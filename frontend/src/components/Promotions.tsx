@@ -119,7 +119,7 @@ export default function Promotions() {
               viewport={{ once: true }}
               whileHover={{ y: -5 }}
             >
-              <Card className="h-full hover:shadow-xl transition-all duration-300 border-0 shadow-lg overflow-hidden group">
+              <Card className="h-full hover:shadow-xl transition-all duration-300 border-0 shadow-lg overflow-hidden group flex flex-col">
                 {/* Promotion Header */}
                 <div className={`relative h-32 bg-gradient-to-r ${promo.color}`}>
                   <Image
@@ -139,7 +139,7 @@ export default function Promotions() {
                   </Badge>
                 </div>
 
-                <CardContent className="p-6">
+                <CardContent className="p-6 flex flex-col flex-1">
                   <h3 className="font-bold text-gray-900 mb-2">{promo.title}</h3>
                   <p className="text-sm text-gray-600 mb-4 leading-relaxed">
                     {promo.description}
@@ -157,8 +157,8 @@ export default function Promotions() {
                     <span>Valid until {new Date(promo.validUntil).toLocaleDateString()}</span>
                   </div>
 
-                  {/* CTA Button */}
-                  <Button className="w-full group-hover:shadow-lg transition-all duration-300">
+                  {/* CTA Button - Aligned to bottom */}
+                  <Button className="w-full group-hover:shadow-lg transition-all duration-300 mt-auto">
                     Apply Offer
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>

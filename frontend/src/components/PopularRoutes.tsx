@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Clock, MapPin, ArrowRight, Star, Users, Wifi, Coffee } from "lucide-react";
+import { Clock, MapPin, ArrowRight, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -86,7 +86,12 @@ interface Route {
   to: string;
   price: string;
   duration: string;
-  departures: Array<{ time: string; type: string; available: boolean }>;
+  originalPrice?: string;
+  rating: number;
+  reviews: number;
+  features: string[];
+  departures: string[];
+  image: string;
 }
 
 interface PopularRoutesProps {
@@ -133,7 +138,7 @@ export default function PopularRoutes({ onBookNow }: PopularRoutesProps) {
               viewport={{ once: true }}
               whileHover={{ y: -5 }}
             >
-              <Card className="h-full hover:shadow-xl transition-all duration-300 border-0 shadow-lg overflow-hidden">
+              <Card className="h-full hover:shadow-xl transition-all duration-300 border-0 shadow-lg overflow-hidden flex flex-col">
                 {/* Route Image */}
                 <div className="relative h-32 bg-gradient-to-r from-amber-400 to-amber-600">
                   <img
@@ -153,7 +158,7 @@ export default function PopularRoutes({ onBookNow }: PopularRoutesProps) {
                   </div>
                 </div>
 
-                <CardContent className="p-6">
+                <CardContent className="p-6 flex flex-col flex-1">
                   {/* Route Info */}
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center gap-2">
@@ -206,8 +211,8 @@ export default function PopularRoutes({ onBookNow }: PopularRoutesProps) {
                     </div>
                   </div>
 
-                  {/* Action Buttons */}
-                  <div className="flex gap-2">
+                  {/* Action Buttons - Aligned to bottom */}
+                  <div className="flex gap-2 mt-auto">
                     <Button 
                       className="flex-1 bg-amber-600 hover:bg-amber-700 text-white"
                       onClick={() => onBookNow?.(route)}
@@ -232,7 +237,15 @@ export default function PopularRoutes({ onBookNow }: PopularRoutesProps) {
           viewport={{ once: true }}
           className="text-center"
         >
-          <Button variant="outline" size="lg" className="border-white text-white hover:bg-white hover:text-[#5d4a15]">
+          <Button 
+            variant="outline" 
+            size="lg" 
+            className="border-white text-black hover:bg-white hover:text-[#5d4a15]"
+            onClick={() => {
+              // Navigate to routes page
+              window.location.href = '/routes';
+            }}
+          >
             View All Routes
             <ArrowRight className="ml-2 h-4 w-4" />
           </Button>

@@ -7,6 +7,8 @@ import BookingModal from "@/components/BookingModal";
 import Features from "@/components/Features";
 import PopularRoutes from "@/components/PopularRoutes";
 import Promotions from "@/components/Promotions";
+import LogisticsSection from "@/components/LogisticsSection";
+import AnimatedMap from "@/components/AnimatedMap";
 import Footer from "@/components/Footer";
 import { useState } from "react";
 
@@ -26,14 +28,19 @@ export default function Home() {
     to: string;
     price: string;
     duration: string;
-    departures: Array<{ time: string; type: string; available: boolean }>;
+    originalPrice?: string;
+    rating: number;
+    reviews: number;
+    features: string[];
+    departures: string[];
+    image: string;
   }) => {
     setSelectedRoute({
       from: route.from,
       to: route.to,
       price: route.price,
       duration: route.duration,
-      departureTime: route.departures[0]?.time || "06:00",
+      departureTime: route.departures[0] || "06:00",
       date: new Date().toISOString().split('T')[0]
     });
     setIsBookingModalOpen(true);
@@ -63,6 +70,8 @@ export default function Home() {
       <Features />
       <PopularRoutes onBookNow={handleBookNow} />
       <Promotions />
+      <LogisticsSection />
+      <AnimatedMap />
       
       {/* Group Travel CTA */}
       <section className="py-16 bg-white">
