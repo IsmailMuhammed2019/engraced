@@ -11,8 +11,8 @@ const routes = [
     from: "Lagos",
     to: "Abuja",
     duration: "8h 30m",
-    price: "₦7,500",
-    originalPrice: "₦9,000",
+    price: "₦15,000",
+    originalPrice: "₦18,000",
     rating: 4.8,
     reviews: 1240,
     features: ["Wi-Fi", "Refreshments", "Comfortable Seats"],
@@ -23,8 +23,8 @@ const routes = [
     from: "Lagos",
     to: "Port Harcourt",
     duration: "6h 0m",
-    price: "₦6,200",
-    originalPrice: "₦7,500",
+    price: "₦12,500",
+    originalPrice: "₦15,000",
     rating: 4.6,
     reviews: 980,
     features: ["Wi-Fi", "USB Charging"],
@@ -35,8 +35,8 @@ const routes = [
     from: "Abuja",
     to: "Kaduna",
     duration: "2h 15m",
-    price: "₦2,000",
-    originalPrice: "₦2,500",
+    price: "₦4,500",
+    originalPrice: "₦5,500",
     rating: 4.9,
     reviews: 2100,
     features: ["Wi-Fi", "Refreshments", "Priority Boarding"],
@@ -47,8 +47,8 @@ const routes = [
     from: "Kano",
     to: "Lagos",
     duration: "12h 0m",
-    price: "₦12,000",
-    originalPrice: "₦15,000",
+    price: "₦25,000",
+    originalPrice: "₦30,000",
     rating: 4.7,
     reviews: 850,
     features: ["Wi-Fi", "Meals", "Entertainment", "Sleeper Seats"],
@@ -59,8 +59,8 @@ const routes = [
     from: "Ibadan",
     to: "Abuja",
     duration: "7h 45m",
-    price: "₦6,800",
-    originalPrice: "₦8,000",
+    price: "₦14,000",
+    originalPrice: "₦16,500",
     rating: 4.5,
     reviews: 650,
     features: ["Wi-Fi", "Refreshments"],
@@ -71,8 +71,8 @@ const routes = [
     from: "Enugu",
     to: "Lagos",
     duration: "9h 30m",
-    price: "₦8,500",
-    originalPrice: "₦10,000",
+    price: "₦18,000",
+    originalPrice: "₦22,000",
     rating: 4.6,
     reviews: 720,
     features: ["Wi-Fi", "Refreshments", "Comfortable Seats"],
@@ -81,8 +81,16 @@ const routes = [
   },
 ];
 
+interface Route {
+  from: string;
+  to: string;
+  price: string;
+  duration: string;
+  departures: Array<{ time: string; type: string; available: boolean }>;
+}
+
 interface PopularRoutesProps {
-  onBookNow?: (route: any) => void;
+  onBookNow?: (route: Route) => void;
 }
 
 export default function PopularRoutes({ onBookNow }: PopularRoutesProps) {

@@ -111,6 +111,13 @@ export default function Hero() {
                     <Button
                       size="lg"
                       className="px-8 py-3 text-lg"
+                      onClick={() => {
+                        // Scroll to booking form or open booking modal
+                        const bookingForm = document.querySelector('#booking-form');
+                        if (bookingForm) {
+                          bookingForm.scrollIntoView({ behavior: 'smooth' });
+                        }
+                      }}
                     >
                       Book Now
                     </Button>
@@ -118,6 +125,10 @@ export default function Hero() {
                       variant="outline"
                       size="lg"
                       className="border-white text-black hover:bg-white hover:text-[#5d4a15] px-8 py-3 text-lg"
+                      onClick={() => {
+                        // Navigate to routes page
+                        window.location.href = '/routes';
+                      }}
                     >
                       View Routes
                     </Button>

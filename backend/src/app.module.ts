@@ -13,6 +13,7 @@ import { SystemModule } from './system/system.module';
 import { DriversModule } from './drivers/drivers.module';
 import { VehiclesModule } from './vehicles/vehicles.module';
 import { PaymentsModule } from './payments/payments.module';
+import { HealthModule } from './health/health.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { PaymentsModule } from './payments/payments.module';
     DriversModule,
     VehiclesModule,
     PaymentsModule,
+    HealthModule,
   ],
 })
 export class AppModule {}

@@ -44,6 +44,13 @@ export class PaymentsController {
     return this.paymentsService.verifyPayment(reference);
   }
 
+  @Post('webhook')
+  @ApiOperation({ summary: 'Paystack webhook handler' })
+  @ApiResponse({ status: 200, description: 'Webhook processed successfully' })
+  handleWebhook(@Body() body: any) {
+    return this.paymentsService.handleWebhook(body);
+  }
+
   @Get('booking/:bookingId')
   @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()

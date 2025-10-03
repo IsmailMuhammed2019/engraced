@@ -18,7 +18,7 @@ const features = [
   {
     icon: Clock,
     title: "Daily Departures",
-    description: "Multiple daily schedules connecting major cities with punctuality guarantees.",
+    description: "Multiple daily schedules connecting major cities with punctuality guarantees. Our fleet operates 365 days a year with over 50+ daily departures across Nigeria. Real-time tracking and SMS notifications keep you informed every step of the way.",
     color: "bg-blue-500",
     badge: "Reliable",
     image: "/depature.jpg",
@@ -26,7 +26,7 @@ const features = [
   {
     icon: Shield,
     title: "Comfort + Safety",
-    description: "Well-maintained coaches, onboard Wi‑Fi and professional drivers.",
+    description: "Well-maintained coaches, onboard Wi‑Fi and professional drivers. All vehicles undergo daily safety inspections and are equipped with GPS tracking, emergency exits, and first aid kits. Our drivers are professionally trained and certified.",
     color: "bg-green-500",
     badge: "Secure",
     image: "/comfort.jpg",
@@ -34,7 +34,7 @@ const features = [
   {
     icon: CreditCard,
     title: "Easy Payments",
-    description: "Pay with card, bank transfer or mobile money. Secure and fast.",
+    description: "Pay with card, bank transfer or mobile money. Secure and fast. We accept all major payment methods including Visa, Mastercard, Verve, and mobile money platforms. All transactions are encrypted and PCI compliant for maximum security.",
     color: "bg-purple-500",
     badge: "Fast",
     image: "/payment.jpg",
@@ -42,7 +42,7 @@ const features = [
   {
     icon: Wifi,
     title: "Free Wi-Fi",
-    description: "Stay connected throughout your journey with complimentary internet access.",
+    description: "Stay connected throughout your journey with complimentary internet access. High-speed 4G Wi-Fi available on all routes with unlimited data usage. Perfect for business travelers, students, and anyone who needs to stay connected on the go.",
     color: "bg-orange-500",
     badge: "Modern",
     image: "/wifi.jpg",
@@ -50,7 +50,7 @@ const features = [
   {
     icon: Users,
     title: "Group Bookings",
-    description: "Special rates and dedicated support for corporate and group travel.",
+    description: "Special rates and dedicated support for corporate and group travel. We offer exclusive discounts for groups of 10+ passengers, corporate accounts, and educational institutions. Dedicated account managers and flexible payment terms available.",
     color: "bg-pink-500",
     badge: "Flexible",
     image: "/group.jpg",
@@ -58,7 +58,7 @@ const features = [
   {
     icon: Headphones,
     title: "24/7 Support",
-    description: "Round-the-clock customer service for all your travel needs.",
+    description: "Round-the-clock customer service for all your travel needs. Our multilingual support team is available 24/7 via phone, email, WhatsApp, and live chat. Get instant help with bookings, changes, cancellations, and travel information.",
     color: "bg-indigo-500",
     badge: "Always On",
     image: "/support.jpg",
@@ -130,12 +130,6 @@ export default function Features() {
                     </div>
                   </div>
                   
-                  {/* Button aligned to bottom */}
-                  <div className="mt-auto pt-4">
-                    <button className="w-full bg-[#5d4a15] hover:bg-[#6b5618] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors cursor-pointer">
-                      Learn More
-                    </button>
-                  </div>
                 </CardContent>
               </Card>
             </motion.div>

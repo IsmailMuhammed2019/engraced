@@ -41,7 +41,7 @@ export class PaymentsService {
           email,
           amount: amount * 100, // Paystack expects amount in kobo
           reference,
-          callback_url: `${this.configService.get('FRONTEND_URL')}/booking/success`,
+          callback_url: 'https://engracedsmile.com/api/payments/verify',
           metadata: {
             bookingId,
             bookingNumber: booking.bookingNumber,
@@ -231,5 +231,78 @@ export class PaymentsService {
       successRate: totalPayments > 0 ? (successfulPayments / totalPayments) * 100 : 0,
       monthlyRevenue,
     };
+  }
+
+  async handleWebhook(body: any) {
+    try {
+      const { event, data } = body;
+
+      if (event === 'charge.success') {
+        const { reference } = data;
+        
+        // Verify payment with Paystack
+        const response = await axios.get(
+          `${this.paystackBaseUrl}/transaction/verify/${reference}`,
+          {
+            headers: {
+              Authorization: `Bearer ${this.paystackSecretKey}`,
+            },
+          },
+        );
+
+        const paymentData = response.data.data;
+
+        if (paymentData.status === 'success') {
+          // Update payment record
+          const payment = await this.prisma.payment.update({
+            where: { paystackRef: reference },
+            data: {
+              paymentStatus: 'PAID',
+              paymentDate: new Date(),
+              paymentMethod: paymentData.channel,
+            },
+            include: {
+              booking: {
+                include: {
+                  user: true,
+                },
+              },
+            },
+          });
+
+          // Update booking status
+          await this.prisma.booking.update({
+            where: { id: payment.bookingId },
+            data: {
+              paymentStatus: 'PAID',
+              status: 'CONFIRMED',
+            },
+          });
+
+          // Create notification for user
+          if (payment.booking.userId) {
+            await this.prisma.notification.create({
+              data: {
+                userId: payment.booking.userId,
+                type: 'PAYMENT_SUCCESS',
+                title: 'Payment Successful',
+                message: `Your payment for booking ${payment.booking.bookingNumber} has been confirmed.`,
+                data: {
+                  bookingId: payment.booking.id,
+                  amount: payment.amount,
+                },
+              },
+            });
+          }
+
+          console.log(`Payment successful for reference: ${reference}`);
+        }
+      }
+
+      return { success: true, message: 'Webhook processed successfully' };
+    } catch (error) {
+      console.error('Webhook processing error:', error);
+      return { success: false, message: 'Webhook processing failed' };
+    }
   }
 }
