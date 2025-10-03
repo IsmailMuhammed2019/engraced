@@ -18,6 +18,12 @@ fi
 echo "🐳 Starting Docker containers..."
 docker-compose up --build -d
 
+# Check if development mode is requested
+if [ "$1" = "dev" ] || [ "$1" = "development" ]; then
+    echo "🔧 Starting in development mode..."
+    docker-compose --profile development up --build -d
+fi
+
 # Wait for services to be ready
 echo "⏳ Waiting for services to start..."
 sleep 10
