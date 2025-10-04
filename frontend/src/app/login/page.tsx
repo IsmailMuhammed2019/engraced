@@ -64,8 +64,8 @@ export default function LoginPage() {
     <div className="min-h-screen bg-gradient-to-br from-[#5d4a15] to-[#6b5618] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <Card className="shadow-2xl">
-          <CardHeader className="text-center">
-            <div className="mx-auto w-20 h-20 mb-4">
+          <CardHeader className="text-center pb-8">
+            <div className="mx-auto w-20 h-20 mb-6">
               <Image
                 src="/logo.png"
                 alt="Engracedsmile Logo"
@@ -74,13 +74,13 @@ export default function LoginPage() {
                 className="object-contain"
               />
             </div>
-            <CardTitle className="text-2xl font-bold text-gray-900">Welcome Back</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-2xl font-bold text-gray-900 mb-3">Welcome Back</CardTitle>
+            <CardDescription className="text-base">
               Sign in to your account to manage your bookings and track shipments
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
+          <CardContent className="pt-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
               {error && (
                 <Alert variant="destructive">
                   <AlertCircle className="h-4 w-4" />
@@ -95,8 +95,8 @@ export default function LoginPage() {
                 </Alert>
               )}
 
-              <div>
-                <Label htmlFor="email">Email Address</Label>
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-sm font-medium">Email Address</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
@@ -112,8 +112,8 @@ export default function LoginPage() {
                 </div>
               </div>
 
-              <div>
-                <Label htmlFor="password">Password</Label>
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-sm font-medium">Password</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input

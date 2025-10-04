@@ -95,8 +95,8 @@ export default function RegisterPage() {
     <div className="min-h-screen bg-gradient-to-br from-[#5d4a15] to-[#6b5618] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <Card className="shadow-2xl">
-          <CardHeader className="text-center">
-            <div className="mx-auto w-20 h-20 mb-4">
+          <CardHeader className="text-center pb-8">
+            <div className="mx-auto w-20 h-20 mb-6">
               <Image
                 src="/logo.png"
                 alt="Engracedsmile Logo"
@@ -105,13 +105,13 @@ export default function RegisterPage() {
                 className="object-contain"
               />
             </div>
-            <CardTitle className="text-2xl font-bold text-gray-900">Create Account</CardTitle>
-            <CardDescription>
+            <CardTitle className="text-2xl font-bold text-gray-900 mb-3">Create Account</CardTitle>
+            <CardDescription className="text-base">
               Join Engracedsmile to manage your bookings and track your shipments
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
+          <CardContent className="pt-6">
+            <form onSubmit={handleSubmit} className="space-y-6">
               {error && (
                 <Alert variant="destructive">
                   <AlertCircle className="h-4 w-4" />
@@ -127,8 +127,8 @@ export default function RegisterPage() {
               )}
 
               <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="firstName">First Name *</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="firstName" className="text-sm font-medium">First Name *</Label>
                   <Input
                     id="firstName"
                     name="firstName"
@@ -138,8 +138,8 @@ export default function RegisterPage() {
                     required
                   />
                 </div>
-                <div>
-                  <Label htmlFor="lastName">Last Name *</Label>
+                <div className="space-y-2">
+                  <Label htmlFor="lastName" className="text-sm font-medium">Last Name *</Label>
                   <Input
                     id="lastName"
                     name="lastName"
@@ -151,8 +151,8 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              <div>
-                <Label htmlFor="email">Email Address *</Label>
+              <div className="space-y-2">
+                <Label htmlFor="email" className="text-sm font-medium">Email Address *</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
@@ -168,8 +168,8 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              <div>
-                <Label htmlFor="phone">Phone Number *</Label>
+              <div className="space-y-2">
+                <Label htmlFor="phone" className="text-sm font-medium">Phone Number *</Label>
                 <div className="relative">
                   <Phone className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
@@ -185,8 +185,8 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              <div>
-                <Label htmlFor="address">Address</Label>
+              <div className="space-y-2">
+                <Label htmlFor="address" className="text-sm font-medium">Address</Label>
                 <div className="relative">
                   <MapPin className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
@@ -200,8 +200,8 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              <div>
-                <Label htmlFor="password">Password *</Label>
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-sm font-medium">Password *</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
@@ -226,8 +226,8 @@ export default function RegisterPage() {
                 </div>
               </div>
 
-              <div>
-                <Label htmlFor="confirmPassword">Confirm Password *</Label>
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword" className="text-sm font-medium">Confirm Password *</Label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
