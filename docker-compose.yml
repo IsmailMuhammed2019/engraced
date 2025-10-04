@@ -1,0 +1,97 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: engracedsmile-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: engracedsmile_db
+      POSTGRES_USER: engracedsmile
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U engracedsmile -d engracedsmile_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: engracedsmile-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: engracedsmile-backend
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://engracedsmile:password@postgres:5432/engracedsmile_db?schema=public
+      JWT_SECRET: your-super-secret-jwt-key-here-make-it-long-and-secure
+      JWT_EXPIRES_IN: 7d
+      PORT: 3003
+      NODE_ENV: production
+      FRONTEND_URL: http://localhost:3001
+      ADMIN_URL: http://localhost:3002
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ""
+      PAYSTACK_SECRET_KEY: ${PAYSTACK_SECRET_KEY}
+      PAYSTACK_PUBLIC_KEY: ${PAYSTACK_PUBLIC_KEY}
+      PAYSTACK_CALLBACK_URL: https://engracedsmile.com/api/payments/verify
+      PAYSTACK_WEBHOOK_URL: https://engracedsmile.com/api/payments/webhook
+    ports:
+      - "3003:3003"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3003/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: engracedsmile-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+
+  admin:
+    build:
+      context: ./admin-portal
+      dockerfile: Dockerfile
+    container_name: engracedsmile-admin
+    restart: unless-stopped
+    ports:
+      - "3002:3002"
+    depends_on:
+      - backend
+    environment:
+      - NODE_ENV=production
+      - PORT=3002
+
+volumes:
+  postgres_data:
