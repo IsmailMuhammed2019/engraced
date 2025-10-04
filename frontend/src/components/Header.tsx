@@ -102,10 +102,16 @@ export default function Header() {
               </button>
             )}
             <Link 
-              href="/contact" 
+              href="/login" 
+              className="border border-[#5d4a15] text-[#5d4a15] px-4 py-2 rounded-md hover:bg-[#5d4a15] hover:text-white transition-colors"
+            >
+              Login
+            </Link>
+            <Link 
+              href="/register" 
               className="bg-[#5d4a15] text-white px-4 py-2 rounded-md hover:bg-[#6b5618] transition-colors"
             >
-              Contact Us
+              Sign Up
             </Link>
           </div>
 
@@ -158,10 +164,16 @@ export default function Header() {
                   </button>
                 )}
                 <Link 
-                  href="/contact" 
+                  href="/login" 
+                  className="block w-full border border-[#5d4a15] text-[#5d4a15] px-3 py-2 text-center rounded-md hover:bg-[#5d4a15] hover:text-white transition-colors"
+                >
+                  Login
+                </Link>
+                <Link 
+                  href="/register" 
                   className="block w-full bg-[#5d4a15] text-white px-3 py-2 text-center rounded-md hover:bg-[#6b5618] transition-colors"
                 >
-                  Contact Us
+                  Sign Up
                 </Link>
               </div>
             </div>
