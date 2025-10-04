@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import Image from "next/image";
 import { Menu, X, Phone, Mail } from "lucide-react";
 
 export default function Header() {
@@ -42,15 +43,15 @@ export default function Header() {
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
             <div className="flex items-center">
-              <a href="/" className="flex items-center">
-                <img
+              <Link href="/" className="flex items-center">
+                <Image
                   src="/logo.png"
                   alt="Engracedsmile Logo"
                   width={80}
                   height={80}
                   className="object-contain cursor-pointer hover:opacity-80 transition-opacity"
                 />
-              </a>
+              </Link>
             </div>
 
           {/* Desktop Navigation */}
@@ -68,9 +69,12 @@ export default function Header() {
 
           {/* CTA Buttons */}
           <div className="hidden md:flex items-center">
-            <Button size="lg" className="px-6 py-3">
-              Download App
-            </Button>
+            <Link 
+              href="/contact" 
+              className="bg-[#5d4a15] text-white px-4 py-2 rounded-md hover:bg-[#6b5618] transition-colors"
+            >
+              Contact Us
+            </Link>
           </div>
 
           {/* Mobile menu button */}
@@ -102,9 +106,12 @@ export default function Header() {
                 </a>
               ))}
               <div className="pt-4 pb-2">
-                <Button size="lg" className="w-full px-6 py-3">
-                  Download App
-                </Button>
+                <Link 
+                  href="/contact" 
+                  className="block w-full bg-[#5d4a15] text-white px-3 py-2 text-center rounded-md hover:bg-[#6b5618] transition-colors"
+                >
+                  Contact Us
+                </Link>
               </div>
             </div>
           </div>

@@ -24,6 +24,28 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+
+interface Trip {
+  id: number;
+  route: string;
+  from: string;
+  to: string;
+  departureTime: string;
+  arrivalTime: string;
+  date: string;
+  duration: string;
+  price: string;
+  originalPrice: string;
+  availableSeats: number;
+  totalSeats: number;
+  vehicle: string;
+  amenities: string[];
+  status: string;
+  rating: number;
+  reviews: number;
+  driver: string;
+  vehicleType: string;
+}
 import BookingModal from "@/components/BookingModal";
 
 // Sample trips data
@@ -147,7 +169,7 @@ export default function TripsPage() {
   const [selectedRoute, setSelectedRoute] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("");
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
-  const [selectedTrip, setSelectedTrip] = useState<any>(null);
+  const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
 
   const filteredTrips = trips.filter(trip => {
     const matchesSearch = trip.route.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -160,7 +182,7 @@ export default function TripsPage() {
     return matchesSearch && matchesDate && matchesRoute && matchesStatus;
   });
 
-  const handleBookTrip = (trip: any) => {
+  const handleBookTrip = (trip: Trip) => {
     setSelectedTrip(trip);
     setIsBookingModalOpen(true);
   };
@@ -365,7 +387,7 @@ export default function TripsPage() {
               Our customer service team is here to help you find the perfect journey
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button variant="outline" size="lg" className="border-white text-black hover:bg-white hover:text-[#5d4a15]">
+              <Button variant="outline" size="lg" className="border-white text-white hover:bg-white hover:text-[#5d4a15]">
                 Contact Support
               </Button>
               <Button size="lg" className="bg-white text-[#5d4a15] hover:bg-gray-100">

@@ -17,7 +17,7 @@ const routes = [
     reviews: 1240,
     features: ["Wi-Fi", "Refreshments", "Comfortable Seats"],
     departures: ["06:00", "12:00", "18:00"],
-    image: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=400&q=60",
+    image: "/sienna.jpg",
   },
   {
     from: "Lagos",
@@ -29,7 +29,7 @@ const routes = [
     reviews: 980,
     features: ["Wi-Fi", "USB Charging"],
     departures: ["07:00", "13:00", "19:00"],
-    image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=400&q=60",
+    image: "/sienna2.jpg",
   },
   {
     from: "Abuja",
@@ -41,7 +41,7 @@ const routes = [
     reviews: 2100,
     features: ["Wi-Fi", "Refreshments", "Priority Boarding"],
     departures: ["06:30", "09:00", "12:30", "15:00", "18:30"],
-    image: "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?auto=format&fit=crop&w=400&q=60",
+    image: "/sienna3.jpg",
   },
   {
     from: "Kano",
@@ -53,7 +53,7 @@ const routes = [
     reviews: 850,
     features: ["Wi-Fi", "Meals", "Entertainment", "Sleeper Seats"],
     departures: ["17:00", "20:00"],
-    image: "https://images.unsplash.com/photo-1570125909236-eb263c188f7e?auto=format&fit=crop&w=400&q=60",
+    image: "/sienna.jpg",
   },
   {
     from: "Ibadan",
@@ -65,7 +65,7 @@ const routes = [
     reviews: 650,
     features: ["Wi-Fi", "Refreshments"],
     departures: ["08:00", "14:00"],
-    image: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=400&q=60",
+    image: "/sienna2.jpg",
   },
   {
     from: "Enugu",
@@ -77,7 +77,7 @@ const routes = [
     reviews: 720,
     features: ["Wi-Fi", "Refreshments", "Comfortable Seats"],
     departures: ["06:30", "13:30"],
-    image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=400&q=60",
+    image: "/sienna3.jpg",
   },
 ];
 

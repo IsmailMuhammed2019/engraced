@@ -14,6 +14,7 @@ const logisticsServices = [
     color: "from-blue-500 to-blue-600",
     bgColor: "bg-blue-50",
     iconColor: "text-blue-600",
+    image: "/parcel.jpg",
   },
   {
     icon: Truck,
@@ -23,6 +24,7 @@ const logisticsServices = [
     color: "from-green-500 to-green-600",
     bgColor: "bg-green-50",
     iconColor: "text-green-600",
+    image: "/cargo.jpg",
   },
   {
     icon: MapPin,
@@ -32,6 +34,7 @@ const logisticsServices = [
     color: "from-purple-500 to-purple-600",
     bgColor: "bg-purple-50",
     iconColor: "text-purple-600",
+    image: "/lastmile.png",
   },
 ];
 
@@ -75,7 +78,13 @@ export default function LogisticsSection() {
               whileHover={{ y: -5 }}
             >
               <Card className="h-full hover:shadow-xl transition-all duration-300 border-0 shadow-lg overflow-hidden group">
-                <div className={`relative h-48 bg-gradient-to-r ${service.color}`}>
+                <div className="relative h-48 overflow-hidden">
+                  <img
+                    src={service.image}
+                    alt={service.title}
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black/40"></div>
                   <div className="absolute inset-0 flex items-center justify-center">
                     <div className="text-center text-white">
                       <service.icon className="h-16 w-16 mx-auto mb-4" />
@@ -178,7 +187,7 @@ export default function LogisticsSection() {
               <Button 
                 variant="outline" 
                 size="lg" 
-                className="border-white text-white hover:bg-white hover:text-[#5d4a15]"
+                className="border-[#5d4a15] text-[#5d4a15] hover:bg-[#5d4a15] hover:text-white"
                 onClick={() => {
                   window.location.href = '/logistics';
                 }}

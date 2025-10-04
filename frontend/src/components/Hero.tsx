@@ -157,14 +157,6 @@ export default function Hero() {
         <ChevronRight className="h-6 w-6" />
       </button>
 
-      {/* Play/Pause Button */}
-      <button
-        onClick={() => setIsPlaying(!isPlaying)}
-        className="absolute top-6 right-6 z-20 p-3 bg-black/30 hover:bg-black/50 text-white rounded-full transition-all duration-300 backdrop-blur-sm"
-        aria-label={isPlaying ? "Pause slideshow" : "Play slideshow"}
-      >
-        <Play className={`h-5 w-5 ${isPlaying ? "animate-pulse" : ""}`} />
-      </button>
 
       {/* Dots Indicator */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-20 flex gap-3">

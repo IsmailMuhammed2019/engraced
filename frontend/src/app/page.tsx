@@ -68,10 +68,10 @@ export default function Home() {
       </section>
 
       <Features />
+      <AnimatedMap />
       <PopularRoutes onBookNow={handleBookNow} />
       <Promotions />
       <LogisticsSection />
-      <AnimatedMap />
       
       {/* Group Travel CTA */}
       <section className="py-16 bg-white">
@@ -89,7 +89,7 @@ export default function Home() {
               </div>
               
               <div className="flex flex-col sm:flex-row gap-4">
-                <button className="rounded-lg bg-[#5d4a15] hover:bg-[#6b5618] px-6 py-3 text-white font-semibold transition-colors cursor-pointer">
+                <button className="rounded-lg bg-[#5d4a15] hover:bg-[#6b5618] px-6 py-3 text-black font-semibold transition-colors cursor-pointer">
                   Contact Sales
                 </button>
                 <button className="rounded-lg border border-gray-300 hover:bg-gray-50 px-6 py-3 font-semibold transition-colors cursor-pointer">

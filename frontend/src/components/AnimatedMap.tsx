@@ -21,6 +21,7 @@ const routes = [
   { from: "Lagos", to: "Port Harcourt", duration: "6h", type: "logistics" },
   { from: "Abuja", to: "Enugu", duration: "5h", type: "passenger" },
   { from: "Lagos", to: "Ibadan", duration: "2h", type: "logistics" },
+  { from: "Benin", to: "Abuja", duration: "7h", type: "passenger" },
 ];
 
 export default function AnimatedMap() {

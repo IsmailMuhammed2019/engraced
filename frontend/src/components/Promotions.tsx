@@ -30,7 +30,7 @@ const promotions = [
     iconColor: "text-blue-600",
     validUntil: "2024-12-31",
     terms: "Valid student ID required",
-    image: "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=400&q=60",
+    image: "/students.jpeg",
   },
   {
     id: 2,
@@ -44,7 +44,7 @@ const promotions = [
     iconColor: "text-green-600",
     validUntil: "2024-12-31",
     terms: "Minimum 14 days advance booking",
-    image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=400&q=60",
+    image: "/earlybird.jpg",
   },
   {
     id: 3,
@@ -58,7 +58,7 @@ const promotions = [
     iconColor: "text-purple-600",
     validUntil: "2024-12-31",
     terms: "Valid for Friday-Sunday travel",
-    image: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=400&q=60",
+    image: "/weekend.jpeg",
   },
   {
     id: 4,
@@ -72,7 +72,7 @@ const promotions = [
     iconColor: "text-orange-600",
     validUntil: "2024-12-31",
     terms: "Minimum 10 passengers",
-    image: "https://images.unsplash.com/photo-1570125909236-eb263c188f7e?auto=format&fit=crop&w=400&q=60",
+    image: "/grouptravel.jpg",
   },
 ];
 

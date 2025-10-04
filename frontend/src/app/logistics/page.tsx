@@ -22,7 +22,9 @@ import {
   Weight,
   Route,
   FileText,
-  Download
+  Download,
+  Navigation,
+  CheckCircle2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -32,6 +34,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import AnimatedMap from "@/components/AnimatedMap";
 
 // Sample tracking data
 const trackingData = [
@@ -97,7 +100,7 @@ const trackingStatus = {
 
 export default function LogisticsPage() {
   const [trackingNumber, setTrackingNumber] = useState("");
-  const [trackingResult, setTrackingResult] = useState(null);
+  const [trackingResult, setTrackingResult] = useState<typeof trackingData[0] | null>(null);
   const [isSearching, setIsSearching] = useState(false);
 
   const handleTrackingSearch = () => {
@@ -268,6 +271,95 @@ export default function LogisticsPage() {
         </div>
       </section>
 
+      {/* Interactive Map Section */}
+      <AnimatedMap />
+
+      {/* Why Choose Us Section */}
+      <section className="py-16 bg-gray-50">
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="text-center mb-12"
+          >
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              Why Choose Engracedsmile Logistics?
+            </h2>
+            <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+              We combine technology, experience, and commitment to deliver exceptional logistics solutions.
+            </p>
+          </motion.div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[
+              {
+                icon: Shield,
+                title: "Secure & Insured",
+                description: "All shipments are fully insured with comprehensive coverage for your peace of mind.",
+                features: ["Full insurance coverage", "Secure handling", "Damage protection"]
+              },
+              {
+                icon: Zap,
+                title: "Fast Delivery",
+                description: "Express delivery options with real-time tracking and guaranteed delivery times.",
+                features: ["Same-day delivery", "Express options", "Guaranteed timing"]
+              },
+              {
+                icon: Globe,
+                title: "Global Reach",
+                description: "International shipping capabilities with customs clearance and documentation support.",
+                features: ["International shipping", "Customs clearance", "Documentation support"]
+              },
+              {
+                icon: Users,
+                title: "Expert Team",
+                description: "Experienced logistics professionals dedicated to handling your shipments with care.",
+                features: ["Expert handlers", "Professional service", "Personal attention"]
+              },
+              {
+                icon: Clock,
+                title: "24/7 Support",
+                description: "Round-the-clock customer support and tracking for all your logistics needs.",
+                features: ["24/7 availability", "Real-time support", "Quick response"]
+              },
+              {
+                icon: Star,
+                title: "Proven Track Record",
+                description: "Years of experience with thousands of satisfied customers and successful deliveries.",
+                features: ["99.5% success rate", "Customer satisfaction", "Reliable service"]
+              }
+            ].map((item, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+                viewport={{ once: true }}
+                className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-all duration-300"
+              >
+                <div className="flex items-center gap-4 mb-4">
+                  <div className="w-12 h-12 bg-[#5d4a15] rounded-lg flex items-center justify-center">
+                    <item.icon className="h-6 w-6 text-white" />
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900">{item.title}</h3>
+                </div>
+                <p className="text-gray-600 mb-4">{item.description}</p>
+                <ul className="space-y-2">
+                  {item.features.map((feature, featureIndex) => (
+                    <li key={featureIndex} className="flex items-center gap-2 text-sm text-gray-600">
+                      <CheckCircle2 className="h-4 w-4 text-green-500" />
+                      {feature}
+                    </li>
+                  ))}
+                </ul>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Services Section */}
       <section className="py-16 bg-gray-50">
         <div className="container mx-auto px-4">
@@ -356,7 +448,7 @@ export default function LogisticsPage() {
                 Get a Quote
               </h2>
               <p className="text-lg text-gray-600">
-                Tell us about your shipping needs and we'll provide a competitive quote
+                Tell us about your shipping needs and we&apos;ll provide a competitive quote
               </p>
             </motion.div>
 

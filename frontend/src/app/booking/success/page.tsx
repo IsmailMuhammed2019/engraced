@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, Download, Home, Calendar } from "lucide-react";
@@ -19,7 +19,7 @@ interface BookingData {
   phone: string;
 }
 
-export default function BookingSuccess() {
+function BookingSuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [bookingData, setBookingData] = useState<BookingData | null>(null);
@@ -168,5 +168,22 @@ export default function BookingSuccess() {
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+export default function BookingSuccess() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardContent className="p-8 text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#5d4a15] mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading booking details...</p>
+          </CardContent>
+        </Card>
+      </div>
+    }>
+      <BookingSuccessContent />
+    </Suspense>
   );
 }
