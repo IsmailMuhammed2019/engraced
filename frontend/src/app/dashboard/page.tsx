@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -23,15 +25,8 @@ import {
 } from "lucide-react";
 
 export default function DashboardPage() {
+  const { user, logout } = useAuth();
   const [activeTab, setActiveTab] = useState("bookings");
-
-  // Mock user data
-  const user = {
-    name: "John Doe",
-    email: "john@example.com",
-    phone: "+234 801 234 5678",
-    address: "123 Main Street, Lagos"
-  };
 
   // Mock bookings data
   const bookings = [
@@ -130,7 +125,8 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <ProtectedRoute>
+      <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -140,11 +136,15 @@ export default function DashboardPage() {
                 <User className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-semibold text-gray-900">Welcome, {user.name}</h1>
+                <h1 className="text-xl font-semibold text-gray-900">Welcome, {user?.firstName} {user?.lastName}</h1>
                 <p className="text-sm text-gray-600">Manage your bookings and shipments</p>
               </div>
             </div>
-            <Button variant="outline" className="text-red-600 border-red-600 hover:bg-red-50">
+            <Button 
+              variant="outline" 
+              className="text-red-600 border-red-600 hover:bg-red-50"
+              onClick={logout}
+            >
               <LogOut className="h-4 w-4 mr-2" />
               Sign Out
             </Button>
@@ -166,17 +166,17 @@ export default function DashboardPage() {
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
                   <Mail className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm">{user.email}</span>
+                  <span className="text-sm">{user?.email}</span>
                 </div>
                 <div className="flex items-center gap-3">
                   <Phone className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm">{user.phone}</span>
+                  <span className="text-sm">{user?.phone || 'Not provided'}</span>
                 </div>
               </div>
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
                   <MapPin className="h-4 w-4 text-gray-500" />
-                  <span className="text-sm">{user.address}</span>
+                  <span className="text-sm">{user?.address || 'Not provided'}</span>
                 </div>
                 <Button variant="outline" size="sm">
                   Edit Profile
@@ -319,5 +319,6 @@ export default function DashboardPage() {
         </Tabs>
       </div>
     </div>
+    </ProtectedRoute>
   );
 }

@@ -11,10 +11,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Mail, Lock, Eye, EyeOff, CheckCircle, AlertCircle, ArrowLeft } from "lucide-react";
 import Image from "next/image";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function LoginPage() {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
+  const { login, isLoading } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState("");
@@ -43,20 +44,14 @@ export default function LoginPage() {
       return;
     }
 
-    setIsLoading(true);
-
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
+      await login({
+        email: formData.email,
+        password: formData.password,
+      });
       setSuccess("Login successful! Redirecting to dashboard...");
-      setTimeout(() => {
-        router.push("/dashboard");
-      }, 1500);
-    } catch (err) {
-      setError("Invalid email or password. Please try again.");
-    } finally {
-      setIsLoading(false);
+    } catch (err: any) {
+      setError(err.message || "Invalid email or password. Please try again.");
     }
   };
 

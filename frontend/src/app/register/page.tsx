@@ -11,10 +11,11 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Mail, Lock, Phone, MapPin, Eye, EyeOff, CheckCircle, AlertCircle } from "lucide-react";
 import Image from "next/image";
+import { useAuth } from "@/contexts/AuthContext";
 
 export default function RegisterPage() {
   const router = useRouter();
-  const [isLoading, setIsLoading] = useState(false);
+  const { register, isLoading } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [agreeToTerms, setAgreeToTerms] = useState(false);
@@ -74,20 +75,18 @@ export default function RegisterPage() {
 
     if (!validateForm()) return;
 
-    setIsLoading(true);
-
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      setSuccess("Account created successfully! You can now login.");
-      setTimeout(() => {
-        router.push("/login");
-      }, 2000);
-    } catch (err) {
-      setError("Failed to create account. Please try again.");
-    } finally {
-      setIsLoading(false);
+      await register({
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        password: formData.password,
+        address: formData.address,
+      });
+      setSuccess("Account created successfully! Redirecting to dashboard...");
+    } catch (err: any) {
+      setError(err.message || "Failed to create account. Please try again.");
     }
   };
 
