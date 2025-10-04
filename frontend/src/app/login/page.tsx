@@ -64,17 +64,17 @@ export default function LoginPage() {
     <div className="min-h-screen bg-gradient-to-br from-[#5d4a15] to-[#6b5618] flex items-center justify-center p-4">
       <div className="w-full max-w-md">
         <Card className="shadow-2xl">
-          <CardHeader className="text-center pb-8">
-            <div className="mx-auto w-20 h-20 mb-6">
+          <CardHeader className="text-center pb-6 pt-8">
+            <div className="mx-auto w-24 h-16 mb-4">
               <Image
                 src="/logo.png"
                 alt="Engracedsmile Logo"
-                width={80}
-                height={80}
+                width={96}
+                height={64}
                 className="object-contain"
               />
             </div>
-            <CardTitle className="text-2xl font-bold text-gray-900 mb-3">Welcome Back</CardTitle>
+            <CardTitle className="text-2xl font-bold text-gray-900 mb-2">Welcome Back</CardTitle>
             <CardDescription className="text-base">
               Sign in to your account to manage your bookings and track shipments
             </CardDescription>
