@@ -9,7 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Mail, Lock, Eye, EyeOff, CheckCircle, AlertCircle, ArrowLeft } from "lucide-react";
+import { Mail, Eye, EyeOff, CheckCircle, AlertCircle, ArrowLeft } from "lucide-react";
+import Image from "next/image";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -64,8 +65,14 @@ export default function LoginPage() {
       <div className="w-full max-w-md">
         <Card className="shadow-2xl">
           <CardHeader className="text-center">
-            <div className="mx-auto w-16 h-16 bg-[#5d4a15] rounded-full flex items-center justify-center mb-4">
-              <Lock className="h-8 w-8 text-white" />
+            <div className="mx-auto w-20 h-20 mb-4">
+              <Image
+                src="/logo.png"
+                alt="Engracedsmile Logo"
+                width={80}
+                height={80}
+                className="object-contain"
+              />
             </div>
             <CardTitle className="text-2xl font-bold text-gray-900">Welcome Back</CardTitle>
             <CardDescription>
