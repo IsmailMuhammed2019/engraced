@@ -4,7 +4,8 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState, Suspense } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Download, Home, Calendar } from "lucide-react";
+import { CheckCircle, Download, Home, Calendar, User, LogIn } from "lucide-react";
+import Link from "next/link";
 
 interface BookingData {
   bookingId: string;
@@ -118,6 +119,27 @@ function BookingSuccessContent() {
           <p className="text-gray-600 text-center">
             Your booking has been successfully confirmed. You will receive a confirmation email shortly.
           </p>
+          
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h4 className="font-semibold text-blue-900 mb-2">Manage Your Bookings</h4>
+            <p className="text-sm text-blue-800 mb-3">
+              Create an account or login to track your bookings, view booking history, and manage your travel preferences.
+            </p>
+            <div className="flex gap-2">
+              <Link href="/register" className="flex-1">
+                <Button variant="outline" size="sm" className="w-full border-blue-600 text-blue-600 hover:bg-blue-50">
+                  <User className="h-4 w-4 mr-2" />
+                  Create Account
+                </Button>
+              </Link>
+              <Link href="/login" className="flex-1">
+                <Button variant="outline" size="sm" className="w-full border-blue-600 text-blue-600 hover:bg-blue-50">
+                  <LogIn className="h-4 w-4 mr-2" />
+                  Login
+                </Button>
+              </Link>
+            </div>
+          </div>
           
           <div className="bg-gray-50 p-4 rounded-lg">
             <h3 className="font-semibold mb-2">Booking Details</h3>
