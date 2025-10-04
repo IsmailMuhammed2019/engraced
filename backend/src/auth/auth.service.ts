@@ -1,11 +1,9 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import * as bcrypt from 'bcrypt';
-
 import { PrismaService } from '../prisma/prisma.service';
-import { LoginDto } from './dto/login.dto';
-import { RegisterDto } from './dto/register.dto';
-import { AdminLoginDto } from './dto/admin-login.dto';
+import * as bcrypt from 'bcrypt';
+import { RegisterDto, LoginDto } from './dto/auth.dto';
+import { User } from '@prisma/client';
 
 @Injectable()
 export class AuthService {
@@ -14,145 +12,260 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async validateUser(email: string, password: string): Promise<any> {
+  async register(registerDto: RegisterDto) {
+    const { email, password, firstName, lastName, phone, address } = registerDto;
+
+    // Check if user already exists
+    const existingUser = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (existingUser) {
+      throw new ConflictException('User with this email already exists');
+    }
+
+    // Hash password with salt rounds
+    const saltRounds = 12;
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+    // Create user
+    const user = await this.prisma.user.create({
+      data: {
+        email,
+        password: hashedPassword,
+        firstName,
+        lastName,
+        phone,
+        address,
+        isActive: true,
+        emailVerified: false,
+      },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+        address: true,
+        isActive: true,
+        emailVerified: true,
+        createdAt: true,
+      },
+    });
+
+    // Generate JWT tokens
+    const payload = { 
+      sub: user.id, 
+      email: user.email,
+      type: 'access'
+    };
+    
+    const accessToken = this.jwtService.sign(payload, { 
+      expiresIn: '15m',
+      secret: process.env.JWT_SECRET 
+    });
+    
+    const refreshToken = this.jwtService.sign(
+      { sub: user.id, type: 'refresh' }, 
+      { 
+        expiresIn: '7d',
+        secret: process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET 
+      }
+    );
+
+    // Store refresh token in database
+    await this.prisma.refreshToken.create({
+      data: {
+        token: refreshToken,
+        userId: user.id,
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+      },
+    });
+
+    return {
+      user,
+      accessToken,
+      refreshToken,
+    };
+  }
+
+  async login(loginDto: LoginDto) {
+    const { email, password } = loginDto;
+
+    // Find user with email
     const user = await this.prisma.user.findUnique({
       where: { email },
     });
 
-    if (user && await bcrypt.compare(password, user.password)) {
-      const { password: _, ...result } = user;
-      return result;
-    }
-    return null;
-  }
-
-  async validateAdmin(email: string, password: string): Promise<any> {
-    const admin = await this.prisma.admin.findUnique({
-      where: { email },
-    });
-
-    if (admin && await bcrypt.compare(password, admin.password)) {
-      const { password: _, ...result } = admin;
-      return result;
-    }
-    return null;
-  }
-
-  async login(loginDto: LoginDto) {
-    const user = await this.validateUser(loginDto.email, loginDto.password);
     if (!user) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    // Check if user is active
+    if (!user.isActive) {
+      throw new UnauthorizedException('Account is deactivated');
+    }
+
+    // Verify password
+    const isPasswordValid = await bcrypt.compare(password, user.password);
+    if (!isPasswordValid) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    // Generate JWT tokens
     const payload = { 
-      email: user.email, 
       sub: user.id, 
-      role: user.role,
-      type: 'user'
+      email: user.email,
+      type: 'access'
     };
+    
+    const accessToken = this.jwtService.sign(payload, { 
+      expiresIn: '15m',
+      secret: process.env.JWT_SECRET 
+    });
+    
+    const refreshToken = this.jwtService.sign(
+      { sub: user.id, type: 'refresh' }, 
+      { 
+        expiresIn: '7d',
+        secret: process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET 
+      }
+    );
+
+    // Store refresh token in database
+    await this.prisma.refreshToken.create({
+      data: {
+        token: refreshToken,
+        userId: user.id,
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+      },
+    });
+
+    // Update last login
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { lastLoginAt: new Date() },
+    });
 
     return {
-      access_token: this.jwtService.sign(payload),
       user: {
         id: user.id,
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
-        role: user.role,
+        phone: user.phone,
+        address: user.address,
+        isActive: user.isActive,
+        emailVerified: user.emailVerified,
+        createdAt: user.createdAt,
       },
+      accessToken,
+      refreshToken,
     };
   }
 
-  async adminLogin(adminLoginDto: AdminLoginDto) {
-    const admin = await this.validateAdmin(adminLoginDto.email, adminLoginDto.password);
-    if (!admin) {
-      throw new UnauthorizedException('Invalid admin credentials');
-    }
+  async refreshToken(refreshToken: string) {
+    try {
+      const payload = this.jwtService.verify(refreshToken, {
+        secret: process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET,
+      });
 
-    const payload = { 
-      email: admin.email, 
-      sub: admin.id, 
-      role: admin.role,
-      type: 'admin'
-    };
+      // Verify token exists in database
+      const tokenRecord = await this.prisma.refreshToken.findFirst({
+        where: {
+          token: refreshToken,
+          userId: payload.sub,
+          expiresAt: { gt: new Date() },
+        },
+      });
 
-    return {
-      access_token: this.jwtService.sign(payload),
-      admin: {
-        id: admin.id,
-        email: admin.email,
-        firstName: admin.firstName,
-        lastName: admin.lastName,
-        role: admin.role,
-      },
-    };
-  }
+      if (!tokenRecord) {
+        throw new UnauthorizedException('Invalid refresh token');
+      }
 
-  async register(registerDto: RegisterDto) {
-    const existingUser = await this.prisma.user.findUnique({
-      where: { email: registerDto.email },
-    });
+      // Get user
+      const user = await this.prisma.user.findUnique({
+        where: { id: payload.sub },
+        select: {
+          id: true,
+          email: true,
+          firstName: true,
+          lastName: true,
+          phone: true,
+          address: true,
+          isActive: true,
+          emailVerified: true,
+          createdAt: true,
+        },
+      });
 
-    if (existingUser) {
-      throw new UnauthorizedException('User with this email already exists');
-    }
+      if (!user || !user.isActive) {
+        throw new UnauthorizedException('User not found or inactive');
+      }
 
-    const hashedPassword = await bcrypt.hash(registerDto.password, 10);
-
-    const user = await this.prisma.user.create({
-      data: {
-        ...registerDto,
-        password: hashedPassword,
-      },
-    });
-
-    const { password: _, ...result } = user;
-
-    const payload = { 
-      email: user.email, 
-      sub: user.id, 
-      role: user.role,
-      type: 'user'
-    };
-
-    return {
-      access_token: this.jwtService.sign(payload),
-      user: {
-        id: user.id,
+      // Generate new access token
+      const newPayload = { 
+        sub: user.id, 
         email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        role: user.role,
-      },
-    };
+        type: 'access'
+      };
+      
+      const newAccessToken = this.jwtService.sign(newPayload, { 
+        expiresIn: '15m',
+        secret: process.env.JWT_SECRET 
+      });
+
+      return {
+        user,
+        accessToken: newAccessToken,
+      };
+    } catch (error) {
+      throw new UnauthorizedException('Invalid refresh token');
+    }
   }
 
-  async createAdmin(adminData: {
-    email: string;
-    password: string;
-    firstName: string;
-    lastName: string;
-    role?: string;
-  }) {
-    const existingAdmin = await this.prisma.admin.findUnique({
-      where: { email: adminData.email },
+  async logout(refreshToken: string) {
+    // Remove refresh token from database
+    await this.prisma.refreshToken.deleteMany({
+      where: { token: refreshToken },
     });
 
-    if (existingAdmin) {
-      throw new UnauthorizedException('Admin with this email already exists');
+    return { message: 'Logged out successfully' };
+  }
+
+  async validateUser(userId: string): Promise<User | null> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user || !user.isActive) {
+      return null;
     }
 
-    const hashedPassword = await bcrypt.hash(adminData.password, 10);
+    return user;
+  }
 
-    const admin = await this.prisma.admin.create({
-      data: {
-        ...adminData,
-        password: hashedPassword,
-        role: adminData.role as any || 'ADMIN',
+  async getProfile(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+        address: true,
+        isActive: true,
+        emailVerified: true,
+        createdAt: true,
+        lastLoginAt: true,
       },
     });
 
-    const { password: _, ...result } = admin;
-    return result;
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    return user;
   }
 }

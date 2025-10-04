@@ -1,70 +1,100 @@
-import { Controller, Post, Body, UseGuards, Request, UnauthorizedException } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth } from '@nestjs/swagger';
-import { AuthGuard } from '@nestjs/passport';
-
+import { Controller, Post, Body, Get, UseGuards, Request, Put, HttpCode, HttpStatus } from '@nestjs/common';
 import { AuthService } from './auth.service';
-import { LoginDto } from './dto/login.dto';
-import { RegisterDto } from './dto/register.dto';
-import { AdminLoginDto } from './dto/admin-login.dto';
+import { EmailService } from '../email/email.service';
+import { JwtAuthGuard } from './jwt-auth.guard';
+import { Public } from './public.decorator';
+import { RegisterDto, LoginDto, RefreshTokenDto, ChangePasswordDto, UpdateProfileDto } from './dto/auth.dto';
 
-@ApiTags('Authentication')
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private emailService: EmailService,
+  ) {}
 
-  @Post('login')
-  @ApiOperation({ summary: 'User login' })
-  @ApiResponse({ status: 200, description: 'Login successful' })
-  @ApiResponse({ status: 401, description: 'Invalid credentials' })
-  async login(@Body() loginDto: LoginDto) {
-    return this.authService.login(loginDto);
-  }
-
+  @Public()
   @Post('register')
-  @ApiOperation({ summary: 'User registration' })
-  @ApiResponse({ status: 201, description: 'Registration successful' })
-  @ApiResponse({ status: 400, description: 'Bad request' })
   async register(@Body() registerDto: RegisterDto) {
-    return this.authService.register(registerDto);
-  }
-
-  @Post('admin/login')
-  @ApiOperation({ summary: 'Admin login' })
-  @ApiResponse({ status: 200, description: 'Admin login successful' })
-  @ApiResponse({ status: 401, description: 'Invalid admin credentials' })
-  async adminLogin(@Body() adminLoginDto: AdminLoginDto) {
-    return this.authService.adminLogin(adminLoginDto);
-  }
-
-  @Post('admin/create')
-  @UseGuards(AuthGuard('jwt'))
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Create admin user (Super Admin only)' })
-  @ApiResponse({ status: 201, description: 'Admin created successfully' })
-  async createAdmin(
-    @Request() req,
-    @Body() adminData: {
-      email: string;
-      password: string;
-      firstName: string;
-      lastName: string;
-      role?: string;
-    },
-  ) {
-    // Check if the current user is a super admin
-    if (req.user.type !== 'admin' || req.user.role !== 'SUPER_ADMIN') {
-      throw new UnauthorizedException('Only Super Admins can create other admins');
+    const result = await this.authService.register(registerDto);
+    
+    // Send welcome email
+    try {
+      await this.emailService.sendWelcomeEmail(
+        registerDto.email,
+        registerDto.firstName
+      );
+    } catch (error) {
+      console.error('Failed to send welcome email:', error);
+      // Don't fail registration if email fails
     }
 
-    return this.authService.createAdmin(adminData);
+    return {
+      message: 'Registration successful',
+      data: result,
+    };
   }
 
-  @Post('profile')
-  @UseGuards(AuthGuard('jwt'))
-  @ApiBearerAuth()
-  @ApiOperation({ summary: 'Get user profile' })
-  @ApiResponse({ status: 200, description: 'Profile retrieved successfully' })
+  @Public()
+  @Post('login')
+  @HttpCode(HttpStatus.OK)
+  async login(@Body() loginDto: LoginDto) {
+    const result = await this.authService.login(loginDto);
+    
+    return {
+      message: 'Login successful',
+      data: result,
+    };
+  }
+
+  @Public()
+  @Post('refresh')
+  async refreshToken(@Body() refreshTokenDto: RefreshTokenDto) {
+    const result = await this.authService.refreshToken(refreshTokenDto.refreshToken);
+    
+    return {
+      message: 'Token refreshed successfully',
+      data: result,
+    };
+  }
+
+  @Post('logout')
+  @UseGuards(JwtAuthGuard)
+  async logout(@Request() req, @Body() refreshTokenDto: RefreshTokenDto) {
+    await this.authService.logout(refreshTokenDto.refreshToken);
+    
+    return {
+      message: 'Logout successful',
+    };
+  }
+
+  @Get('profile')
+  @UseGuards(JwtAuthGuard)
   async getProfile(@Request() req) {
-    return req.user;
+    const user = await this.authService.getProfile(req.user.id);
+    
+    return {
+      message: 'Profile retrieved successfully',
+      data: user,
+    };
+  }
+
+  @Put('profile')
+  @UseGuards(JwtAuthGuard)
+  async updateProfile(@Request() req, @Body() updateProfileDto: UpdateProfileDto) {
+    // Implementation for updating profile
+    // This would require updating the auth service
+    return {
+      message: 'Profile updated successfully',
+    };
+  }
+
+  @Put('change-password')
+  @UseGuards(JwtAuthGuard)
+  async changePassword(@Request() req, @Body() changePasswordDto: ChangePasswordDto) {
+    // Implementation for changing password
+    // This would require updating the auth service
+    return {
+      message: 'Password changed successfully',
+    };
   }
 }

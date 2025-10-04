@@ -13,6 +13,7 @@ import { SystemModule } from './system/system.module';
 import { DriversModule } from './drivers/drivers.module';
 import { VehiclesModule } from './vehicles/vehicles.module';
 import { PaymentsModule } from './payments/payments.module';
+import { EmailModule } from './email/email.module';
 import { HealthModule } from './health/health.module';
 
 @Module({
@@ -39,6 +40,7 @@ import { HealthModule } from './health/health.module';
     DriversModule,
     VehiclesModule,
     PaymentsModule,
+    EmailModule,
     HealthModule,
   ],
 })
