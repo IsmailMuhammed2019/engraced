@@ -3,10 +3,12 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Menu, X, Phone, Mail } from "lucide-react";
+import { Menu, X, Phone, Mail, Download } from "lucide-react";
+import { usePWAInstall } from "@/hooks/usePWAInstall";
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const { isInstallable, isInstalled, isInstalling, install, showInstallInstructions } = usePWAInstall();
 
   const navigation = [
     { name: "Home", href: "/" },
@@ -16,6 +18,17 @@ export default function Header() {
     { name: "About", href: "/about" },
     { name: "Contact", href: "/contact" },
   ];
+
+  const handleDownloadApp = async () => {
+    if (isInstallable) {
+      const success = await install();
+      if (!success) {
+        showInstallInstructions();
+      }
+    } else {
+      showInstallInstructions();
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/60">
@@ -68,7 +81,26 @@ export default function Header() {
           </nav>
 
           {/* CTA Buttons */}
-          <div className="hidden md:flex items-center">
+          <div className="hidden md:flex items-center space-x-3">
+            {!isInstalled && (
+              <button
+                onClick={handleDownloadApp}
+                disabled={isInstalling}
+                className="flex items-center gap-2 bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 transition-colors disabled:opacity-50"
+              >
+                {isInstalling ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    Installing...
+                  </>
+                ) : (
+                  <>
+                    <Download className="h-4 w-4" />
+                    Download App
+                  </>
+                )}
+              </button>
+            )}
             <Link 
               href="/contact" 
               className="bg-[#5d4a15] text-white px-4 py-2 rounded-md hover:bg-[#6b5618] transition-colors"
@@ -105,7 +137,26 @@ export default function Header() {
                   {item.name}
                 </a>
               ))}
-              <div className="pt-4 pb-2">
+              <div className="pt-4 pb-2 space-y-2">
+                {!isInstalled && (
+                  <button
+                    onClick={handleDownloadApp}
+                    disabled={isInstalling}
+                    className="block w-full bg-green-600 text-white px-3 py-2 text-center rounded-md hover:bg-green-700 transition-colors disabled:opacity-50"
+                  >
+                    {isInstalling ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mx-auto mb-1"></div>
+                        Installing...
+                      </>
+                    ) : (
+                      <>
+                        <Download className="h-4 w-4 mx-auto mb-1" />
+                        Download App
+                      </>
+                    )}
+                  </button>
+                )}
                 <Link 
                   href="/contact" 
                   className="block w-full bg-[#5d4a15] text-white px-3 py-2 text-center rounded-md hover:bg-[#6b5618] transition-colors"
