@@ -42,13 +42,15 @@ export default function Header() {
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
             <div className="flex items-center">
-              <img
-                src="/logo.png"
-                alt="Engracedsmile Logo"
-                width={80}
-                height={80}
-                className="object-contain"
-              />
+              <a href="/" className="flex items-center">
+                <img
+                  src="/logo.png"
+                  alt="Engracedsmile Logo"
+                  width={80}
+                  height={80}
+                  className="object-contain cursor-pointer hover:opacity-80 transition-opacity"
+                />
+              </a>
             </div>
 
           {/* Desktop Navigation */}

@@ -24,6 +24,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
+import BookingModal from "@/components/BookingModal";
 
 // Sample trips data
 const trips = [
@@ -36,8 +37,8 @@ const trips = [
     arrivalTime: "14:30",
     date: "2024-01-15",
     duration: "8h 30m",
-    price: "₦15,000",
-    originalPrice: "₦18,000",
+    price: "₦25,000",
+    originalPrice: "₦30,000",
     availableSeats: 12,
     totalSeats: 50,
     vehicle: "Luxury Coach A",
@@ -57,8 +58,8 @@ const trips = [
     arrivalTime: "20:30",
     date: "2024-01-15",
     duration: "8h 30m",
-    price: "₦15,000",
-    originalPrice: "₦18,000",
+    price: "₦25,000",
+    originalPrice: "₦30,000",
     availableSeats: 3,
     totalSeats: 50,
     vehicle: "Luxury Coach B",
@@ -78,8 +79,8 @@ const trips = [
     arrivalTime: "02:30",
     date: "2024-01-15",
     duration: "8h 30m",
-    price: "₦15,000",
-    originalPrice: "₦18,000",
+    price: "₦25,000",
+    originalPrice: "₦30,000",
     availableSeats: 0,
     totalSeats: 50,
     vehicle: "Luxury Coach C",
@@ -99,8 +100,8 @@ const trips = [
     arrivalTime: "13:00",
     date: "2024-01-15",
     duration: "6h 0m",
-    price: "₦12,500",
-    originalPrice: "₦15,000",
+    price: "₦18,000",
+    originalPrice: "₦22,000",
     availableSeats: 25,
     totalSeats: 45,
     vehicle: "Standard Coach D",
@@ -120,8 +121,8 @@ const trips = [
     arrivalTime: "11:15",
     date: "2024-01-15",
     duration: "2h 15m",
-    price: "₦4,500",
-    originalPrice: "₦5,500",
+    price: "₦8,500",
+    originalPrice: "₦10,500",
     availableSeats: 8,
     totalSeats: 30,
     vehicle: "Mini Bus E",
@@ -145,22 +146,28 @@ export default function TripsPage() {
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedRoute, setSelectedRoute] = useState("");
   const [selectedStatus, setSelectedStatus] = useState("");
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const [selectedTrip, setSelectedTrip] = useState<any>(null);
 
   const filteredTrips = trips.filter(trip => {
     const matchesSearch = trip.route.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          trip.from.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          trip.to.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesDate = !selectedDate || trip.date === selectedDate;
-    const matchesRoute = !selectedRoute || trip.route === selectedRoute;
-    const matchesStatus = !selectedStatus || trip.status === selectedStatus;
+    const matchesRoute = !selectedRoute || selectedRoute === "all" || trip.route === selectedRoute;
+    const matchesStatus = !selectedStatus || selectedStatus === "all" || trip.status === selectedStatus;
     
     return matchesSearch && matchesDate && matchesRoute && matchesStatus;
   });
 
   const handleBookTrip = (trip: any) => {
-    // Handle trip booking logic here
-    console.log("Booking trip:", trip);
-    // You can redirect to booking page or open booking modal
+    setSelectedTrip(trip);
+    setIsBookingModalOpen(true);
+  };
+
+  const handleCloseBookingModal = () => {
+    setIsBookingModalOpen(false);
+    setSelectedTrip(null);
   };
 
   return (
@@ -210,7 +217,7 @@ export default function TripsPage() {
                 <SelectValue placeholder="All Routes" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Routes</SelectItem>
+                <SelectItem value="all">All Routes</SelectItem>
                 <SelectItem value="Lagos to Abuja">Lagos to Abuja</SelectItem>
                 <SelectItem value="Lagos to Port Harcourt">Lagos to Port Harcourt</SelectItem>
                 <SelectItem value="Abuja to Kaduna">Abuja to Kaduna</SelectItem>
@@ -222,7 +229,7 @@ export default function TripsPage() {
                 <SelectValue placeholder="All Status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Status</SelectItem>
+                <SelectItem value="all">All Status</SelectItem>
                 <SelectItem value="Available">Available</SelectItem>
                 <SelectItem value="Almost Full">Almost Full</SelectItem>
                 <SelectItem value="Fully Booked">Fully Booked</SelectItem>
@@ -358,7 +365,7 @@ export default function TripsPage() {
               Our customer service team is here to help you find the perfect journey
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button variant="outline" size="lg" className="border-white text-white hover:bg-white hover:text-[#5d4a15]">
+              <Button variant="outline" size="lg" className="border-white text-black hover:bg-white hover:text-[#5d4a15]">
                 Contact Support
               </Button>
               <Button size="lg" className="bg-white text-[#5d4a15] hover:bg-gray-100">
@@ -370,6 +377,20 @@ export default function TripsPage() {
       </section>
 
       <Footer />
+
+      {/* Booking Modal */}
+      <BookingModal
+        isOpen={isBookingModalOpen}
+        onClose={handleCloseBookingModal}
+        routeData={selectedTrip ? {
+          from: selectedTrip.from,
+          to: selectedTrip.to,
+          price: selectedTrip.price,
+          duration: selectedTrip.duration,
+          departureTime: selectedTrip.departureTime,
+          date: selectedTrip.date
+        } : undefined}
+      />
     </div>
   );
 }

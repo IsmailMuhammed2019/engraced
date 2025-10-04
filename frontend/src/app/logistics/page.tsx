@@ -58,28 +58,32 @@ const logisticsServices = [
     title: "Package Delivery",
     description: "Fast and secure package delivery across Nigeria with real-time tracking and insurance coverage.",
     features: ["Same-day delivery", "Real-time tracking", "Insurance coverage", "Proof of delivery"],
-    price: "From ₦2,500"
+    price: "From ₦2,500",
+    image: "/delivery.jpg"
   },
   {
     icon: Truck,
     title: "Freight Services",
     description: "Heavy cargo transportation for businesses with specialized vehicles and experienced drivers.",
     features: ["Heavy cargo handling", "Specialized vehicles", "Experienced drivers", "Route optimization"],
-    price: "From ₦15,000"
+    price: "From ₦15,000",
+    image: "/Freight.jpg"
   },
   {
     icon: Globe,
     title: "International Shipping",
     description: "Global logistics solutions connecting Nigeria to the world with customs clearance support.",
     features: ["Global reach", "Customs clearance", "Documentation support", "Air & sea freight"],
-    price: "From ₦50,000"
+    price: "From ₦50,000",
+    image: "/International.jpeg"
   },
   {
     icon: Users,
     title: "Corporate Logistics",
     description: "Tailored logistics solutions for businesses with dedicated account management and reporting.",
     features: ["Dedicated account manager", "Custom solutions", "Detailed reporting", "Volume discounts"],
-    price: "Custom pricing"
+    price: "Custom pricing",
+    image: "/Corporate.png"
   }
 ];
 
@@ -292,17 +296,29 @@ export default function LogisticsPage() {
                 viewport={{ once: true }}
                 whileHover={{ y: -5 }}
               >
-                <Card className="h-full hover:shadow-lg transition-all duration-300">
-                  <CardContent className="p-6">
-                    <div className="text-center mb-4">
-                      <div className="inline-flex items-center justify-center w-16 h-16 bg-[#5d4a15] text-white rounded-full mb-4">
-                        <service.icon className="h-8 w-8" />
+                <Card className="h-full hover:shadow-lg transition-all duration-300 flex flex-col">
+                  {/* Image at the top */}
+                  <div className="relative h-48 overflow-hidden rounded-t-lg">
+                    <img
+                      src={service.image}
+                      alt={service.title}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black/20"></div>
+                    <div className="absolute top-4 right-4">
+                      <div className="inline-flex items-center justify-center w-12 h-12 bg-[#5d4a15] text-white rounded-full">
+                        <service.icon className="h-6 w-6" />
                       </div>
+                    </div>
+                  </div>
+                  
+                  <CardContent className="p-6 flex flex-col flex-1">
+                    <div className="text-center mb-4">
                       <h3 className="text-xl font-semibold text-gray-900 mb-2">{service.title}</h3>
                       <p className="text-gray-600 text-sm mb-4">{service.description}</p>
                     </div>
                     
-                    <div className="space-y-2 mb-6">
+                    <div className="space-y-2 mb-6 flex-1">
                       {service.features.map((feature, idx) => (
                         <div key={idx} className="flex items-center gap-2">
                           <CheckCircle className="h-4 w-4 text-green-500" />
@@ -311,7 +327,7 @@ export default function LogisticsPage() {
                       ))}
                     </div>
                     
-                    <div className="text-center">
+                    <div className="text-center mt-auto">
                       <p className="text-lg font-bold text-[#5d4a15] mb-4">{service.price}</p>
                       <Button className="w-full bg-[#5d4a15] hover:bg-[#6b5618] text-white">
                         Learn More
@@ -521,7 +537,7 @@ export default function LogisticsPage() {
               <Button size="lg" className="bg-white text-[#5d4a15] hover:bg-gray-100">
                 Start Shipping
               </Button>
-              <Button variant="outline" size="lg" className="border-white text-white hover:bg-white hover:text-[#5d4a15]">
+              <Button variant="outline" size="lg" className="border-white text-black hover:bg-white hover:text-[#5d4a15]">
                 Contact Sales
               </Button>
             </div>

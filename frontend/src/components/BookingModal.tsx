@@ -97,8 +97,38 @@ export default function BookingModal({ isOpen, onClose, routeData }: BookingModa
         callback: function(response: { reference: string; status: string }) {
           // Handle successful payment
           console.log('Payment successful:', response);
-          // Redirect to success page
-          router.push('/booking/success');
+          
+          // Store booking data in session storage for success page
+          const bookingData = {
+            bookingId: response.reference,
+            route: `${formData.origin} → ${formData.destination}`,
+            from: formData.origin,
+            to: formData.destination,
+            date: formData.departureDate,
+            time: formData.departureTime,
+            amount: formData.totalAmount,
+            passengerName: `${formData.firstName} ${formData.lastName}`,
+            email: formData.email,
+            phone: formData.phone
+          };
+          
+          sessionStorage.setItem('bookingData', JSON.stringify(bookingData));
+          
+          // Redirect to success page with URL parameters
+          const params = new URLSearchParams({
+            reference: response.reference,
+            amount: formData.totalAmount.replace(/[₦,]/g, ''),
+            route: `${formData.origin} → ${formData.destination}`,
+            from: formData.origin,
+            to: formData.destination,
+            date: formData.departureDate,
+            time: formData.departureTime,
+            passengerName: `${formData.firstName} ${formData.lastName}`,
+            email: formData.email,
+            phone: formData.phone
+          });
+          
+          router.push(`/booking/success?${params.toString()}`);
         },
         onClose: function() {
           // Handle payment cancellation
