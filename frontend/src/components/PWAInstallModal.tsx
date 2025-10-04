@@ -36,7 +36,7 @@ export default function PWAInstallModal() {
     // Check if app is already installed
     const checkIfInstalled = () => {
       if (window.matchMedia('(display-mode: standalone)').matches || 
-          (window.navigator as any).standalone === true) {
+          (window.navigator as Navigator & { standalone?: boolean }).standalone === true) {
         setIsInstalled(true);
         return;
       }
