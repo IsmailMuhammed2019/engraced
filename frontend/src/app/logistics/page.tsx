@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
+import Image from "next/image";
 import { 
   Truck, 
   Package, 
@@ -391,9 +392,11 @@ export default function LogisticsPage() {
                 <Card className="h-full hover:shadow-lg transition-all duration-300 flex flex-col">
                   {/* Image at the top */}
                   <div className="relative h-48 overflow-hidden rounded-t-lg">
-                    <img
+                    <Image
                       src={service.image}
                       alt={service.title}
+                      width={400}
+                      height={192}
                       className="w-full h-full object-cover"
                     />
                     <div className="absolute inset-0 bg-black/20"></div>
@@ -422,7 +425,7 @@ export default function LogisticsPage() {
                     <div className="text-center mt-auto">
                       <p className="text-lg font-bold text-[#5d4a15] mb-4">{service.price}</p>
                       <Button className="w-full bg-[#5d4a15] hover:bg-[#6b5618] text-white">
-                        Learn More
+                        Get Quote
                       </Button>
                     </div>
                   </CardContent>

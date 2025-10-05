@@ -1,6 +1,6 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
-export interface ApiResponse<T = any> {
+export interface ApiResponse<T = unknown> {
   message: string;
   data?: T;
   error?: string;
@@ -74,9 +74,9 @@ class ApiService {
   ): Promise<ApiResponse<T>> {
     const url = `${this.baseURL}${endpoint}`;
     
-    const headers: HeadersInit = {
+    const headers: Record<string, string> = {
       'Content-Type': 'application/json',
-      ...options.headers,
+      ...(options.headers as Record<string, string>),
     };
 
     if (this.accessToken) {
@@ -183,7 +183,7 @@ class ApiService {
     return response.data!;
   }
 
-  async sendBookingConfirmation(bookingDetails: any): Promise<void> {
+  async sendBookingConfirmation(bookingDetails: Record<string, unknown>): Promise<void> {
     await this.request('/email/booking-confirmation', {
       method: 'POST',
       body: JSON.stringify(bookingDetails),

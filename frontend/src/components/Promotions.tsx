@@ -85,7 +85,7 @@ const loyaltyProgram = {
     "Priority boarding",
     "Exclusive member offers",
   ],
-  image: "/rent.jpg",
+  image: "/rent.jpeg",
 };
 
 export default function Promotions() {
@@ -206,9 +206,6 @@ export default function Promotions() {
                 <Button size="lg">
                   Join Now
                   <ArrowRight className="ml-2 h-4 w-4" />
-                </Button>
-                <Button variant="outline" size="lg">
-                  Learn More
                 </Button>
               </div>
             </div>

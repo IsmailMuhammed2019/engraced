@@ -55,7 +55,7 @@ const nextConfig = {
   generateEtags: false,
   
   // Output configuration for PWA
-  output: 'standalone',
+  // output: 'standalone', // Commented out to fix chunk loading issues
   
   // Enable static optimization
   trailingSlash: false,

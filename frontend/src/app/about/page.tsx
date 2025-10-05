@@ -156,7 +156,7 @@ export default function AboutPage() {
               </div>
               <div className="mt-8">
                 <Button className="bg-[#5d4a15] hover:bg-[#6b5618] text-white">
-                  Learn More About Our Mission
+                  Our Mission
                 </Button>
               </div>
             </div>

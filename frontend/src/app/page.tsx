@@ -92,9 +92,6 @@ export default function Home() {
                 <button className="rounded-lg bg-[#5d4a15] hover:bg-[#6b5618] px-6 py-3 text-black font-semibold transition-colors cursor-pointer">
                   Contact Sales
                 </button>
-                <button className="rounded-lg border border-gray-300 hover:bg-gray-50 px-6 py-3 font-semibold transition-colors cursor-pointer">
-                  Learn More
-                </button>
               </div>
             </div>
           </div>

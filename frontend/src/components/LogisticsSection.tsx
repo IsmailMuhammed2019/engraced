@@ -110,7 +110,7 @@ export default function LogisticsSection() {
 
                   {/* CTA Button */}
                   <Button className="w-full group-hover:shadow-lg transition-all duration-300 mt-auto">
-                    Learn More
+                    Get Started
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button>
                 </CardContent>

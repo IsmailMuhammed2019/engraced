@@ -16,7 +16,7 @@ const sliderImages = [
     id: 2,
     title: "Explore New Destinations",
     subtitle: "Daily departures between major cities with flexible fares and cargo services.",
-    image: "/Worlds.jpg",
+    image: "/Worlds.jpeg",
   },
   {
     id: 3,

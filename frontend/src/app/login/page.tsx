@@ -50,8 +50,8 @@ export default function LoginPage() {
         password: formData.password,
       });
       setSuccess("Login successful! Redirecting to dashboard...");
-    } catch (err: any) {
-      setError(err.message || "Invalid email or password. Please try again.");
+    } catch (err: unknown) {
+      setError((err as Error).message || "Invalid email or password. Please try again.");
     }
   };
 

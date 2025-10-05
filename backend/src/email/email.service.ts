@@ -7,7 +7,7 @@ export class EmailService {
   private transporter;
 
   constructor(private configService: ConfigService) {
-    this.transporter = nodemailer.createTransporter({
+    this.transporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
         user: this.configService.get('SMTP_USER'),
@@ -17,7 +17,7 @@ export class EmailService {
   }
 
   async sendWelcomeEmail(userEmail: string, firstName: string) {
-    const htmlContent = this.getWelcomeEmailTemplate(firstName);
+    const htmlContent = this.getWelcomeEmailTemplate(firstName, userEmail);
     
     const mailOptions = {
       from: `"Engracedsmile Travel & Logistics" <${this.configService.get('SMTP_USER')}>`,
@@ -36,7 +36,7 @@ export class EmailService {
   }
 
   async sendBookingConfirmationEmail(userEmail: string, firstName: string, bookingDetails: any) {
-    const htmlContent = this.getBookingConfirmationTemplate(firstName, bookingDetails);
+    const htmlContent = this.getBookingConfirmationTemplate(firstName, bookingDetails, userEmail);
     
     const mailOptions = {
       from: `"Engracedsmile Travel & Logistics" <${this.configService.get('SMTP_USER')}>`,
@@ -54,7 +54,7 @@ export class EmailService {
     }
   }
 
-  private getWelcomeEmailTemplate(firstName: string): string {
+  private getWelcomeEmailTemplate(firstName: string, userEmail: string): string {
     return `
     <!DOCTYPE html>
     <html lang="en">
@@ -214,7 +214,7 @@ export class EmailService {
     `;
   }
 
-  private getBookingConfirmationTemplate(firstName: string, bookingDetails: any): string {
+  private getBookingConfirmationTemplate(firstName: string, bookingDetails: any, userEmail: string): string {
     return `
     <!DOCTYPE html>
     <html lang="en">

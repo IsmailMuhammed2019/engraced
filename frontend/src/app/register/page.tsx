@@ -85,8 +85,8 @@ export default function RegisterPage() {
         address: formData.address,
       });
       setSuccess("Account created successfully! Redirecting to dashboard...");
-    } catch (err: any) {
-      setError(err.message || "Failed to create account. Please try again.");
+    } catch (err: unknown) {
+      setError((err as Error).message || "Failed to create account. Please try again.");
     }
   };
 
