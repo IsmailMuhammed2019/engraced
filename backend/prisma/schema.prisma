@@ -159,6 +159,7 @@ model Driver {
   licenseNumber String @unique
   licenseExpiry DateTime
   address     String
+  profileImage String? // Cloudinary image URL
   isActive    Boolean  @default(true)
   rating      Float    @default(5.0)
   experience  Int      @default(0) // years of experience
@@ -179,6 +180,7 @@ model Vehicle {
   year        Int
   capacity    Int      @default(7) // 1 front + 6 back
   features    String[] // ["AC", "WiFi", "USB Charging", "Reclining Seats"]
+  images      String[] // Array of Cloudinary image URLs
   isActive    Boolean  @default(true)
   mileage     Int      @default(0)
   lastService DateTime?

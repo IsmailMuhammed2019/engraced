@@ -242,4 +242,58 @@ export class VehiclesService {
       },
     });
   }
+
+  async addImages(vehicleId: string, imageUrls: string[]) {
+    const vehicle = await this.prisma.vehicle.findUnique({
+      where: { id: vehicleId },
+    });
+
+    if (!vehicle) {
+      throw new NotFoundException('Vehicle not found');
+    }
+
+    // Add new images to existing ones
+    const updatedImages = [...vehicle.images, ...imageUrls];
+
+    return this.prisma.vehicle.update({
+      where: { id: vehicleId },
+      data: { images: updatedImages },
+      include: {
+        _count: {
+          select: {
+            trips: true,
+          },
+        },
+      },
+    });
+  }
+
+  async removeImage(vehicleId: string, imageIndex: number) {
+    const vehicle = await this.prisma.vehicle.findUnique({
+      where: { id: vehicleId },
+    });
+
+    if (!vehicle) {
+      throw new NotFoundException('Vehicle not found');
+    }
+
+    if (imageIndex < 0 || imageIndex >= vehicle.images.length) {
+      throw new NotFoundException('Image index out of range');
+    }
+
+    // Remove image at the specified index
+    const updatedImages = vehicle.images.filter((_, index) => index !== imageIndex);
+
+    return this.prisma.vehicle.update({
+      where: { id: vehicleId },
+      data: { images: updatedImages },
+      include: {
+        _count: {
+          select: {
+            trips: true,
+          },
+        },
+      },
+    });
+  }
 }

@@ -220,4 +220,19 @@ export class DriversService {
       },
     };
   }
+
+  async updateProfileImage(driverId: string, profileImageUrl: string) {
+    const driver = await this.prisma.driver.findUnique({
+      where: { id: driverId },
+    });
+
+    if (!driver) {
+      throw new NotFoundException('Driver not found');
+    }
+
+    return this.prisma.driver.update({
+      where: { id: driverId },
+      data: { profileImage: profileImageUrl },
+    });
+  }
 }
