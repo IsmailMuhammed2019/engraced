@@ -61,7 +61,7 @@ export default function Home() {
       </section>
 
       {/* Mobile Booking Form */}
-      <section className="lg:hidden py-8 bg-white">
+      <section className="lg:hidden py-12 bg-white">
         <div className="container mx-auto px-4">
           <BookingForm />
         </div>

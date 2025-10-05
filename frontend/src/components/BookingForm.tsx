@@ -62,28 +62,28 @@ export default function BookingForm() {
       transition={{ duration: 0.6 }}
       className="w-full max-w-md"
     >
-      <Card className="shadow-2xl border-0 bg-white/95 backdrop-blur-sm">
-        <CardHeader className="pb-4">
-          <CardTitle className="flex items-center gap-2 text-xl">
+      <Card className="shadow-2xl border-0 bg-white/95 backdrop-blur-sm rounded-2xl overflow-hidden">
+        <CardHeader className="pb-6 pt-12 px-6 py-6">
+          <CardTitle className="flex items-center gap-2 text-xl font-bold text-gray-900 mb-3">
             <Search className="h-5 w-5 text-[#5d4a15]" />
             Quick Booking
           </CardTitle>
-          <p className="text-sm text-gray-600">
+          <p className="text-sm text-gray-600 leading-relaxed">
             Search routes, choose a date and secure your seat in minutes.
           </p>
         </CardHeader>
         
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+        <CardContent className="px-6 pb-8">
+          <form onSubmit={handleSubmit} className="space-y-6">
             {/* Trip Type Toggle */}
-            <div className="flex bg-gray-100 rounded-lg p-1">
+            <div className="flex bg-gray-100 rounded-xl p-1.5">
               <button
                 type="button"
                 onClick={() => setIsRoundTrip(false)}
-                className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
+                className={`flex-1 py-3 px-4 rounded-lg text-sm font-semibold transition-all duration-200 ${
                   !isRoundTrip
-                    ? "bg-white text-[#5d4a15] shadow-sm"
-                    : "text-gray-600 hover:text-gray-900"
+                    ? "bg-white text-[#5d4a15] shadow-md transform scale-[1.02]"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                 }`}
               >
                 One Way
@@ -91,10 +91,10 @@ export default function BookingForm() {
               <button
                 type="button"
                 onClick={() => setIsRoundTrip(true)}
-                className={`flex-1 py-2 px-4 rounded-md text-sm font-medium transition-all ${
+                className={`flex-1 py-3 px-4 rounded-lg text-sm font-semibold transition-all duration-200 ${
                   isRoundTrip
-                    ? "bg-white text-[#5d4a15] shadow-sm"
-                    : "text-gray-600 hover:text-gray-900"
+                    ? "bg-white text-[#5d4a15] shadow-md transform scale-[1.02]"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-50"
                 }`}
               >
                 Round Trip
@@ -102,15 +102,15 @@ export default function BookingForm() {
             </div>
 
             {/* From and To */}
-            <div className="space-y-3">
+            <div className="space-y-4">
               <div className="relative">
-                <Label htmlFor="from" className="text-sm font-medium">
+                <Label htmlFor="from" className="text-sm font-semibold text-gray-700 mb-2 block">
                   From
                 </Label>
                 <div className="relative">
                   <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <Select value={formData.from} onValueChange={(value) => handleInputChange("from", value)}>
-                    <SelectTrigger className="pl-10">
+                    <SelectTrigger className="pl-10 h-12 rounded-xl border-gray-200 focus:border-[#5d4a15] focus:ring-[#5d4a15] transition-all duration-200">
                       <SelectValue placeholder="Select departure city" />
                     </SelectTrigger>
                     <SelectContent>
@@ -128,19 +128,19 @@ export default function BookingForm() {
               <button
                 type="button"
                 onClick={swapLocations}
-                className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10 p-1 hover:bg-gray-100 rounded-full transition-colors"
+                className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10 p-2 hover:bg-gray-100 rounded-full transition-all duration-200 hover:scale-110"
               >
                 <ArrowRightLeft className="h-4 w-4 text-gray-500" />
               </button>
 
               <div>
-                <Label htmlFor="to" className="text-sm font-medium">
+                <Label htmlFor="to" className="text-sm font-semibold text-gray-700 mb-2 block">
                   To
                 </Label>
                 <div className="relative">
                   <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <Select value={formData.to} onValueChange={(value) => handleInputChange("to", value)}>
-                    <SelectTrigger className="pl-10">
+                    <SelectTrigger className="pl-10 h-12 rounded-xl border-gray-200 focus:border-[#5d4a15] focus:ring-[#5d4a15] transition-all duration-200">
                       <SelectValue placeholder="Select destination city" />
                     </SelectTrigger>
                     <SelectContent>
@@ -156,9 +156,9 @@ export default function BookingForm() {
             </div>
 
             {/* Date Selection */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="departureDate" className="text-sm font-medium">
+                <Label htmlFor="departureDate" className="text-sm font-semibold text-gray-700 mb-2 block">
                   Departure
                 </Label>
                 <div className="relative">
@@ -168,7 +168,7 @@ export default function BookingForm() {
                     type="date"
                     value={formData.departureDate}
                     onChange={(e) => handleInputChange("departureDate", e.target.value)}
-                    className="pl-10"
+                    className="pl-10 h-12 rounded-xl border-gray-200 focus:border-[#5d4a15] focus:ring-[#5d4a15] transition-all duration-200"
                     min={new Date().toISOString().split('T')[0]}
                   />
                 </div>
@@ -176,7 +176,7 @@ export default function BookingForm() {
 
               {isRoundTrip && (
                 <div>
-                  <Label htmlFor="returnDate" className="text-sm font-medium">
+                  <Label htmlFor="returnDate" className="text-sm font-semibold text-gray-700 mb-2 block">
                     Return
                   </Label>
                   <div className="relative">
@@ -186,7 +186,7 @@ export default function BookingForm() {
                       type="date"
                       value={formData.returnDate}
                       onChange={(e) => handleInputChange("returnDate", e.target.value)}
-                      className="pl-10"
+                      className="pl-10 h-12 rounded-xl border-gray-200 focus:border-[#5d4a15] focus:ring-[#5d4a15] transition-all duration-200"
                       min={formData.departureDate || new Date().toISOString().split('T')[0]}
                     />
                   </div>
@@ -195,15 +195,15 @@ export default function BookingForm() {
             </div>
 
             {/* Passengers and Class */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="passengers" className="text-sm font-medium">
+                <Label htmlFor="passengers" className="text-sm font-semibold text-gray-700 mb-2 block">
                   Passengers
                 </Label>
                 <div className="relative">
                   <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <Select value={formData.passengers} onValueChange={(value) => handleInputChange("passengers", value)}>
-                    <SelectTrigger className="pl-10">
+                    <SelectTrigger className="pl-10 h-12 rounded-xl border-gray-200 focus:border-[#5d4a15] focus:ring-[#5d4a15] transition-all duration-200">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -218,11 +218,11 @@ export default function BookingForm() {
               </div>
 
               <div>
-                <Label htmlFor="class" className="text-sm font-medium">
+                <Label htmlFor="class" className="text-sm font-semibold text-gray-700 mb-2 block">
                   Class
                 </Label>
                 <Select value={formData.class} onValueChange={(value) => handleInputChange("class", value)}>
-                  <SelectTrigger>
+                  <SelectTrigger className="h-12 rounded-xl border-gray-200 focus:border-[#5d4a15] focus:ring-[#5d4a15] transition-all duration-200">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -239,16 +239,16 @@ export default function BookingForm() {
             {/* Submit Button */}
             <Button
               type="submit"
-              className="w-full py-3 text-base font-semibold"
+              className="w-full py-4 text-base font-semibold bg-[#5d4a15] hover:bg-[#6b5618] pt-8 text-white rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200"
             >
               <Search className="h-4 w-4 mr-2" />
               Search Trips
             </Button>
 
             {/* Additional Info */}
-            <div className="flex items-center gap-2 text-xs text-gray-500 pt-2">
-              <Clock className="h-3 w-3" />
-              <span>Free cancellations up to 24 hours before departure</span>
+            <div className="flex items-center gap-2 text-xs text-gray-500 pb-4bg-gray-50 rounded-lg p-4 mt-4">
+              <Clock className="h-3 w-3 text-[#5d4a15]" />
+              <span className="font-medium">Free cancellations up to 24 hours before departure</span>
             </div>
           </form>
         </CardContent>
