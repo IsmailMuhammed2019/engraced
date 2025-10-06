@@ -442,7 +442,7 @@ export default function DriversPage() {
       cell: ({ row }) => (
         <div className="flex items-center space-x-2">
           <Car className="h-4 w-4 text-gray-400" />
-          <span className="font-medium">{row.getValue("tripsCount")}</span>
+          <span className="font-medium">{row.getValue("tripsCount") || 0}</span>
         </div>
       ),
     },
@@ -586,7 +586,7 @@ export default function DriversPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {drivers.reduce((sum, driver) => sum + driver.tripsCount, 0)}
+                {drivers.reduce((sum, driver) => sum + (driver.tripsCount || 0), 0)}
                   </div>
               <p className="text-xs text-muted-foreground">Completed trips</p>
               </CardContent>
@@ -803,7 +803,7 @@ export default function DriversPage() {
                       <h4 className="font-semibold mb-2">Performance</h4>
                       <p><strong>Rating:</strong> {selectedDriver.rating}/5</p>
                       <p><strong>Experience:</strong> {selectedDriver.experience} years</p>
-                      <p><strong>Total Trips:</strong> {selectedDriver.tripsCount}</p>
+                      <p><strong>Total Trips:</strong> {selectedDriver.tripsCount || 0}</p>
                     </div>
                   </div>
                   

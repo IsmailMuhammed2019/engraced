@@ -100,4 +100,16 @@ export class VehiclesController {
     }
     return this.vehiclesService.remove(id);
   }
+
+  @Delete(':id/delete')
+  @ApiOperation({ summary: 'Permanently delete vehicle (Admin only)' })
+  @ApiResponse({ status: 200, description: 'Vehicle deleted successfully' })
+  @ApiResponse({ status: 404, description: 'Vehicle not found' })
+  @ApiResponse({ status: 409, description: 'Vehicle has associated trips' })
+  delete(@Param('id') id: string, @Request() req) {
+    if (req.user.type !== 'admin') {
+      throw new Error('Only admins can delete vehicles');
+    }
+    return this.vehiclesService.delete(id);
+  }
 }

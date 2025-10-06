@@ -169,6 +169,25 @@ export class VehiclesService {
     });
   }
 
+  async delete(id: string) {
+    const vehicle = await this.findOne(id);
+
+    // Check if vehicle has any trips (active or completed)
+    const tripsCount = await this.prisma.trip.count({
+      where: {
+        vehicleId: id,
+      },
+    });
+
+    if (tripsCount > 0) {
+      throw new ConflictException('Cannot delete vehicle with associated trips');
+    }
+
+    return this.prisma.vehicle.delete({
+      where: { id },
+    });
+  }
+
   async getVehicleStats(id: string) {
     const vehicle = await this.findOne(id);
 

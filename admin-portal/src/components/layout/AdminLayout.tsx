@@ -113,6 +113,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               Logout
             </Button>
           </div>
+          
         </div>
       </div>
 
@@ -142,6 +143,8 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               );
             })}
           </nav>
+          
+          {/* Desktop logout button */}
           <div className="p-4 border-t">
             <Button 
               variant="ghost" 
@@ -220,15 +223,6 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                   <p className="text-sm font-medium text-gray-900">Admin User</p>
                   <p className="text-xs text-gray-500">admin@engracedsmile.com</p>
                 </div>
-                <Button 
-                  variant="ghost" 
-                  size="sm"
-                  onClick={handleLogout}
-                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                >
-                  <LogOut className="h-4 w-4 mr-2" />
-                  Logout
-                </Button>
               </div>
             </div>
           </div>

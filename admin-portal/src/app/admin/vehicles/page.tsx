@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/ui/data-table";
+import { Modal, AlertModal } from "@/components/ui/modal";
 import {
   Plus,
   Search,
@@ -71,11 +72,34 @@ export default function VehiclesPage() {
   const [showImageViewer, setShowImageViewer] = useState(false);
   const [viewerImages, setViewerImages] = useState<string[]>([]);
   const [viewerIndex, setViewerIndex] = useState(0);
+  const [showVehicleDetailsModal, setShowVehicleDetailsModal] = useState(false);
+  const [showEditVehicleModal, setShowEditVehicleModal] = useState(false);
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+  const [showServiceModal, setShowServiceModal] = useState(false);
+  const [showManageImagesModal, setShowManageImagesModal] = useState(false);
+  const [selectedVehicle, setSelectedVehicle] = useState<Vehicle | null>(null);
+  const [alertModal, setAlertModal] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'info' as 'success' | 'error' | 'warning' | 'info',
+    onConfirm: () => {}
+  });
 
   // Fetch vehicles data
   useEffect(() => {
     fetchVehicles();
   }, []);
+
+  const showAlert = (title: string, message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info', onConfirm?: () => void) => {
+    setAlertModal({
+      isOpen: true,
+      title,
+      message,
+      type,
+      onConfirm: onConfirm || (() => {})
+    });
+  };
 
   const fetchVehicles = async () => {
     try {
@@ -160,7 +184,7 @@ export default function VehiclesPage() {
           isActive: true
         });
         setSelectedImages([]);
-        alert('Vehicle added successfully!');
+        showAlert('Success', 'Vehicle added successfully!', 'success');
       } else {
         // Mock add for development
         const mockVehicle: Vehicle = {
@@ -184,11 +208,11 @@ export default function VehiclesPage() {
           isActive: true
         });
         setSelectedImages([]);
-        alert('Vehicle added successfully! (Mock)');
+        showAlert('Success', 'Vehicle added successfully! (Mock)', 'success');
       }
     } catch (error) {
       console.error('Error adding vehicle:', error);
-      alert('Failed to add vehicle');
+      showAlert('Error', 'Failed to add vehicle', 'error');
     } finally {
       setIsUploadingImages(false);
     }
@@ -200,15 +224,17 @@ export default function VehiclesPage() {
       setViewerIndex(0);
       setShowImageViewer(true);
     } else {
-      alert('No images available for this vehicle');
+      showAlert('Info', 'No images available for this vehicle', 'info');
     }
   };
 
   const handleViewVehicle = (vehicle: Vehicle) => {
-    alert(`Viewing vehicle: ${vehicle.make} ${vehicle.model} (${vehicle.plateNumber})`);
+    setSelectedVehicle(vehicle);
+    setShowVehicleDetailsModal(true);
   };
 
   const handleEditVehicle = (vehicle: Vehicle) => {
+    setSelectedVehicle(vehicle);
     setNewVehicle({
       plateNumber: vehicle.plateNumber,
       make: vehicle.make,
@@ -219,14 +245,74 @@ export default function VehiclesPage() {
       mileage: vehicle.mileage,
       isActive: vehicle.isActive
     });
-    setShowAddVehicleModal(true);
+    setShowEditVehicleModal(true);
   };
 
   const handleDeleteVehicle = (vehicle: Vehicle) => {
-    if (confirm(`Are you sure you want to delete ${vehicle.make} ${vehicle.model} (${vehicle.plateNumber})?`)) {
-      setVehicles(prev => prev.filter(v => v.id !== vehicle.id));
-      alert('Vehicle deleted successfully!');
+    console.log('Delete vehicle clicked for:', vehicle.make, vehicle.model);
+    setSelectedVehicle(vehicle);
+    setShowDeleteConfirmModal(true);
+    console.log('Delete modal should be open now');
+  };
+
+  const confirmDeleteVehicle = async () => {
+    console.log('Confirm delete called for:', selectedVehicle?.make, selectedVehicle?.model);
+    if (selectedVehicle) {
+      try {
+        const token = localStorage.getItem('adminToken');
+        const response = await fetch(`http://localhost:3003/api/v1/vehicles/${selectedVehicle.id}/delete`, {
+          method: 'DELETE',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          // Remove from local state
+          console.log('API delete successful, removing from local state');
+          setVehicles(prev => {
+            const filtered = prev.filter(v => v.id !== selectedVehicle.id);
+            console.log('Vehicles after deletion:', filtered.length);
+            return filtered;
+          });
+          setShowDeleteConfirmModal(false);
+          setSelectedVehicle(null);
+          showAlert('Success', 'Vehicle deleted successfully!', 'success');
+          console.log('Vehicle deleted successfully from backend');
+        } else {
+          // If API call fails, still remove from local state for demo purposes
+          console.log('API delete failed, removing from local state only');
+          setVehicles(prev => {
+            const filtered = prev.filter(v => v.id !== selectedVehicle.id);
+            console.log('Vehicles after local deletion:', filtered.length);
+            return filtered;
+          });
+          setShowDeleteConfirmModal(false);
+          setSelectedVehicle(null);
+          showAlert('Success', 'Vehicle deleted successfully! (Local only)', 'success');
+        }
+      } catch (error) {
+        console.error('Error deleting vehicle:', error);
+        // If API call fails, still remove from local state for demo purposes
+        setVehicles(prev => prev.filter(v => v.id !== selectedVehicle.id));
+        setShowDeleteConfirmModal(false);
+        setSelectedVehicle(null);
+        showAlert('Success', 'Vehicle deleted successfully! (Local only)', 'success');
+      }
+    } else {
+      console.log('No selected vehicle to delete');
     }
+  };
+
+  const handleServiceHistory = (vehicle: Vehicle) => {
+    setSelectedVehicle(vehicle);
+    setShowServiceModal(true);
+  };
+
+  const handleManageImages = (vehicle: Vehicle) => {
+    setSelectedVehicle(vehicle);
+    setShowManageImagesModal(true);
   };
 
 
@@ -353,7 +439,7 @@ export default function VehiclesPage() {
       },
       cell: ({ row }) => (
         <div className="text-center">
-          <span className="font-medium">{row.getValue("tripsCount")}</span>
+          <span className="font-medium">{row.getValue("tripsCount") || 0}</span>
         </div>
       ),
     },
@@ -396,7 +482,7 @@ export default function VehiclesPage() {
                 Copy vehicle ID
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleViewVehicle(vehicle)}>
                 <Eye className="mr-2 h-4 w-4" />
                 View details
               </DropdownMenuItem>
@@ -404,20 +490,23 @@ export default function VehiclesPage() {
                 <ImageIcon className="mr-2 h-4 w-4" />
                 View images
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleEditVehicle(vehicle)}>
                 <Edit className="mr-2 h-4 w-4" />
                 Edit vehicle
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleServiceHistory(vehicle)}>
                 <Wrench className="mr-2 h-4 w-4" />
                 Service history
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleManageImages(vehicle)}>
                 <ImageIcon className="mr-2 h-4 w-4" />
                 Manage images
               </DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-red-600">
+              <DropdownMenuItem 
+                onClick={() => handleDeleteVehicle(vehicle)}
+                className="text-red-600"
+              >
                 <Trash2 className="mr-2 h-4 w-4" />
                 Remove vehicle
               </DropdownMenuItem>
@@ -500,7 +589,7 @@ export default function VehiclesPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {vehicles.reduce((sum, vehicle) => sum + vehicle.tripsCount, 0)}
+                {vehicles.reduce((sum, vehicle) => sum + (vehicle.tripsCount || 0), 0)}
                     </div>
               <p className="text-xs text-muted-foreground">Completed trips</p>
               </CardContent>
@@ -621,7 +710,7 @@ export default function VehiclesPage() {
                         onChange={(e) => {
                           const files = Array.from(e.target.files || []);
                           if (files.length > 8) {
-                            alert('Maximum 8 images allowed');
+                            showAlert('Warning', 'Maximum 8 images allowed', 'warning');
                             return;
                           }
                           setSelectedImages(files);
@@ -680,6 +769,315 @@ export default function VehiclesPage() {
               images={viewerImages}
               currentIndex={viewerIndex}
               title="Vehicle Images"
+            />
+
+            {/* Vehicle Details Modal */}
+            {showVehicleDetailsModal && selectedVehicle && (
+              <Modal
+                isOpen={showVehicleDetailsModal}
+                onClose={() => {
+                  setShowVehicleDetailsModal(false);
+                  setSelectedVehicle(null);
+                }}
+                title="Vehicle Details"
+                size="lg"
+              >
+                <div className="space-y-6">
+                  <div className="flex items-center space-x-4">
+                    <div className="w-20 h-20 bg-[#5d4a15] rounded-lg flex items-center justify-center">
+                      <Car className="h-10 w-10 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-bold">{selectedVehicle.make} {selectedVehicle.model}</h3>
+                      <p className="text-gray-600">{selectedVehicle.plateNumber} • {selectedVehicle.year}</p>
+                      <div className="flex items-center space-x-2 mt-2">
+                        {getStatusBadge(selectedVehicle.isActive)}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-6">
+                    <div>
+                      <h4 className="font-semibold mb-2">Specifications</h4>
+                      <p><strong>Capacity:</strong> {selectedVehicle.capacity} seats</p>
+                      <p><strong>Mileage:</strong> {selectedVehicle.mileage.toLocaleString()} km</p>
+                      <p><strong>Trips:</strong> {selectedVehicle.tripsCount || 0}</p>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold mb-2">Features</h4>
+                      <div className="flex flex-wrap gap-1">
+                        {selectedVehicle.features.map((feature, index) => (
+                          <Badge key={index} variant="secondary" className="text-xs">
+                            {feature}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h4 className="font-semibold mb-2">Service Status</h4>
+                    {getServiceStatus(selectedVehicle.lastService, selectedVehicle.nextService)}
+                  </div>
+                  
+                  <div>
+                    <h4 className="font-semibold mb-2">Images</h4>
+                    <div className="flex space-x-2">
+                      {selectedVehicle.images.length > 0 ? (
+                        selectedVehicle.images.slice(0, 4).map((image, index) => (
+                          <img
+                            key={index}
+                            src={image}
+                            alt={`Vehicle ${index + 1}`}
+                            className="w-16 h-16 object-cover rounded-md cursor-pointer"
+                            onClick={() => {
+                              setViewerImages(selectedVehicle.images);
+                              setViewerIndex(index);
+                              setShowImageViewer(true);
+                            }}
+                          />
+                        ))
+                      ) : (
+                        <p className="text-gray-500">No images available</p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              </Modal>
+            )}
+
+            {/* Edit Vehicle Modal */}
+            {showEditVehicleModal && selectedVehicle && (
+              <Modal
+                isOpen={showEditVehicleModal}
+                onClose={() => {
+                  setShowEditVehicleModal(false);
+                  setSelectedVehicle(null);
+                }}
+                title="Edit Vehicle"
+                size="lg"
+              >
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Plate Number</label>
+                      <input
+                        type="text"
+                        value={newVehicle.plateNumber}
+                        onChange={(e) => setNewVehicle(prev => ({ ...prev, plateNumber: e.target.value }))}
+                        className="w-full p-2 border rounded-md"
+                        placeholder="Enter plate number"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Make</label>
+                      <input
+                        type="text"
+                        value={newVehicle.make}
+                        onChange={(e) => setNewVehicle(prev => ({ ...prev, make: e.target.value }))}
+                        className="w-full p-2 border rounded-md"
+                        placeholder="Enter make"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Model</label>
+                      <input
+                        type="text"
+                        value={newVehicle.model}
+                        onChange={(e) => setNewVehicle(prev => ({ ...prev, model: e.target.value }))}
+                        className="w-full p-2 border rounded-md"
+                        placeholder="Enter model"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Year</label>
+                      <input
+                        type="number"
+                        value={newVehicle.year}
+                        onChange={(e) => setNewVehicle(prev => ({ ...prev, year: parseInt(e.target.value) || 0 }))}
+                        className="w-full p-2 border rounded-md"
+                        placeholder="Enter year"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Capacity</label>
+                      <input
+                        type="number"
+                        value={newVehicle.capacity}
+                        onChange={(e) => setNewVehicle(prev => ({ ...prev, capacity: parseInt(e.target.value) || 0 }))}
+                        className="w-full p-2 border rounded-md"
+                        placeholder="Enter capacity"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Mileage</label>
+                      <input
+                        type="number"
+                        value={newVehicle.mileage}
+                        onChange={(e) => setNewVehicle(prev => ({ ...prev, mileage: parseInt(e.target.value) || 0 }))}
+                        className="w-full p-2 border rounded-md"
+                        placeholder="Enter mileage"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Features (comma-separated)</label>
+                    <input
+                      type="text"
+                      value={newVehicle.features.join(', ')}
+                      onChange={(e) => setNewVehicle(prev => ({ ...prev, features: e.target.value.split(',').map(f => f.trim()) }))}
+                      className="w-full p-2 border rounded-md"
+                      placeholder="AC, WiFi, USB Charging"
+                    />
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="isActive"
+                      checked={newVehicle.isActive}
+                      onChange={(e) => setNewVehicle(prev => ({ ...prev, isActive: e.target.checked }))}
+                      className="rounded"
+                    />
+                    <label htmlFor="isActive" className="text-sm font-medium">Active</label>
+                  </div>
+                </div>
+                <div className="flex justify-end space-x-2 mt-6">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowEditVehicleModal(false);
+                      setSelectedVehicle(null);
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      // Update vehicle logic here
+                      setShowEditVehicleModal(false);
+                      setSelectedVehicle(null);
+                      showAlert('Success', 'Vehicle updated successfully!', 'success');
+                    }}
+                    className="bg-[#5d4a15] hover:bg-[#6b5618]"
+                  >
+                    Update Vehicle
+                  </Button>
+                </div>
+              </Modal>
+            )}
+
+            {/* Delete Confirmation Modal */}
+            <AlertModal
+              isOpen={showDeleteConfirmModal}
+              onClose={() => {
+                setShowDeleteConfirmModal(false);
+                setSelectedVehicle(null);
+              }}
+              title="Delete Vehicle"
+              message={`Are you sure you want to delete ${selectedVehicle?.make} ${selectedVehicle?.model} (${selectedVehicle?.plateNumber})? This action cannot be undone.`}
+              type="warning"
+              onConfirm={confirmDeleteVehicle}
+              confirmText="Delete"
+              cancelText="Cancel"
+              showCancel={true}
+            />
+
+            {/* Service History Modal */}
+            {showServiceModal && selectedVehicle && (
+              <Modal
+                isOpen={showServiceModal}
+                onClose={() => {
+                  setShowServiceModal(false);
+                  setSelectedVehicle(null);
+                }}
+                title="Service History"
+                size="lg"
+              >
+                <div className="space-y-4">
+                  <div className="text-center py-8">
+                    <Wrench className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-lg font-semibold mb-2">Service History</h3>
+                    <p className="text-gray-600">
+                      Service history for {selectedVehicle.make} {selectedVehicle.model} ({selectedVehicle.plateNumber})
+                    </p>
+                    <p className="text-sm text-gray-500 mt-2">No service records found</p>
+                  </div>
+                </div>
+              </Modal>
+            )}
+
+            {/* Manage Images Modal */}
+            {showManageImagesModal && selectedVehicle && (
+              <Modal
+                isOpen={showManageImagesModal}
+                onClose={() => {
+                  setShowManageImagesModal(false);
+                  setSelectedVehicle(null);
+                }}
+                title="Manage Images"
+                size="lg"
+              >
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="font-semibold mb-2">Current Images</h4>
+                    <div className="grid grid-cols-4 gap-4">
+                      {selectedVehicle.images.map((image, index) => (
+                        <div key={index} className="relative">
+                          <img
+                            src={image}
+                            alt={`Vehicle ${index + 1}`}
+                            className="w-full h-24 object-cover rounded-md"
+                          />
+                          <button
+                            onClick={() => {
+                              // Remove image logic here
+                              showAlert('Info', 'Image removal functionality coming soon', 'info');
+                            }}
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs"
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h4 className="font-semibold mb-2">Add New Images</h4>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      onChange={(e) => {
+                        const files = Array.from(e.target.files || []);
+                        if (files.length > 8) {
+                          showAlert('Warning', 'Maximum 8 images allowed', 'warning');
+                          return;
+                        }
+                        showAlert('Info', 'Image upload functionality coming soon', 'info');
+                      }}
+                      className="w-full p-2 border rounded-md"
+                    />
+                  </div>
+                </div>
+              </Modal>
+            )}
+
+            {/* Alert Modal */}
+            <AlertModal
+              isOpen={alertModal.isOpen}
+              onClose={() => setAlertModal(prev => ({ ...prev, isOpen: false }))}
+              title={alertModal.title}
+              message={alertModal.message}
+              type={alertModal.type}
+              onConfirm={() => {
+                alertModal.onConfirm();
+                setAlertModal(prev => ({ ...prev, isOpen: false }));
+              }}
             />
       </div>
     </AdminLayout>

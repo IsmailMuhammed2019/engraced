@@ -101,8 +101,12 @@ export default function AdminLogin() {
       <div className="w-full max-w-md">
         {/* Logo and Branding */}
         <div className="text-center mb-8">
-          <div className="mx-auto w-16 h-16 bg-gradient-to-r from-[#5d4a15] to-[#6b5618] rounded-2xl flex items-center justify-center mb-4 shadow-lg">
-            <span className="text-white font-bold text-xl">ES</span>
+          <div className="mx-auto w-24 h-16 bg-white rounded-2xl flex items-center justify-center mb-4 shadow-lg border-2 border-[#5d4a15]">
+            <img 
+              src="/logo.png" 
+              alt="Engracedsmile Logo" 
+              className="w-20 h-12 object-contain"
+            />
           </div>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">Engracedsmile</h1>
           <p className="text-gray-600">Admin Portal</p>
