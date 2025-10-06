@@ -17,8 +17,12 @@ import {
   X,
   LogOut,
   Bell,
-  Search
+  Search,
+  MessageCircle,
+  Star
 } from "lucide-react";
+import AdminNotificationCenter from "../AdminNotificationCenter";
+import AdminSupportChat from "../AdminSupportChat";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -31,6 +35,7 @@ const navigation = [
   { name: "Vehicles", href: "/admin/vehicles", icon: Car },
   { name: "Bookings", href: "/admin/bookings", icon: BookOpen },
   { name: "Payments", href: "/admin/payments", icon: CreditCard },
+  { name: "Ratings", href: "/admin/ratings", icon: Star },
   { name: "Promotions", href: "/admin/promotions", icon: Gift },
   { name: "Settings", href: "/admin/settings", icon: Settings },
 ];
@@ -41,6 +46,8 @@ interface AdminLayoutProps {
 
 export default function AdminLayout({ children }: AdminLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const pathname = usePathname();
 
   return (
@@ -155,11 +162,26 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             
             <div className="flex items-center space-x-4">
               {/* Notifications */}
-              <Button variant="ghost" size="sm" className="relative">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                className="relative"
+                onClick={() => setIsNotificationOpen(true)}
+              >
                 <Bell className="h-5 w-5" />
                 <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 flex items-center justify-center text-xs">
                   3
                 </Badge>
+              </Button>
+              
+              {/* Support Chat */}
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => setIsChatOpen(true)}
+                className="text-gray-600 hover:text-[#5d4a15]"
+              >
+                <MessageCircle className="h-5 w-5" />
               </Button>
               
               {/* User menu */}
@@ -178,11 +200,25 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
 
         {/* Page content */}
         <main className="p-4 sm:p-6 lg:p-8">
-          <div className="max-w-7xl mx-auto">
+          <div className="max-w-8xl mx-auto">
             {children}
           </div>
         </main>
       </div>
+
+      {/* Admin Notification Center */}
+      <AdminNotificationCenter
+        isOpen={isNotificationOpen}
+        onClose={() => setIsNotificationOpen(false)}
+        adminId="admin-user"
+      />
+
+      {/* Admin Support Chat */}
+      <AdminSupportChat
+        isOpen={isChatOpen}
+        onClose={() => setIsChatOpen(false)}
+        adminId="admin-user"
+      />
     </div>
   );
 }

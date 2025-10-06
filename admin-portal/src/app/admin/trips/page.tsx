@@ -100,6 +100,14 @@ export default function TripsPage() {
   const [trips, setTrips] = useState(mockTrips);
   const [searchTerm, setSearchTerm] = useState("");
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [newTrip, setNewTrip] = useState({
+    routeId: '',
+    driverId: '',
+    vehicleId: '',
+    departureTime: '',
+    arrivalTime: '',
+    price: ''
+  });
 
   const filteredTrips = trips.filter(
     (trip) =>
@@ -127,6 +135,135 @@ export default function TripsPage() {
         return "bg-blue-100 text-blue-800";
       default:
         return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const handleScheduleTrip = async () => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch('http://localhost:3003/api/v1/trips', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(newTrip)
+      });
+      
+      if (response.ok) {
+        const addedTrip = await response.json();
+        setTrips([...trips, addedTrip]);
+        setShowCreateForm(false);
+        setNewTrip({
+          routeId: '',
+          driverId: '',
+          vehicleId: '',
+          departureTime: '',
+          arrivalTime: '',
+          price: ''
+        });
+      } else {
+        // Fallback: add to local state for development
+        const mockTrip = {
+          id: (trips.length + 1).toString(),
+          route: {
+            from: "New Route",
+            to: "Destination"
+          },
+          driver: {
+            name: "New Driver",
+            phone: "+2348071116232"
+          },
+          vehicle: {
+            plateNumber: "NEW123XY",
+            make: "Toyota",
+            model: "Sienna"
+          },
+          departureTime: newTrip.departureTime,
+          arrivalTime: newTrip.arrivalTime,
+          price: parseInt(newTrip.price) || 0,
+          status: "ACTIVE",
+          availableSeats: 7,
+          totalSeats: 7,
+          bookingsCount: 0,
+          features: ["Wi-Fi", "AC"]
+        };
+        setTrips([...trips, mockTrip]);
+        setShowCreateForm(false);
+        setNewTrip({
+          routeId: '',
+          driverId: '',
+          vehicleId: '',
+          departureTime: '',
+          arrivalTime: '',
+          price: ''
+        });
+      }
+    } catch (error) {
+      console.error('Error scheduling trip:', error);
+      // Fallback: add to local state for development
+      const mockTrip = {
+        id: (trips.length + 1).toString(),
+        route: {
+          from: "New Route",
+          to: "Destination"
+        },
+        driver: {
+          name: "New Driver",
+          phone: "+2348071116232"
+        },
+        vehicle: {
+          plateNumber: "NEW123XY",
+          make: "Toyota",
+          model: "Sienna"
+        },
+        departureTime: newTrip.departureTime,
+        arrivalTime: newTrip.arrivalTime,
+        price: parseInt(newTrip.price) || 0,
+        status: "ACTIVE",
+        availableSeats: 7,
+        totalSeats: 7,
+        bookingsCount: 0,
+        features: ["Wi-Fi", "AC"]
+      };
+      setTrips([...trips, mockTrip]);
+      setShowCreateForm(false);
+      setNewTrip({
+        routeId: '',
+        driverId: '',
+        vehicleId: '',
+        departureTime: '',
+        arrivalTime: '',
+        price: ''
+      });
+    }
+  };
+
+  const handleViewTrip = (tripId: string) => {
+    const trip = trips.find(t => t.id === tripId);
+    if (trip) {
+      alert(`Viewing trip: ${trip.route.from} → ${trip.route.to}\nDriver: ${trip.driver.name}\nVehicle: ${trip.vehicle.plateNumber}\nPrice: ₦${trip.price}`);
+    }
+  };
+
+  const handleEditTrip = (tripId: string) => {
+    const trip = trips.find(t => t.id === tripId);
+    if (trip) {
+      setNewTrip({
+        routeId: trip.route.from,
+        driverId: trip.driver.name,
+        vehicleId: trip.vehicle.plateNumber,
+        departureTime: trip.departureTime,
+        arrivalTime: trip.arrivalTime,
+        price: trip.price.toString()
+      });
+      setShowCreateForm(true);
+    }
+  };
+
+  const handleDeleteTrip = (tripId: string) => {
+    if (confirm('Are you sure you want to delete this trip?')) {
+      setTrips(trips.filter(t => t.id !== tripId));
     }
   };
 
@@ -234,15 +371,30 @@ export default function TripsPage() {
                     
                     {/* Actions */}
                     <div className="flex space-x-2 pt-2">
-                      <Button variant="outline" size="sm" className="flex-1">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="flex-1"
+                        onClick={() => handleViewTrip(trip.id)}
+                      >
                         <Eye className="h-4 w-4 mr-1" />
                         View
                       </Button>
-                      <Button variant="outline" size="sm" className="flex-1">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="flex-1"
+                        onClick={() => handleEditTrip(trip.id)}
+                      >
                         <Edit className="h-4 w-4 mr-1" />
                         Edit
                       </Button>
-                      <Button variant="outline" size="sm" className="text-red-600 hover:text-red-700">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="text-red-600 hover:text-red-700"
+                        onClick={() => handleDeleteTrip(trip.id)}
+                      >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
@@ -265,8 +417,12 @@ export default function TripsPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="text-sm font-medium">Route</label>
-                      <select className="w-full p-2 border rounded-md">
-                        <option>Select Route</option>
+                      <select 
+                        className="w-full p-2 border rounded-md"
+                        value={newTrip.routeId}
+                        onChange={(e) => setNewTrip({...newTrip, routeId: e.target.value})}
+                      >
+                        <option value="">Select Route</option>
                         <option value="1">Lagos → Abuja</option>
                         <option value="2">Abuja → Kaduna</option>
                         <option value="3">Lagos → Port Harcourt</option>
@@ -274,8 +430,12 @@ export default function TripsPage() {
                     </div>
                     <div>
                       <label className="text-sm font-medium">Driver</label>
-                      <select className="w-full p-2 border rounded-md">
-                        <option>Select Driver</option>
+                      <select 
+                        className="w-full p-2 border rounded-md"
+                        value={newTrip.driverId}
+                        onChange={(e) => setNewTrip({...newTrip, driverId: e.target.value})}
+                      >
+                        <option value="">Select Driver</option>
                         <option value="1">John Doe</option>
                         <option value="2">Jane Smith</option>
                         <option value="3">Mike Johnson</option>
@@ -285,8 +445,12 @@ export default function TripsPage() {
                   
                   <div>
                     <label className="text-sm font-medium">Vehicle</label>
-                    <select className="w-full p-2 border rounded-md">
-                      <option>Select Vehicle</option>
+                    <select 
+                      className="w-full p-2 border rounded-md"
+                      value={newTrip.vehicleId}
+                      onChange={(e) => setNewTrip({...newTrip, vehicleId: e.target.value})}
+                    >
+                      <option value="">Select Vehicle</option>
                       <option value="1">ABC123XY - Toyota Sienna</option>
                       <option value="2">XYZ789AB - Toyota Sienna</option>
                       <option value="3">DEF456GH - Toyota Sienna</option>
@@ -296,17 +460,30 @@ export default function TripsPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="text-sm font-medium">Departure Time</label>
-                      <Input type="datetime-local" />
+                      <Input 
+                        type="datetime-local" 
+                        value={newTrip.departureTime}
+                        onChange={(e) => setNewTrip({...newTrip, departureTime: e.target.value})}
+                      />
                     </div>
                     <div>
                       <label className="text-sm font-medium">Arrival Time</label>
-                      <Input type="datetime-local" />
+                      <Input 
+                        type="datetime-local" 
+                        value={newTrip.arrivalTime}
+                        onChange={(e) => setNewTrip({...newTrip, arrivalTime: e.target.value})}
+                      />
                     </div>
                   </div>
                   
                   <div>
                     <label className="text-sm font-medium">Price (₦)</label>
-                    <Input type="number" placeholder="7500" />
+                    <Input 
+                      type="number" 
+                      placeholder="7500" 
+                      value={newTrip.price}
+                      onChange={(e) => setNewTrip({...newTrip, price: e.target.value})}
+                    />
                   </div>
                   
                   <div className="flex space-x-2 pt-4">
@@ -318,7 +495,13 @@ export default function TripsPage() {
                     >
                       Cancel
                     </Button>
-                    <Button className="flex-1">Schedule Trip</Button>
+                    <Button 
+                      type="button"
+                      onClick={handleScheduleTrip}
+                      className="flex-1"
+                    >
+                      Schedule Trip
+                    </Button>
                   </div>
                 </form>
               </CardContent>

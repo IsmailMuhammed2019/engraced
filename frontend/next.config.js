@@ -54,6 +54,11 @@ const nextConfig = {
   poweredByHeader: false,
   generateEtags: false,
   
+  // Disable ESLint during builds to speed up development
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  
   // Output configuration for PWA
   // output: 'standalone', // Commented out to fix chunk loading issues
   

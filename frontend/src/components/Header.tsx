@@ -3,12 +3,17 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Menu, X, Phone, Mail, Download } from "lucide-react";
+import { Menu, X, Phone, Mail, Download, Bell } from "lucide-react";
 import { usePWAInstall } from "@/hooks/usePWAInstall";
+import { useAuth } from "@/contexts/AuthContext";
+import NotificationBell from "./NotificationBell";
+import CustomerAdminChat from "./CustomerAdminChat";
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [isChatOpen, setIsChatOpen] = useState(false);
   const { isInstallable, isInstalled, isInstalling, install, showInstallInstructions } = usePWAInstall();
+  const { isAuthenticated, user } = useAuth();
 
   const navigation = [
     { name: "Home", href: "/" },
@@ -82,6 +87,27 @@ export default function Header() {
 
           {/* CTA Buttons */}
           <div className="hidden md:flex items-center space-x-3">
+            {/* Show notification bell and chat only for logged-in users */}
+            {isAuthenticated && user && (
+              <>
+                {/* Notification Bell */}
+                <NotificationBell 
+                  userId={user.id} 
+                  userType="customer" 
+                  className="text-gray-600 hover:text-[#5d4a15]"
+                />
+                
+                {/* Support Chat Button */}
+                <button
+                  onClick={() => setIsChatOpen(true)}
+                  className="p-2 text-gray-600 hover:text-[#5d4a15] transition-colors"
+                  title="Support Chat"
+                >
+                  <Bell className="h-5 w-5" />
+                </button>
+              </>
+            )}
+
             {!isInstalled && (
               <button
                 onClick={handleDownloadApp}
@@ -180,6 +206,16 @@ export default function Header() {
           </div>
         )}
       </div>
+
+      {/* Customer Support Chat - Only show for logged-in users */}
+      {isAuthenticated && user && (
+        <CustomerAdminChat
+          isOpen={isChatOpen}
+          onClose={() => setIsChatOpen(false)}
+          userType="customer"
+          userId={user.id}
+        />
+      )}
     </header>
   );
 }

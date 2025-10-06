@@ -7,6 +7,7 @@ import BookingModal from "@/components/BookingModal";
 import Features from "@/components/Features";
 import PopularRoutes from "@/components/PopularRoutes";
 import Promotions from "@/components/Promotions";
+import PromotionsSection from "@/components/PromotionsSection";
 import LogisticsSection from "@/components/LogisticsSection";
 import AnimatedMap from "@/components/AnimatedMap";
 import Footer from "@/components/Footer";
@@ -71,6 +72,7 @@ export default function Home() {
       <AnimatedMap />
       <PopularRoutes onBookNow={handleBookNow} />
       <Promotions />
+      <PromotionsSection />
       <LogisticsSection />
       
       {/* Group Travel CTA */}

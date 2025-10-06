@@ -36,6 +36,80 @@ export class UploadController {
     private driversService: DriversService,
   ) {}
 
+  @Post('driver')
+  @UseInterceptors(FilesInterceptor('image', 1)) // Max 1 image
+  @ApiOperation({ summary: 'Upload driver image for new driver (Admin only)' })
+  @ApiConsumes('multipart/form-data')
+  @ApiResponse({ status: 201, description: 'Image uploaded successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async uploadDriverImageForNew(
+    @UploadedFiles() files: MulterFile[],
+    @Request() req,
+  ) {
+    if (req.user.type !== 'admin') {
+      throw new Error('Only admins can upload driver images');
+    }
+
+    if (!files || files.length === 0) {
+      throw new Error('No file uploaded');
+    }
+
+    // Upload image to Cloudinary
+    const uploadResult = await this.cloudinaryService.uploadImage(
+      files[0],
+      `drivers/temp`,
+      `driver-temp-${Date.now()}`,
+    );
+
+    return {
+      message: 'Driver image uploaded successfully',
+      data: {
+        url: uploadResult.url,
+        publicId: uploadResult.publicId,
+      },
+    };
+  }
+
+  @Post('vehicle')
+  @UseInterceptors(FilesInterceptor('image', 8)) // Max 8 images
+  @ApiOperation({ summary: 'Upload vehicle images for new vehicle (Admin only)' })
+  @ApiConsumes('multipart/form-data')
+  @ApiResponse({ status: 201, description: 'Images uploaded successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async uploadVehicleImagesForNew(
+    @UploadedFiles() files: MulterFile[],
+    @Request() req,
+  ) {
+    if (req.user.type !== 'admin') {
+      throw new Error('Only admins can upload vehicle images');
+    }
+
+    if (!files || files.length === 0) {
+      throw new Error('No files uploaded');
+    }
+
+    if (files.length > 8) {
+      throw new Error('Maximum 8 images allowed per vehicle');
+    }
+
+    // Upload images to Cloudinary
+    const uploadResults = await this.cloudinaryService.uploadMultipleImages(
+      files,
+      `vehicles/temp`,
+    );
+
+    // Extract URLs from upload results
+    const imageUrls = uploadResults.map(result => result.url);
+
+    return {
+      message: 'Vehicle images uploaded successfully',
+      data: {
+        urls: imageUrls,
+        publicIds: uploadResults.map(result => result.publicId),
+      },
+    };
+  }
+
   @Post('vehicles/:id/images')
   @UseInterceptors(FilesInterceptor('images', 6)) // Max 6 images
   @ApiOperation({ summary: 'Upload vehicle images (Admin only)' })
@@ -125,6 +199,73 @@ export class UploadController {
     };
   }
 
+  @Post('vehicle')
+  @UseInterceptors(FilesInterceptor('image', 8)) // Max 8 images for new vehicle
+  @ApiOperation({ summary: 'Upload images for new vehicle (Admin only)' })
+  @ApiConsumes('multipart/form-data')
+  @ApiResponse({ status: 201, description: 'Images uploaded successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async uploadNewVehicleImages(
+    @UploadedFiles() files: MulterFile[],
+    @Request() req,
+  ) {
+    if (req.user.type !== 'admin') {
+      throw new Error('Only admins can upload vehicle images');
+    }
+
+    if (!files || files.length === 0) {
+      return { success: true, url: '' };
+    }
+
+    if (files.length > 8) {
+      throw new Error('Maximum 8 images allowed per vehicle');
+    }
+
+    // Upload images to Cloudinary
+    const uploadResults = await this.cloudinaryService.uploadMultipleImages(
+      files,
+      `vehicles/temp`,
+    );
+
+    // Return the first image URL (for single image uploads)
+    return {
+      success: true,
+      url: uploadResults[0]?.url || '',
+      urls: uploadResults.map(result => result.url),
+    };
+  }
+
+  @Post('driver')
+  @UseInterceptors(FilesInterceptor('image', 1)) // Max 1 image for new driver
+  @ApiOperation({ summary: 'Upload image for new driver (Admin only)' })
+  @ApiConsumes('multipart/form-data')
+  @ApiResponse({ status: 201, description: 'Image uploaded successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async uploadNewDriverImage(
+    @UploadedFiles() files: MulterFile[],
+    @Request() req,
+  ) {
+    if (req.user.type !== 'admin') {
+      throw new Error('Only admins can upload driver images');
+    }
+
+    if (!files || files.length === 0) {
+      return { success: true, url: '' };
+    }
+
+    // Upload image to Cloudinary
+    const uploadResult = await this.cloudinaryService.uploadImage(
+      files[0],
+      `drivers/temp`,
+      `driver-temp-${Date.now()}`,
+    );
+
+    return {
+      success: true,
+      url: uploadResult.url,
+    };
+  }
+
   @Delete('vehicles/:id/images/:imageIndex')
   @ApiOperation({ summary: 'Delete vehicle image (Admin only)' })
   @ApiResponse({ status: 200, description: 'Image deleted successfully' })
@@ -150,7 +291,7 @@ export class UploadController {
       throw new Error('Vehicle not found');
     }
 
-    if (index >= vehicle.images.length) {
+    if (index >= (vehicle as any).images.length) {
       throw new Error('Image index out of range');
     }
 

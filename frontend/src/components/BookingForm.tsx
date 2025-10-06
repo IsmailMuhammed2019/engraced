@@ -43,8 +43,33 @@ export default function BookingForm() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle form submission
-    console.log("Booking form submitted:", formData);
+    
+    // Validate form data
+    if (!formData.from || !formData.to || !formData.departureDate) {
+      alert("Please fill in all required fields");
+      return;
+    }
+
+    if (formData.from === formData.to) {
+      alert("Departure and destination cannot be the same");
+      return;
+    }
+
+    // Create search parameters
+    const searchParams = new URLSearchParams({
+      from: formData.from,
+      to: formData.to,
+      date: formData.departureDate,
+      passengers: formData.passengers,
+      class: formData.class
+    });
+
+    if (isRoundTrip && formData.returnDate) {
+      searchParams.append('returnDate', formData.returnDate);
+    }
+
+    // Redirect to trips page with search parameters
+    window.location.href = `/trips?${searchParams.toString()}`;
   };
 
   const swapLocations = () => {

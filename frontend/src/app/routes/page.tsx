@@ -3,6 +3,7 @@
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import BookingModal from "@/components/BookingModal";
+import ViewDetailsModal from "@/components/ViewDetailsModal";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,14 +14,154 @@ import {
   ArrowRight,
   Search,
   Filter,
-  Bus
+  Bus,
+  RefreshCw,
+  AlertCircle,
+  Loader2
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
-const routes = [
-  {
-    id: 1,
+interface Route {
+  id: string;
+  from: string;
+  to: string;
+  duration: string;
+  distance: string;
+  price: string;
+  originalPrice?: string;
+  rating: number;
+  reviews: number;
+  features: string[];
+  departures: Array<{
+    time: string;
+    type: string;
+    available: boolean;
+  }>;
+  image: string;
+  description: string;
+  amenities: string[];
+  isActive: boolean;
+  createdAt: string;
+}
+
+export default function RoutesPage() {
+  const [routes, setRoutes] = useState<Route[]>([]);
+  const [filteredRoutes, setFilteredRoutes] = useState<Route[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+  const [isViewDetailsOpen, setIsViewDetailsOpen] = useState(false);
+  const [selectedRoute, setSelectedRoute] = useState<{
+    from: string;
+    to: string;
+    price: string;
+    duration: string;
+    departureTime: string;
+    date: string;
+  } | null>(null);
+  const [selectedRouteDetails, setSelectedRouteDetails] = useState<{
+    id: string;
+    from: string;
+    to: string;
+    duration: string;
+    distance: string;
+    price: number;
+    originalPrice?: number;
+    rating: number;
+    reviews: number;
+    features: string[];
+    amenities: string[];
+    description: string;
+    image: string;
+    departures: Array<{
+      time: string;
+      type: string;
+      available: boolean;
+    }>;
+    isActive: boolean;
+    createdAt: string;
+  } | null>(null);
+
+  useEffect(() => {
+    fetchRoutes();
+  }, []);
+
+  useEffect(() => {
+    filterRoutes();
+  }, [routes, searchTerm]);
+
+  const fetchRoutes = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('http://localhost:3003/api/v1/routes');
+      
+      if (response.ok) {
+        const data = await response.json();
+        const formattedRoutes = data.map((route: {
+          id: string;
+          from: string;
+          to: string;
+          distance: number;
+          duration: number;
+          basePrice: number;
+          description?: string;
+          isActive: boolean;
+          createdAt: string;
+          trips?: Array<{
+            departureTime: string;
+            status: string;
+          }>;
+        }) => ({
+          id: route.id,
+          from: route.from,
+          to: route.to,
+          duration: `${Math.floor(route.duration / 60)}h ${route.duration % 60}m`, // Convert minutes to hours and minutes
+          distance: `${route.distance} km`,
+          price: `₦${route.basePrice.toLocaleString()}`,
+          originalPrice: undefined,
+          rating: 4.5 + Math.random() * 0.5, // Mock rating (backend doesn't have ratings yet)
+          reviews: Math.floor(Math.random() * 2000) + 100, // Mock reviews
+          features: ["Wi-Fi", "Refreshments", "Comfortable Seats"], // Default features
+          departures: route.trips?.map((trip: {
+            departureTime: string;
+            status: string;
+          }) => ({
+            time: new Date(trip.departureTime).toLocaleTimeString('en-US', { 
+              hour: '2-digit', 
+              minute: '2-digit',
+              hour12: false 
+            }),
+            type: "Standard",
+            available: trip.status === 'ACTIVE'
+          })) || [
+            { time: "06:00", type: "Express", available: true },
+            { time: "12:00", type: "Standard", available: true },
+            { time: "18:00", type: "Express", available: false }
+          ],
+          image: "/cars.jpg",
+          description: route.description || `Experience a comfortable journey from ${route.from} to ${route.to} with our premium transport service.`,
+          amenities: ["Air Conditioning", "Reclining Seats", "Free Wi-Fi", "Refreshments"],
+          isActive: route.isActive,
+          createdAt: route.createdAt
+        }));
+        setRoutes(formattedRoutes);
+      } else {
+        console.error('Failed to fetch routes');
+        // Fallback to mock data
+        setRoutes(getMockRoutes());
+      }
+    } catch (error) {
+      console.error('Error fetching routes:', error);
+      setRoutes(getMockRoutes());
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getMockRoutes = (): Route[] => [
+    {
+      id: "1",
     from: "Lagos",
     to: "Abuja",
     duration: "8h 30m",
@@ -37,10 +178,12 @@ const routes = [
     ],
     image: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=600&q=60",
     description: "Our flagship route connecting Nigeria's commercial capital with the federal capital. Features premium coaches with onboard entertainment.",
-    amenities: ["Air Conditioning", "Reclining Seats", "Onboard Toilet", "Refreshments", "Free Wi-Fi"]
+      amenities: ["Air Conditioning", "Reclining Seats", "Onboard Toilet", "Refreshments", "Free Wi-Fi"],
+      isActive: true,
+      createdAt: "2024-01-01T00:00:00Z"
   },
   {
-    id: 2,
+      id: "2",
     from: "Lagos",
     to: "Port Harcourt",
     duration: "6h 0m",
@@ -57,99 +200,25 @@ const routes = [
     ],
     image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=600&q=60",
     description: "Connect to the oil-rich Niger Delta region with our comfortable and reliable service.",
-    amenities: ["Air Conditioning", "Reclining Seats", "Free Wi-Fi", "USB Charging"]
-  },
-  {
-    id: 3,
-    from: "Abuja",
-    to: "Kaduna",
-    duration: "2h 15m",
-    distance: "200 km",
-    price: "₦4,500",
-    originalPrice: "₦5,500",
-    rating: 4.9,
-    reviews: 2100,
-    features: ["Wi-Fi", "Refreshments", "Priority Boarding"],
-    departures: [
-      { time: "06:30", type: "Express", available: true },
-      { time: "09:00", type: "Standard", available: true },
-      { time: "12:30", type: "Express", available: true },
-      { time: "15:00", type: "Standard", available: true },
-      { time: "18:30", type: "Express", available: true }
-    ],
-    image: "https://images.unsplash.com/photo-1558618047-3c8c76ca7d13?auto=format&fit=crop&w=600&q=60",
-    description: "Quick and convenient connection between the capital and northern Nigeria's commercial hub.",
-    amenities: ["Air Conditioning", "Priority Boarding", "Free Wi-Fi", "Refreshments"]
-  },
-  {
-    id: 4,
-    from: "Kano",
-    to: "Lagos",
-    duration: "12h 0m",
-    distance: "1000 km",
-    price: "₦25,000",
-    originalPrice: "₦30,000",
-    rating: 4.7,
-    reviews: 850,
-    features: ["Wi-Fi", "Meals", "Entertainment", "Sleeper Seats"],
-    departures: [
-      { time: "17:00", type: "Overnight", available: true },
-      { time: "20:00", type: "Overnight", available: true }
-    ],
-    image: "https://images.unsplash.com/photo-1570125909236-eb263c188f7e?auto=format&fit=crop&w=600&q=60",
-    description: "Our premium overnight service connecting northern and southern Nigeria with sleeper seats and full amenities.",
-    amenities: ["Sleeper Seats", "Full Meals", "Entertainment", "Free Wi-Fi", "Blankets", "Pillows"]
-  },
-  {
-    id: 5,
-    from: "Ibadan",
-    to: "Abuja",
-    duration: "7h 45m",
-    distance: "650 km",
-    price: "₦14,000",
-    originalPrice: "₦16,500",
-    rating: 4.5,
-    reviews: 650,
-    features: ["Wi-Fi", "Refreshments", "Comfortable Seats"],
-    departures: [
-      { time: "08:00", type: "Standard", available: true },
-      { time: "14:00", type: "Express", available: true }
-    ],
-    image: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=600&q=60",
-    description: "Connect the ancient city of Ibadan with the modern capital through comfortable and reliable service.",
-    amenities: ["Air Conditioning", "Reclining Seats", "Free Wi-Fi", "Refreshments"]
-  },
-  {
-    id: 6,
-    from: "Enugu",
-    to: "Lagos",
-    duration: "9h 30m",
-    distance: "750 km",
-    price: "₦18,000",
-    originalPrice: "₦22,000",
-    rating: 4.6,
-    reviews: 720,
-    features: ["Wi-Fi", "Refreshments", "Comfortable Seats"],
-    departures: [
-      { time: "06:30", type: "Express", available: true },
-      { time: "13:30", type: "Standard", available: true }
-    ],
-    image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=600&q=60",
-    description: "Eastern Nigeria to Lagos connection with modern coaches and excellent service.",
-    amenities: ["Air Conditioning", "Reclining Seats", "Free Wi-Fi", "Refreshments", "USB Charging"]
-  }
-];
+      amenities: ["Air Conditioning", "Reclining Seats", "Free Wi-Fi", "USB Charging"],
+      isActive: true,
+      createdAt: "2024-01-01T00:00:00Z"
+    }
+  ];
 
-export default function RoutesPage() {
-  const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
-  const [selectedRoute, setSelectedRoute] = useState<{
-    from: string;
-    to: string;
-    price: string;
-    duration: string;
-    departureTime: string;
-    date: string;
-  } | null>(null);
+  const filterRoutes = () => {
+    if (!searchTerm.trim()) {
+      setFilteredRoutes(routes);
+      return;
+    }
+
+    const filtered = routes.filter(route =>
+      route.from.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      route.to.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      route.description.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    setFilteredRoutes(filtered);
+  };
 
   const handleBookNow = (route: {
     from: string;
@@ -167,6 +236,39 @@ export default function RoutesPage() {
       date: new Date().toISOString().split('T')[0]
     });
     setIsBookingModalOpen(true);
+  };
+
+  const handleViewDetails = (route: Route) => {
+    // Convert the route to match RouteDetails interface
+    const routeDetails = {
+      id: route.id,
+      from: route.from,
+      to: route.to,
+      duration: route.duration,
+      distance: route.distance,
+      price: parseFloat(route.price.replace(/[^\d.]/g, '')), // Convert string price to number
+      originalPrice: route.originalPrice ? parseFloat(route.originalPrice.replace(/[^\d.]/g, '')) : undefined,
+      rating: route.rating,
+      reviews: route.reviews,
+      features: route.features,
+      amenities: route.amenities,
+      description: route.description,
+      image: route.image,
+      departures: route.departures?.map(dep => ({
+        time: dep.time,
+        type: dep.type,
+        available: dep.available
+      })) || [
+        { time: '06:00', type: 'Express', available: true },
+        { time: '10:00', type: 'Standard', available: true },
+        { time: '14:00', type: 'Express', available: false },
+        { time: '18:00', type: 'Standard', available: true }
+      ],
+      isActive: route.isActive,
+      createdAt: route.createdAt
+    };
+    setSelectedRouteDetails(routeDetails);
+    setIsViewDetailsOpen(true);
   };
 
   return (
@@ -195,6 +297,8 @@ export default function RoutesPage() {
                 <Input 
                   placeholder="Search routes..." 
                   className="pl-10"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
               <Button variant="outline" className="flex items-center gap-2">
@@ -202,8 +306,22 @@ export default function RoutesPage() {
                 Filter
               </Button>
             </div>
+            <div className="flex items-center gap-4">
             <div className="text-sm text-gray-600">
-              {routes.length} routes available
+                {filteredRoutes.length} routes available
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={fetchRoutes}
+                disabled={loading}
+              >
+                {loading ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4" />
+                )}
+              </Button>
             </div>
           </div>
         </div>
@@ -212,8 +330,32 @@ export default function RoutesPage() {
       {/* Routes Grid */}
       <section className="py-16">
         <div className="container mx-auto px-4">
+          {loading ? (
+            <div className="flex justify-center items-center py-16">
+              <div className="text-center">
+                <Loader2 className="h-12 w-12 animate-spin text-[#5d4a15] mx-auto mb-4" />
+                <p className="text-gray-600">Loading routes...</p>
+              </div>
+            </div>
+          ) : filteredRoutes.length === 0 ? (
+            <div className="text-center py-16">
+              <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No routes found</h3>
+              <p className="text-gray-500 mb-4">
+                {searchTerm ? "Try adjusting your search terms" : "No routes available at the moment"}
+              </p>
+              {searchTerm && (
+                <Button 
+                  variant="outline" 
+                  onClick={() => setSearchTerm("")}
+                >
+                  Clear Search
+                </Button>
+              )}
+            </div>
+          ) : (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {routes.map((route) => (
+              {filteredRoutes.map((route) => (
               <Card key={route.id} className="overflow-hidden hover:shadow-xl transition-all duration-300">
                 {/* Route Image */}
                 <div className="relative h-48 bg-gradient-to-r from-[#5d4a15] to-[#6b5618]">
@@ -325,7 +467,11 @@ export default function RoutesPage() {
                     >
                       Book Now
                     </Button>
-                    <Button variant="outline" size="sm">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleViewDetails(route)}
+                    >
                       View Details
                     </Button>
                   </div>
@@ -333,6 +479,7 @@ export default function RoutesPage() {
               </Card>
             ))}
           </div>
+          )}
         </div>
       </section>
 
@@ -362,6 +509,14 @@ export default function RoutesPage() {
         isOpen={isBookingModalOpen}
         onClose={() => setIsBookingModalOpen(false)}
         routeData={selectedRoute || undefined}
+      />
+
+      {/* View Details Modal */}
+      <ViewDetailsModal
+        isOpen={isViewDetailsOpen}
+        onClose={() => setIsViewDetailsOpen(false)}
+        type="route"
+        data={selectedRouteDetails}
       />
     </div>
   );

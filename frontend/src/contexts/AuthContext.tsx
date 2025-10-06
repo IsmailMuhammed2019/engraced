@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { apiService, User, AuthResponse, RegisterData, LoginData } from '@/lib/api';
+import { apiService, User, RegisterData, LoginData } from '@/lib/api';
 
 interface AuthContextType {
   user: User | null;

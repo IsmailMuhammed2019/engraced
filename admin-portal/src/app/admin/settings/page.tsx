@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import AdminLayout from "@/components/layout/AdminLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,7 +38,8 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="space-y-6">
+    <AdminLayout>
+      <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
         <p className="text-muted-foreground">
@@ -310,6 +312,7 @@ export default function SettingsPage() {
           )}
         </Button>
       </div>
-    </div>
+      </div>
+    </AdminLayout>
   );
 }
