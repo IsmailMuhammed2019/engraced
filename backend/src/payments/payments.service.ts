@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
+import { EmailService } from '../email/email.service';
 import axios from 'axios';
 
 @Injectable()
@@ -11,6 +12,7 @@ export class PaymentsService {
   constructor(
     private prisma: PrismaService,
     private configService: ConfigService,
+    private emailService: EmailService,
   ) {
     this.paystackSecretKey = this.configService.get<string>('PAYSTACK_SECRET_KEY');
   }
@@ -134,6 +136,27 @@ export class PaymentsService {
               },
             },
           });
+        }
+
+        // Send payment confirmation email
+        try {
+          await this.emailService.sendBookingConfirmationEmail(
+            payment.booking.user.email,
+            payment.booking.user.firstName,
+            {
+              bookingId: payment.booking.id,
+              bookingNumber: payment.booking.bookingNumber,
+              route: `${payment.booking.route.from} to ${payment.booking.route.to}`,
+              date: payment.booking.trip.departureTime.toLocaleDateString(),
+              time: payment.booking.trip.departureTime,
+              passengers: payment.booking.passengerCount,
+              seats: payment.booking.seatNumbers.join(', '),
+              amount: payment.amount.toString(),
+            }
+          );
+        } catch (error) {
+          console.error('Failed to send payment confirmation email:', error);
+          // Don't fail payment if email fails
         }
       }
 

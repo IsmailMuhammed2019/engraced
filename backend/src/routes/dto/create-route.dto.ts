@@ -21,7 +21,7 @@ export class CreateRouteDto {
 
   @ApiProperty({ example: 7500.00 })
   @Transform(({ value }) => parseFloat(value))
-  @IsDecimal({ decimal_digits: '2' })
+  @IsNumber()
   basePrice: number;
 
   @ApiProperty({ example: 'Premium route connecting Lagos to Abuja', required: false })

@@ -13,6 +13,7 @@ import { SystemModule } from './system/system.module';
 import { DriversModule } from './drivers/drivers.module';
 import { VehiclesModule } from './vehicles/vehicles.module';
 import { PaymentsModule } from './payments/payments.module';
+import { PromotionsModule } from './promotions/promotions.module';
 import { EmailModule } from './email/email.module';
 import { HealthModule } from './health/health.module';
 import { UploadModule } from './upload/upload.module';
@@ -41,6 +42,7 @@ import { UploadModule } from './upload/upload.module';
     DriversModule,
     VehiclesModule,
     PaymentsModule,
+    PromotionsModule,
     EmailModule,
     HealthModule,
     UploadModule,

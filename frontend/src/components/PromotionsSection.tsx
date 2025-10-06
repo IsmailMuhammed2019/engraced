@@ -81,7 +81,7 @@ export default function PromotionsSection() {
 
   const fetchOffers = async () => {
     try {
-      const response = await fetch('http://localhost:3003/api/v1/offers/active');
+      const response = await fetch('http://localhost:3003/api/v1/promotions/active');
       if (response.ok) {
         const data = await response.json();
         setOffers(data);

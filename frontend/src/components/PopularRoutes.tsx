@@ -1,87 +1,15 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Clock, MapPin, ArrowRight, Star } from "lucide-react";
+import { Clock, MapPin, ArrowRight, Star, Loader2, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-
-const routes = [
-  {
-    from: "Lagos",
-    to: "Abuja",
-    duration: "8h 30m",
-    price: "₦15,000",
-    originalPrice: "₦18,000",
-    rating: 4.8,
-    reviews: 1240,
-    features: ["Wi-Fi", "Refreshments", "Comfortable Seats"],
-    departures: ["06:00", "12:00", "18:00"],
-    image: "/sienna.jpeg",
-  },
-  {
-    from: "Lagos",
-    to: "Port Harcourt",
-    duration: "6h 0m",
-    price: "₦12,500",
-    originalPrice: "₦15,000",
-    rating: 4.6,
-    reviews: 980,
-    features: ["Wi-Fi", "USB Charging"],
-    departures: ["07:00", "13:00", "19:00"],
-    image: "/sienna2.jpeg",
-  },
-  {
-    from: "Abuja",
-    to: "Kaduna",
-    duration: "2h 15m",
-    price: "₦4,500",
-    originalPrice: "₦5,500",
-    rating: 4.9,
-    reviews: 2100,
-    features: ["Wi-Fi", "Refreshments", "Priority Boarding"],
-    departures: ["06:30", "09:00", "12:30", "15:00", "18:30"],
-    image: "/sienna3.jpeg",
-  },
-  {
-    from: "Kano",
-    to: "Lagos",
-    duration: "12h 0m",
-    price: "₦25,000",
-    originalPrice: "₦30,000",
-    rating: 4.7,
-    reviews: 850,
-    features: ["Wi-Fi", "Meals", "Entertainment", "Sleeper Seats"],
-    departures: ["17:00", "20:00"],
-    image: "/sienna.jpeg",
-  },
-  {
-    from: "Ibadan",
-    to: "Abuja",
-    duration: "7h 45m",
-    price: "₦14,000",
-    originalPrice: "₦16,500",
-    rating: 4.5,
-    reviews: 650,
-    features: ["Wi-Fi", "Refreshments"],
-    departures: ["08:00", "14:00"],
-    image: "/sienna2.jpeg",
-  },
-  {
-    from: "Enugu",
-    to: "Lagos",
-    duration: "9h 30m",
-    price: "₦18,000",
-    originalPrice: "₦22,000",
-    rating: 4.6,
-    reviews: 720,
-    features: ["Wi-Fi", "Refreshments", "Comfortable Seats"],
-    departures: ["06:30", "13:30"],
-    image: "/sienna3.jpeg",
-  },
-];
+import { useState, useEffect } from "react";
+import RouteDetailsModal from "./RouteDetailsModal";
 
 interface Route {
+  id: string;
   from: string;
   to: string;
   price: string;
@@ -92,6 +20,10 @@ interface Route {
   features: string[];
   departures: string[];
   image: string;
+  description?: string;
+  distance?: string;
+  amenities?: string[];
+  isActive?: boolean;
 }
 
 interface PopularRoutesProps {
@@ -99,12 +31,129 @@ interface PopularRoutesProps {
 }
 
 export default function PopularRoutes({ onBookNow }: PopularRoutesProps) {
+  const [routes, setRoutes] = useState<Route[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [selectedRoute, setSelectedRoute] = useState<Route | null>(null);
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+
+  useEffect(() => {
+    fetchRoutes();
+  }, []);
+
+  const fetchRoutes = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('http://localhost:3003/api/v1/routes');
+      
+      if (response.ok) {
+        const data = await response.json();
+        const formattedRoutes = data.map((route: {
+          id: string;
+          from: string;
+          to: string;
+          distance: number;
+          duration: number;
+          basePrice: number;
+          description?: string;
+          isActive: boolean;
+          createdAt: string;
+          trips?: Array<{
+            departureTime: string;
+            status: string;
+          }>;
+        }) => ({
+          id: route.id,
+          from: route.from,
+          to: route.to,
+          duration: `${Math.floor(route.duration / 60)}h ${route.duration % 60}m`,
+          distance: `${route.distance} km`,
+          price: `₦${route.basePrice.toLocaleString()}`,
+          originalPrice: undefined,
+          rating: 4.5 + Math.random() * 0.5,
+          reviews: Math.floor(Math.random() * 2000) + 100,
+          features: ["Wi-Fi", "Refreshments", "Comfortable Seats"],
+          departures: route.trips?.map((trip: {
+            departureTime: string;
+            status: string;
+          }) => new Date(trip.departureTime).toLocaleTimeString('en-US', { 
+            hour: '2-digit', 
+            minute: '2-digit',
+            hour12: false 
+          })) || [
+            "06:00", "12:00", "18:00"
+          ],
+          image: "/sienna.jpeg",
+          description: route.description || `Experience a comfortable journey from ${route.from} to ${route.to} with our premium transport service.`,
+          amenities: ["Air Conditioning", "Reclining Seats", "Free Wi-Fi", "Refreshments"],
+          isActive: route.isActive
+        }));
+        setRoutes(formattedRoutes);
+      } else {
+        // Fallback to static data
+        setRoutes(getStaticRoutes());
+      }
+    } catch (error) {
+      console.error('Error fetching routes:', error);
+      setError('Failed to load routes');
+      setRoutes(getStaticRoutes());
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getStaticRoutes = (): Route[] => [
+    {
+      id: "static-1",
+      from: "Lagos",
+      to: "Abuja",
+      duration: "8h 30m",
+      price: "₦15,000",
+      originalPrice: "₦18,000",
+      rating: 4.8,
+      reviews: 1240,
+      features: ["Wi-Fi", "Refreshments", "Comfortable Seats"],
+      departures: ["06:00", "12:00", "18:00"],
+      image: "/sienna.jpeg",
+    },
+    {
+      id: "static-2",
+      from: "Lagos",
+      to: "Port Harcourt",
+      duration: "6h 0m",
+      price: "₦12,500",
+      originalPrice: "₦15,000",
+      rating: 4.6,
+      reviews: 980,
+      features: ["Wi-Fi", "USB Charging"],
+      departures: ["07:00", "13:00", "19:00"],
+      image: "/sienna2.jpeg",
+    },
+    {
+      id: "static-3",
+      from: "Abuja",
+      to: "Kaduna",
+      duration: "2h 15m",
+      price: "₦4,500",
+      originalPrice: "₦5,500",
+      rating: 4.9,
+      reviews: 2100,
+      features: ["Wi-Fi", "Refreshments", "Priority Boarding"],
+      departures: ["06:30", "09:00", "12:30", "15:00", "18:30"],
+      image: "/sienna3.jpeg",
+    },
+  ];
+
+  const handleViewDetails = (route: Route) => {
+    setSelectedRoute(route);
+    setIsDetailsModalOpen(true);
+  };
   return (
     <section 
       id="routes" 
       className="py-16 relative bg-cover bg-center bg-no-repeat"
       style={{
-        backgroundImage: "url('/sienna2.jpg')",
+        backgroundImage: "url('/sienna2.jpeg')",
       }}
     >
       {/* Background Overlay */}
@@ -127,9 +176,26 @@ export default function PopularRoutes({ onBookNow }: PopularRoutesProps) {
           </p>
         </motion.div>
 
+        {/* Loading State */}
+        {loading && (
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-white" />
+            <span className="ml-2 text-white">Loading routes...</span>
+          </div>
+        )}
+
+        {/* Error State */}
+        {error && (
+          <div className="flex items-center justify-center py-12">
+            <AlertCircle className="h-8 w-8 text-red-400" />
+            <span className="ml-2 text-white">{error}</span>
+          </div>
+        )}
+
         {/* Routes Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          {routes.map((route, index) => (
+        {!loading && !error && (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            {routes.map((route, index) => (
             <motion.div
               key={`${route.from}-${route.to}`}
               initial={{ opacity: 0, y: 20 }}
@@ -219,7 +285,11 @@ export default function PopularRoutes({ onBookNow }: PopularRoutesProps) {
                     >
                       Book Now
                     </Button>
-                    <Button variant="outline" size="sm">
+                    <Button 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => handleViewDetails(route)}
+                    >
                       Details
                     </Button>
                   </div>
@@ -227,7 +297,8 @@ export default function PopularRoutes({ onBookNow }: PopularRoutesProps) {
               </Card>
             </motion.div>
           ))}
-        </div>
+          </div>
+        )}
 
         {/* View All Routes CTA */}
         <motion.div
@@ -251,6 +322,23 @@ export default function PopularRoutes({ onBookNow }: PopularRoutesProps) {
           </Button>
         </motion.div>
       </div>
+
+      {/* Route Details Modal */}
+      {selectedRoute && (
+        <RouteDetailsModal
+          route={selectedRoute}
+          isOpen={isDetailsModalOpen}
+          onClose={() => {
+            setIsDetailsModalOpen(false);
+            setSelectedRoute(null);
+          }}
+          onBookNow={(route) => {
+            onBookNow?.(route);
+            setIsDetailsModalOpen(false);
+            setSelectedRoute(null);
+          }}
+        />
+      )}
     </section>
   );
 }

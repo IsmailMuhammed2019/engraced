@@ -62,6 +62,9 @@ interface Trip {
     model: string;
     plateNumber: string;
     features: string[];
+    year?: number;
+    color?: string;
+    image?: string;
   };
   driver: {
     name: string;
@@ -145,41 +148,67 @@ export default function TripsPage() {
       
       if (response.ok) {
         const data = await response.json();
-        const formattedTrips = data.map((trip: { id: string; route: { from: string; to: string }; driver: { name: string }; vehicle: { plateNumber: string }; departureTime: string; price: number; availableSeats: number; totalSeats: number }) => ({
+        const formattedTrips = data.map((trip: { 
+          id: string; 
+          route: { from: string; to: string }; 
+          driver: { name: string; phone?: string; rating?: number; experience?: string }; 
+          vehicle: { 
+            plateNumber: string; 
+            make?: string; 
+            model?: string; 
+            features?: string[]; 
+            capacity?: number; 
+            year?: number; 
+            color?: string;
+            image?: string;
+          }; 
+          departureTime: string; 
+          arrivalTime?: string;
+          price: number; 
+          availableSeats: number; 
+          totalSeats: number;
+          status?: string;
+          features?: string[];
+          amenities?: string[];
+        }) => ({
           id: trip.id,
           route: `${trip.route.from} to ${trip.route.to}`,
           from: trip.route.from,
           to: trip.route.to,
           departureTime: trip.departureTime,
-          arrivalTime: (trip as { arrivalTime?: string }).arrivalTime || new Date(new Date(trip.departureTime).getTime() + 4 * 60 * 60 * 1000).toISOString(), // Mock arrival time (4 hours later)
-          date: (trip as { date?: string }).date || new Date().toISOString().split('T')[0], // Mock date
-          duration: (trip as { duration?: string }).duration || "4 hours", // Mock duration
+          arrivalTime: trip.arrivalTime || new Date(new Date(trip.departureTime).getTime() + 4 * 60 * 60 * 1000).toISOString(),
+          date: new Date(trip.departureTime).toISOString().split('T')[0],
+          duration: trip.arrivalTime ? 
+            `${Math.floor((new Date(trip.arrivalTime).getTime() - new Date(trip.departureTime).getTime()) / (1000 * 60 * 60))}h ${Math.floor(((new Date(trip.arrivalTime).getTime() - new Date(trip.departureTime).getTime()) % (1000 * 60 * 60)) / (1000 * 60))}m` :
+            "4 hours",
           price: trip.price,
-          originalPrice: (trip as { originalPrice?: number }).originalPrice || trip.price * 1.2, // Mock original price
+          originalPrice: trip.price * 1.2,
           availableSeats: trip.availableSeats || Math.floor(Math.random() * 20) + 1,
           totalSeats: trip.totalSeats || 30,
           vehicle: {
-            make: (trip.vehicle as { make?: string })?.make || "Toyota",
-            model: (trip.vehicle as { model?: string })?.model || "Sienna",
+            make: trip.vehicle?.make || "Toyota",
+            model: trip.vehicle?.model || "Sienna",
             plateNumber: trip.vehicle?.plateNumber || "ABC123XY",
-            features: (trip.vehicle as { features?: string[] })?.features || ["AC", "WiFi", "USB Charging"],
-            capacity: (trip.vehicle as { capacity?: number })?.capacity || 30,
-            year: (trip.vehicle as { year?: number })?.year || 2020,
-            color: (trip.vehicle as { color?: string })?.color || "White"
+            features: trip.vehicle?.features || ["AC", "WiFi", "USB Charging"],
+            capacity: trip.vehicle?.capacity || 30,
+            year: trip.vehicle?.year || 2020,
+            color: trip.vehicle?.color || "White",
+            image: trip.vehicle?.image || "/sienna.jpeg"
           },
           driver: {
             name: trip.driver?.name || "John Doe",
-            phone: (trip.driver as { phone?: string })?.phone || "+2348071116229",
-            rating: (trip.driver as { rating?: number })?.rating || 4.5 + Math.random() * 0.5,
-            experience: (trip.driver as { experience?: number })?.experience || Math.floor(Math.random() * 10) + 1
+            phone: trip.driver?.phone || "+2348012345678",
+            rating: trip.driver?.rating || 4.5,
+            experience: trip.driver?.experience || "5+ years"
           },
-          amenities: (trip as { amenities?: string[] }).amenities || ["Wi-Fi", "Refreshments", "Comfortable Seats"],
-          status: (trip as { status?: string }).status || "scheduled",
+          status: trip.status || "ACTIVE",
+          features: trip.features || ["Wi-Fi", "Refreshments", "Comfortable Seats"],
+          amenities: trip.amenities || ["Air Conditioning", "Reclining Seats", "Free Wi-Fi"],
           rating: 4.5 + Math.random() * 0.5,
           reviews: Math.floor(Math.random() * 2000) + 100,
-          vehicleType: (trip as { vehicleType?: string }).vehicleType || "Standard",
-          isActive: (trip as { isActive?: boolean }).isActive !== false,
-          createdAt: (trip as { createdAt?: string }).createdAt || new Date().toISOString()
+          vehicleType: "Standard",
+          isActive: true,
+          createdAt: new Date().toISOString()
         }));
         setTrips(formattedTrips);
       } else {
@@ -684,19 +713,36 @@ export default function TripsPage() {
 
                       {/* Vehicle Info */}
                       <div className="p-4 bg-gray-50 rounded-lg">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="font-medium">{trip.vehicle.make} {trip.vehicle.model}</p>
-                            <p className="text-sm text-gray-600">Plate: {trip.vehicle.plateNumber}</p>
+                        <div className="flex items-start gap-4">
+                          {/* Vehicle Image */}
+                          <div className="flex-shrink-0">
+                            <img
+                              src={trip.vehicle.image || "/sienna.jpeg"}
+                              alt={`${trip.vehicle.make} ${trip.vehicle.model}`}
+                              className="w-20 h-16 object-cover rounded-lg"
+                            />
                           </div>
-                          <Badge variant="outline">{trip.vehicleType}</Badge>
-                        </div>
-                        <div className="flex flex-wrap gap-1 mt-2">
-                          {trip.vehicle.features.map((feature, index) => (
-                            <Badge key={index} className="text-xs bg-[#5d4a15] text-white">
-                              {feature}
-                            </Badge>
-                          ))}
+                          
+                          {/* Vehicle Details */}
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between mb-2">
+                              <div>
+                                <p className="font-medium">{trip.vehicle.make} {trip.vehicle.model}</p>
+                                <p className="text-sm text-gray-600">Plate: {trip.vehicle.plateNumber}</p>
+                                {trip.vehicle.year && (
+                                  <p className="text-xs text-gray-500">{trip.vehicle.year} • {trip.vehicle.color}</p>
+                                )}
+                              </div>
+                              <Badge variant="outline">{trip.vehicleType}</Badge>
+                            </div>
+                            <div className="flex flex-wrap gap-1">
+                              {trip.vehicle.features.map((feature, index) => (
+                                <Badge key={index} className="text-xs bg-[#5d4a15] text-white">
+                                  {feature}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
                         </div>
                       </div>
 

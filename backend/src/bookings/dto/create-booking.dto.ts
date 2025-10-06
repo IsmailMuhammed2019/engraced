@@ -15,10 +15,10 @@ export class CreateBookingDto {
   @IsString()
   routeId: string;
 
-  @ApiProperty({ example: 'promo-id-here', required: false })
+  @ApiProperty({ example: 'PROMO123', required: false })
   @IsOptional()
   @IsString()
-  promotionId?: string;
+  promotionCode?: string;
 
   @ApiProperty({ example: 2 })
   @IsNumber()

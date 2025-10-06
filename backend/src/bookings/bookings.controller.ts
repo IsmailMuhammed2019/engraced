@@ -94,6 +94,23 @@ export class BookingsController {
     return this.bookingsService.update(id, updateBookingDto);
   }
 
+  @Patch(':id/status')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Update booking status (Admin only)' })
+  @ApiResponse({ status: 200, description: 'Booking status updated successfully' })
+  @ApiResponse({ status: 404, description: 'Booking not found' })
+  updateStatus(
+    @Param('id') id: string,
+    @Body() body: { status: string; reason?: string },
+    @Request() req,
+  ) {
+    if (req.user.type !== 'admin') {
+      throw new Error('Only admins can update booking status');
+    }
+    return this.bookingsService.updateStatus(id, body.status, body.reason);
+  }
+
   @Delete(':id')
   @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()

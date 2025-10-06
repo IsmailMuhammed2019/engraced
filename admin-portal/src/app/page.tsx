@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { AlertModal } from "@/components/ui/modal";
 import { LogIn, Eye, EyeOff } from "lucide-react";
 
 export default function AdminLogin() {
@@ -12,17 +13,68 @@ export default function AdminLogin() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isClient, setIsClient] = useState(false);
+  const [alertModal, setAlertModal] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'info' as 'success' | 'error' | 'warning' | 'info'
+  });
+
+  const showAlert = (title: string, message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info') => {
+    setAlertModal({
+      isOpen: true,
+      title,
+      message,
+      type
+    });
+  };
+
+  // Ensure we're on the client side
+  useEffect(() => {
+    setIsClient(true);
+    
+    // Check if already logged in
+    const token = localStorage.getItem('adminToken');
+    if (token) {
+      setIsLoggedIn(true);
+    }
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement actual login logic with backend
-    console.log("Login attempt:", { email, password });
     
-    // For demo purposes, accept any email/password or default credentials
-    if (email === "admin@engracedsmile.com" && password === "admin123") {
-      setIsLoggedIn(true);
-    } else {
-      alert("Invalid credentials. Use admin@engracedsmile.com / admin123");
+    if (!isClient) return; // Don't run on server side
+    
+    try {
+        // Try real admin authentication
+        const response = await fetch('/api/v1/simple-admin/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        // Store the real JWT token
+        localStorage.setItem('adminToken', data.data.accessToken);
+        localStorage.setItem('adminUser', JSON.stringify(data.data.user));
+        setIsLoggedIn(true);
+        showAlert('Success', 'Login successful! Redirecting...', 'success');
+        setTimeout(() => {
+          window.location.href = "/admin";
+        }, 1000);
+        return;
+      } else {
+        const errorData = await response.json();
+        console.error('Admin login failed:', errorData);
+        showAlert('Login Failed', errorData.message || 'Invalid credentials', 'error');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      showAlert('Connection Error', 'Login failed. Please check your connection and try again.', 'error');
     }
   };
 
@@ -30,6 +82,18 @@ export default function AdminLogin() {
     // Redirect to admin dashboard
     window.location.href = "/admin";
     return null;
+  }
+
+  // Show loading state during hydration
+  if (!isClient) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-2 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -109,15 +173,6 @@ export default function AdminLogin() {
               </Button>
             </form>
 
-            {/* Demo Credentials */}
-            <div className="mt-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
-              <h3 className="text-sm font-medium text-blue-900 mb-2">Demo Credentials</h3>
-              <div className="text-xs text-blue-700 space-y-1">
-                <p><strong>Email:</strong> admin@engracedsmile.com</p>
-                <p><strong>Password:</strong> admin123</p>
-              </div>
-            </div>
-
             {/* Features */}
             <div className="mt-6 pt-6 border-t border-gray-200">
               <h3 className="text-sm font-medium text-gray-900 mb-3">Admin Features</h3>
@@ -156,7 +211,17 @@ export default function AdminLogin() {
           <p>© 2024 Engracedsmile. All rights reserved.</p>
           <p className="mt-1">Secure Admin Portal</p>
         </div>
+
+        {/* Alert Modal */}
+        <AlertModal
+          isOpen={alertModal.isOpen}
+          onClose={() => setAlertModal({...alertModal, isOpen: false})}
+          title={alertModal.title}
+          message={alertModal.message}
+          type={alertModal.type}
+        />
       </div>
     </div>
   );
-}
+  }
+

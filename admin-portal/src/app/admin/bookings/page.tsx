@@ -29,7 +29,9 @@ import {
   TrendingUp,
   Users,
   Route,
-  Calendar as CalendarIcon
+  Calendar as CalendarIcon,
+  Edit,
+  RefreshCw
 } from "lucide-react";
 import { 
   LineChart, 
@@ -39,6 +41,7 @@ import {
   BarChart, 
   Bar, 
   PieChart as RechartsPieChart, 
+  Pie,
   Cell, 
   XAxis, 
   YAxis, 
@@ -82,6 +85,8 @@ export default function BookingsPage() {
   const [loading, setLoading] = useState(true);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  const [showStatusModal, setShowStatusModal] = useState(false);
+  const [statusUpdate, setStatusUpdate] = useState({ status: '', reason: '' });
 
   // Chart data
   const dailyBookingsData = [
@@ -168,6 +173,54 @@ export default function BookingsPage() {
   const handleConfirmBooking = (booking: Booking) => {
     setSelectedBooking(booking);
     setShowConfirmModal(true);
+  };
+
+  const handleStatusUpdate = (booking: Booking) => {
+    setSelectedBooking(booking);
+    setStatusUpdate({ status: booking.status, reason: '' });
+    setShowStatusModal(true);
+  };
+
+  const updateBookingStatus = async () => {
+    if (!selectedBooking || !statusUpdate.status) return;
+
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`http://localhost:3003/api/v1/bookings/${selectedBooking.id}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          status: statusUpdate.status,
+          reason: statusUpdate.reason
+        })
+      });
+
+      if (response.ok) {
+        setBookings(prev => prev.map(b => 
+          b.id === selectedBooking.id 
+            ? { ...b, status: statusUpdate.status as any }
+            : b
+        ));
+        alert('Booking status updated successfully!');
+      } else {
+        // Mock update for development
+        setBookings(prev => prev.map(b => 
+          b.id === selectedBooking.id 
+            ? { ...b, status: statusUpdate.status as any }
+            : b
+        ));
+        alert('Booking status updated successfully! (Mock)');
+      }
+    } catch (error) {
+      console.error('Error updating booking status:', error);
+      alert('Error updating booking status');
+    }
+    
+    setShowStatusModal(false);
+    setStatusUpdate({ status: '', reason: '' });
   };
 
   const confirmBooking = async () => {
@@ -445,6 +498,10 @@ export default function BookingsPage() {
                   Confirm booking
                 </DropdownMenuItem>
               )}
+              <DropdownMenuItem onClick={() => handleStatusUpdate(row.original)}>
+                <Edit className="mr-2 h-4 w-4" />
+                Update status
+              </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem 
                 className="text-red-600"
@@ -747,6 +804,57 @@ export default function BookingsPage() {
             </div>
           )}
       </div>
+
+      {/* Status Update Modal */}
+      {showStatusModal && selectedBooking && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h3 className="text-lg font-semibold mb-4">Update Booking Status</h3>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-2">Status</label>
+                <select
+                  value={statusUpdate.status}
+                  onChange={(e) => setStatusUpdate(prev => ({ ...prev, status: e.target.value }))}
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                >
+                  <option value="pending">Pending</option>
+                  <option value="confirmed">Confirmed</option>
+                  <option value="cancelled">Cancelled</option>
+                  <option value="completed">Completed</option>
+                </select>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium mb-2">Reason (Optional)</label>
+                <textarea
+                  value={statusUpdate.reason}
+                  onChange={(e) => setStatusUpdate(prev => ({ ...prev, reason: e.target.value }))}
+                  placeholder="Enter reason for status change..."
+                  className="w-full p-2 border border-gray-300 rounded-md h-20"
+                />
+              </div>
+            </div>
+            
+            <div className="flex justify-end space-x-2 mt-6">
+              <Button
+                variant="outline"
+                onClick={() => setShowStatusModal(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={updateBookingStatus}
+                className="bg-blue-600 hover:bg-blue-700"
+              >
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Update Status
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </AdminLayout>
   );
 }

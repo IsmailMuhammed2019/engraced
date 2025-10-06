@@ -102,6 +102,20 @@ interface PassengerInfo {
   specialRequests?: string;
 }
 
+interface Promotion {
+  id: string;
+  title: string;
+  description: string;
+  type: string;
+  value: number;
+  code?: string;
+  startDate: string;
+  endDate: string;
+  isActive: boolean;
+  usedCount: number;
+  usageLimit?: number;
+}
+
 export default function BookingPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -116,6 +130,9 @@ export default function BookingPageContent() {
     emergencyPhone: "",
     specialRequests: ""
   });
+  const [promotions, setPromotions] = useState<Promotion[]>([]);
+  const [selectedPromotion, setSelectedPromotion] = useState<Promotion | null>(null);
+  const [promotionCode, setPromotionCode] = useState("");
   const [isSeatSelectionOpen, setIsSeatSelectionOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
   const [loading, setLoading] = useState(true);
@@ -130,6 +147,17 @@ export default function BookingPageContent() {
 
     if (tripId) {
       fetchTripDetails(tripId);
+    }
+
+    // Fetch promotions
+    fetchPromotions();
+
+    // Check for selected promotion from localStorage
+    const storedPromotion = localStorage.getItem('selectedPromotion');
+    if (storedPromotion) {
+      setSelectedPromotion(JSON.parse(storedPromotion));
+      setPromotionCode(JSON.parse(storedPromotion).code);
+      localStorage.removeItem('selectedPromotion');
     } else {
       // Mock trip details for demonstration
       setTripDetails({
@@ -194,6 +222,47 @@ export default function BookingPageContent() {
     }
   };
 
+  const fetchPromotions = async () => {
+    try {
+      const response = await fetch('http://localhost:3003/api/v1/promotions/active');
+      if (response.ok) {
+        const data = await response.json();
+        setPromotions(data);
+      }
+    } catch (error) {
+      console.error('Error fetching promotions:', error);
+      // Fallback to mock data
+      setPromotions([
+        {
+          id: '1',
+          title: "Student Discount",
+          description: "Up to 30% off on student fares with valid ID.",
+          type: "PERCENTAGE",
+          value: 30,
+          code: "STUDENT30",
+          startDate: "2024-01-01",
+          endDate: "2024-12-31",
+          isActive: true,
+          usedCount: 45,
+          usageLimit: 100,
+        },
+        {
+          id: '2',
+          title: "Early Bird Special",
+          description: "Book 14+ days early to save on all routes.",
+          type: "PERCENTAGE",
+          value: 25,
+          code: "EARLY25",
+          startDate: "2024-01-01",
+          endDate: "2024-12-31",
+          isActive: true,
+          usedCount: 23,
+          usageLimit: 50,
+        },
+      ]);
+    }
+  };
+
   const handleSeatSelection = (seats: { id: string; number: string; price: number }[]) => {
     const selectedSeats: SelectedSeat[] = seats.map(seat => ({
       id: seat.id,
@@ -212,6 +281,57 @@ export default function BookingPageContent() {
     }));
   };
 
+  const handlePromotionCodeChange = (code: string) => {
+    setPromotionCode(code);
+    const promotion = promotions.find(p => p.code === code);
+    setSelectedPromotion(promotion || null);
+  };
+
+  const calculateTotalAmount = () => {
+    if (!tripDetails) return 0;
+    
+    const baseAmount = tripDetails.price * selectedSeats.length;
+    
+    if (selectedPromotion) {
+      let discountAmount = 0;
+      switch (selectedPromotion.type) {
+        case 'PERCENTAGE':
+          discountAmount = (baseAmount * selectedPromotion.value) / 100;
+          break;
+        case 'FIXED_AMOUNT':
+          discountAmount = selectedPromotion.value;
+          break;
+        case 'FREE_RIDE':
+          discountAmount = baseAmount;
+          break;
+      }
+      return Math.max(0, baseAmount - discountAmount);
+    }
+    
+    return baseAmount;
+  };
+
+  const getDiscountAmount = () => {
+    if (!tripDetails || !selectedPromotion) return 0;
+    
+    const baseAmount = tripDetails.price * selectedSeats.length;
+    let discountAmount = 0;
+    
+    switch (selectedPromotion.type) {
+      case 'PERCENTAGE':
+        discountAmount = (baseAmount * selectedPromotion.value) / 100;
+        break;
+      case 'FIXED_AMOUNT':
+        discountAmount = selectedPromotion.value;
+        break;
+      case 'FREE_RIDE':
+        discountAmount = baseAmount;
+        break;
+    }
+    
+    return discountAmount;
+  };
+
   const handleBooking = async () => {
     if (!tripDetails || selectedSeats.length === 0) {
       alert('Please select seats and fill in passenger information');
@@ -220,7 +340,7 @@ export default function BookingPageContent() {
 
     try {
       // Calculate total amount
-      const totalAmount = tripDetails.price + selectedSeats.reduce((sum, seat) => sum + seat.price, 0);
+      const totalAmount = calculateTotalAmount();
       
       // Generate unique reference
       const reference = `BOOK_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
@@ -244,7 +364,10 @@ export default function BookingPageContent() {
             time: tripDetails.departureTime,
             seats: selectedSeats.map(seat => seat.number),
             passengerName: `${passengerInfo.firstName} ${passengerInfo.lastName}`,
-            phone: passengerInfo.phone
+            phone: passengerInfo.phone,
+            promotionCode: selectedPromotion?.code || null,
+            promotionId: selectedPromotion?.id || null,
+            discountAmount: selectedPromotion ? getDiscountAmount() : 0
           }
         }),
       });
@@ -405,55 +528,161 @@ export default function BookingPageContent() {
             )}
 
             {currentStep === 2 && (
-              <Card className="mt-6">
-                <CardHeader>
-                  <CardTitle>Passenger Information</CardTitle>
-                  <CardDescription>
-                    Please provide your contact details
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="firstName">First Name</Label>
-                      <Input
-                        id="firstName"
-                        value={passengerInfo.firstName}
-                        onChange={(e) => handlePassengerInfoChange('firstName', e.target.value)}
-                        placeholder="Enter your first name"
-                      />
+              <>
+                <Card className="mt-6">
+                  <CardHeader>
+                    <CardTitle>Passenger Information</CardTitle>
+                    <CardDescription>
+                      Please provide your contact details
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="firstName">First Name</Label>
+                        <Input
+                          id="firstName"
+                          value={passengerInfo.firstName}
+                          onChange={(e) => handlePassengerInfoChange('firstName', e.target.value)}
+                          placeholder="Enter your first name"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="lastName">Last Name</Label>
+                        <Input
+                          id="lastName"
+                          value={passengerInfo.lastName}
+                          onChange={(e) => handlePassengerInfoChange('lastName', e.target.value)}
+                          placeholder="Enter your last name"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="email">Email</Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          value={passengerInfo.email}
+                          onChange={(e) => handlePassengerInfoChange('email', e.target.value)}
+                          placeholder="Enter your email"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="phone">Phone</Label>
+                        <Input
+                          id="phone"
+                          value={passengerInfo.phone}
+                          onChange={(e) => handlePassengerInfoChange('phone', e.target.value)}
+                          placeholder="Enter your phone number"
+                        />
+                      </div>
                     </div>
-                    <div>
-                      <Label htmlFor="lastName">Last Name</Label>
-                      <Input
-                        id="lastName"
-                        value={passengerInfo.lastName}
-                        onChange={(e) => handlePassengerInfoChange('lastName', e.target.value)}
-                        placeholder="Enter your last name"
-                      />
+                  </CardContent>
+                </Card>
+
+                {/* Promotion Selection */}
+                <Card className="mt-6">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                      <Gift className="h-5 w-5" />
+                      Promotions & Discounts
+                    </CardTitle>
+                    <CardDescription>
+                      Apply a promotion code to save on your booking
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {/* Promotion Code Input */}
+                      <div>
+                        <Label htmlFor="promotionCode">Promotion Code</Label>
+                        <div className="flex gap-2">
+                          <Input
+                            id="promotionCode"
+                            value={promotionCode}
+                            onChange={(e) => handlePromotionCodeChange(e.target.value)}
+                            placeholder="Enter promotion code"
+                            className="flex-1"
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              setPromotionCode("");
+                              setSelectedPromotion(null);
+                            }}
+                          >
+                            Clear
+                          </Button>
+                        </div>
+                      </div>
+
+                      {/* Available Promotions */}
+                      {promotions && promotions.length > 0 && (
+                        <div>
+                          <Label className="text-sm font-medium">Available Promotions</Label>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
+                            {promotions.map((promo) => (
+                              <div
+                                key={promo.id}
+                                className={`p-3 border rounded-lg cursor-pointer transition-colors ${
+                                  selectedPromotion?.id === promo.id
+                                    ? 'border-[#5d4a15] bg-[#5d4a15]/5'
+                                    : 'border-gray-200 hover:border-gray-300'
+                                }`}
+                                onClick={() => {
+                                  setPromotionCode(promo.code || '');
+                                  setSelectedPromotion(promo);
+                                }}
+                              >
+                                <div className="flex justify-between items-start">
+                                  <div>
+                                    <h4 className="font-medium text-sm">{promo.title}</h4>
+                                    <p className="text-xs text-gray-600 mt-1">{promo.description}</p>
+                                    {promo.code && (
+                                      <p className="text-xs text-[#5d4a15] font-mono mt-1">
+                                        Code: {promo.code}
+                                      </p>
+                                    )}
+                                  </div>
+                                  <Badge variant="outline" className="text-xs">
+                                    {promo.type === 'PERCENTAGE' 
+                                      ? `${promo.value}% OFF`
+                                      : promo.type === 'FIXED_AMOUNT'
+                                      ? `₦${promo.value} OFF`
+                                      : 'FREE RIDE'
+                                    }
+                                  </Badge>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Selected Promotion Display */}
+                      {selectedPromotion && (
+                        <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                          <div className="flex items-center gap-2 mb-2">
+                            <CheckCircle className="h-4 w-4 text-green-600" />
+                            <span className="font-medium text-green-800">Promotion Applied</span>
+                          </div>
+                          <p className="text-sm text-green-700">
+                            {selectedPromotion.title} - {selectedPromotion.description}
+                          </p>
+                          <p className="text-sm text-green-600 mt-1">
+                            Discount: {selectedPromotion.type === 'PERCENTAGE' 
+                              ? `${selectedPromotion.value}% off`
+                              : selectedPromotion.type === 'FIXED_AMOUNT'
+                              ? `₦${selectedPromotion.value} off`
+                              : 'Free ride'
+                            }
+                          </p>
+                        </div>
+                      )}
                     </div>
-                    <div>
-                      <Label htmlFor="email">Email</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        value={passengerInfo.email}
-                        onChange={(e) => handlePassengerInfoChange('email', e.target.value)}
-                        placeholder="Enter your email"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="phone">Phone</Label>
-                      <Input
-                        id="phone"
-                        value={passengerInfo.phone}
-                        onChange={(e) => handlePassengerInfoChange('phone', e.target.value)}
-                        placeholder="Enter your phone number"
-                      />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </>
             )}
 
             {currentStep === 3 && (
@@ -480,10 +709,30 @@ export default function BookingPageContent() {
                             <span>₦{selectedSeats.reduce((sum, seat) => sum + seat.price, 0).toLocaleString()}</span>
                           </div>
                         )}
+                        
+                        {/* Promotion Discount */}
+                        {selectedPromotion && (
+                          <>
+                            <div className="flex justify-between text-green-600">
+                              <span>Discount ({selectedPromotion.title})</span>
+                              <span>-₦{getDiscountAmount().toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between text-sm text-gray-600">
+                              <span>Applied Code: {selectedPromotion.code}</span>
+                              <span>{selectedPromotion.type === 'PERCENTAGE' 
+                                ? `${selectedPromotion.value}% off`
+                                : selectedPromotion.type === 'FIXED_AMOUNT'
+                                ? `₦${selectedPromotion.value} off`
+                                : 'Free ride'
+                              }</span>
+                            </div>
+                          </>
+                        )}
+                        
                         <div className="border-t pt-2">
                           <div className="flex justify-between font-semibold">
                             <span>Total Amount</span>
-                            <span>₦{((tripDetails?.price || 0) + selectedSeats.reduce((sum, seat) => sum + seat.price, 0)).toLocaleString()}</span>
+                            <span>₦{calculateTotalAmount().toLocaleString()}</span>
                           </div>
                         </div>
                       </div>

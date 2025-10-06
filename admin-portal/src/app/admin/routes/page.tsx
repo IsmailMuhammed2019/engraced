@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/ui/data-table";
+import { Modal, AlertModal } from "@/components/ui/modal";
 import { 
   Plus, 
   Search, 
@@ -20,6 +21,7 @@ import {
   ArrowUpDown,
   MoreHorizontal
 } from "lucide-react";
+import RouteDetailsModal from "@/components/RouteDetailsModal";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -46,6 +48,10 @@ export default function RoutesPage() {
   const [routes, setRoutes] = useState<Route[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddRouteModal, setShowAddRouteModal] = useState(false);
+  const [showRouteDetailsModal, setShowRouteDetailsModal] = useState(false);
+  const [selectedRoute, setSelectedRoute] = useState<Route | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingRouteId, setEditingRouteId] = useState<string | null>(null);
   const [newRoute, setNewRoute] = useState({
     from: '',
     to: '',
@@ -53,6 +59,15 @@ export default function RoutesPage() {
     duration: '',
     price: '',
     status: 'active' as 'active' | 'inactive'
+  });
+  
+  // Modal states
+  const [alertModal, setAlertModal] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'info' as 'success' | 'error' | 'warning' | 'info',
+    onConfirm: () => {}
   });
 
   // Fetch routes data
@@ -64,7 +79,7 @@ export default function RoutesPage() {
     try {
       setLoading(true);
       const token = localStorage.getItem('adminToken');
-      const response = await fetch('http://localhost:3003/api/v1/routes', {
+      const response = await fetch('/api/v1/routes', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -73,16 +88,30 @@ export default function RoutesPage() {
       
       if (response.ok) {
         const data = await response.json();
-        setRoutes(data);
+        // Format the data to match our Route interface
+        const formattedRoutes: Route[] = data.map((route: any) => ({
+          id: route.id,
+          from: route.from,
+          to: route.to,
+          distance: `${route.distance} km`,
+          duration: formatMinutesToDuration(route.duration),
+          price: `₦${route.basePrice.toLocaleString()}`,
+          status: route.isActive ? 'active' : 'inactive',
+          bookings: Math.floor(Math.random() * 200) + 10, // Mock bookings count
+          lastTrip: new Date().toISOString().split('T')[0] // Mock last trip
+        }));
+        setRoutes(formattedRoutes);
+      } else if (response.status === 401) {
+        showAlert('Session Expired', 'Your session has expired. Please login again.', 'error');
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 2000);
       } else {
-        console.error('Failed to fetch routes');
-        // Fallback to mock data for development
-        setRoutes(getMockRoutes());
+        showAlert('Error', 'Failed to fetch routes', 'error');
       }
     } catch (error) {
       console.error('Error fetching routes:', error);
-      // Fallback to mock data for development
-      setRoutes(getMockRoutes());
+      showAlert('Connection Error', 'Failed to connect to server. Please try again.', 'error');
     } finally {
       setLoading(false);
     }
@@ -147,85 +176,142 @@ export default function RoutesPage() {
     }
   };
 
+  const showAlert = (title: string, message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info', onConfirm?: () => void) => {
+    setAlertModal({
+      isOpen: true,
+      title,
+      message,
+      type,
+      onConfirm: onConfirm || (() => {})
+    });
+  };
+
   const handleAddRoute = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch('http://localhost:3003/api/v1/routes', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(newRoute)
-      });
       
-      if (response.ok) {
-        const addedRoute = await response.json();
-        setRoutes([...routes, addedRoute]);
-        setShowAddRouteModal(false);
-        setNewRoute({
-          from: '',
-          to: '',
-          distance: '',
-          duration: '',
-          price: '',
-          status: 'active'
+      if (!token) {
+        showAlert('Authentication Error', 'Please log in again to continue.', 'error', () => {
+          localStorage.clear();
+          window.location.href = '/';
         });
-      } else {
-        // Fallback: add to local state for development
-        const mockRoute: Route = {
-          id: (routes.length + 1).toString(),
-          from: newRoute.from,
-          to: newRoute.to,
-          distance: newRoute.distance,
-          duration: newRoute.duration,
-          price: newRoute.price,
-          status: newRoute.status,
-          bookings: 0,
-          lastTrip: new Date().toISOString().split('T')[0]
-        };
-        setRoutes([...routes, mockRoute]);
-        setShowAddRouteModal(false);
-        setNewRoute({
-          from: '',
-          to: '',
-          distance: '',
-          duration: '',
-          price: '',
-          status: 'active'
-        });
+        return;
       }
-    } catch (error) {
-      console.error('Error adding route:', error);
-      // Fallback: add to local state for development
-      const mockRoute: Route = {
-        id: (routes.length + 1).toString(),
+      
+      // Format data for backend API
+      const routeData = {
         from: newRoute.from,
         to: newRoute.to,
-        distance: newRoute.distance,
-        duration: newRoute.duration,
-        price: newRoute.price,
-        status: newRoute.status,
-        bookings: 0,
-        lastTrip: new Date().toISOString().split('T')[0]
+        distance: parseInt(newRoute.distance),
+        duration: parseDurationToMinutes(newRoute.duration),
+        basePrice: parseFloat(newRoute.price.replace(/[₦,]/g, '')),
+        description: `Travel from ${newRoute.from} to ${newRoute.to}`,
+        isActive: newRoute.status === 'active'
       };
-      setRoutes([...routes, mockRoute]);
-      setShowAddRouteModal(false);
-      setNewRoute({
-        from: '',
-        to: '',
-        distance: '',
-        duration: '',
-        price: '',
-        status: 'active'
-      });
+
+      // Try to create or update route via backend API
+      try {
+        const url = isEditing && editingRouteId 
+          ? `/api/v1/routes/${editingRouteId}`
+          : '/api/v1/routes';
+        
+        const method = isEditing ? 'PATCH' : 'POST';
+        
+        const response = await fetch(url, {
+          method,
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify(routeData)
+        });
+        
+        if (response.ok) {
+          const routeResponse = await response.json();
+          // Format the response to match our Route interface
+          const formattedRoute: Route = {
+            id: routeResponse.id,
+            from: routeResponse.from,
+            to: routeResponse.to,
+            distance: `${routeResponse.distance} km`,
+            duration: formatMinutesToDuration(routeResponse.duration),
+            price: `₦${routeResponse.basePrice.toLocaleString()}`,
+            status: routeResponse.isActive ? 'active' : 'inactive',
+            bookings: 0,
+            lastTrip: new Date().toISOString().split('T')[0]
+          };
+          
+          if (isEditing) {
+            // Update existing route
+            setRoutes(routes.map(route => 
+              route.id === editingRouteId ? formattedRoute : route
+            ));
+            showAlert('Success', 'Route updated successfully!', 'success');
+          } else {
+            // Add new route
+            setRoutes([...routes, formattedRoute]);
+            showAlert('Success', 'Route added successfully!', 'success');
+          }
+          
+          // Reset form and close modal
+          setShowAddRouteModal(false);
+          setIsEditing(false);
+          setEditingRouteId(null);
+          setNewRoute({
+            from: '',
+            to: '',
+            distance: '',
+            duration: '',
+            price: '',
+            status: 'active'
+          });
+          return;
+        } else if (response.status === 401) {
+          showAlert('Authentication Error', 'Your session has expired. Please log in again.', 'error', () => {
+            localStorage.clear();
+            window.location.href = '/';
+          });
+          return;
+        } else {
+          const errorData = await response.json();
+          console.error('Backend API error:', errorData);
+          showAlert('Error', `Failed to ${isEditing ? 'update' : 'create'} route: ${errorData.message || 'Unknown error'}`, 'error');
+          return;
+        }
+      } catch (apiError) {
+        console.error('Backend API failed:', apiError);
+        showAlert('Connection Error', 'Unable to connect to server. Please check your connection and try again.', 'error');
+        return;
+      }
+    } catch (error) {
+      console.error('Error saving route:', error);
+      showAlert('Error', 'An unexpected error occurred. Please try again.', 'error');
     }
+  };
+
+  // Helper function to parse duration string to minutes
+  const parseDurationToMinutes = (duration: string): number => {
+    const match = duration.match(/(\d+)h\s*(\d+)?m?/);
+    if (match) {
+      const hours = parseInt(match[1]);
+      const minutes = match[2] ? parseInt(match[2]) : 0;
+      return hours * 60 + minutes;
+    }
+    return 480; // Default 8 hours
+  };
+
+  // Helper function to format minutes to duration string
+  const formatMinutesToDuration = (minutes: number): string => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${hours}h ${mins}m`;
   };
 
   const handleViewRoute = (routeId: string) => {
     const route = routes.find(r => r.id === routeId);
     if (route) {
-      alert(`Viewing route: ${route.from} → ${route.to}\nDistance: ${route.distance}\nDuration: ${route.duration}\nPrice: ${route.price}`);
+      setSelectedRoute(route);
+      setShowRouteDetailsModal(true);
     }
   };
 
@@ -235,19 +321,27 @@ export default function RoutesPage() {
       setNewRoute({
         from: route.from,
         to: route.to,
-        distance: route.distance,
+        distance: route.distance.replace(' km', ''), // Remove km suffix for editing
         duration: route.duration,
-        price: route.price,
+        price: route.price.replace('₦', '').replace(/,/g, ''), // Remove currency formatting
         status: route.status
       });
+      setIsEditing(true);
+      setEditingRouteId(routeId);
       setShowAddRouteModal(true);
     }
   };
 
   const handleDeleteRoute = (routeId: string) => {
-    if (confirm('Are you sure you want to delete this route?')) {
-      setRoutes(routes.filter(r => r.id !== routeId));
-    }
+    showAlert(
+      'Delete Route',
+      'Are you sure you want to delete this route? This action cannot be undone.',
+      'warning',
+      () => {
+        setRoutes(routes.filter(r => r.id !== routeId));
+        showAlert('Success', 'Route deleted successfully!', 'success');
+      }
+    );
   };
 
   const columns: ColumnDef<Route>[] = [
@@ -392,7 +486,19 @@ export default function RoutesPage() {
             <h1 className="text-3xl font-bold text-gray-900">Routes Management</h1>
             <p className="text-gray-600 mt-1">Manage and monitor your travel routes</p>
           </div>
-          <Button onClick={() => setShowAddRouteModal(true)} className="btn-golden">
+          <Button onClick={() => {
+            setIsEditing(false);
+            setEditingRouteId(null);
+            setNewRoute({
+              from: '',
+              to: '',
+              distance: '',
+              duration: '',
+              price: '',
+              status: 'active'
+            });
+            setShowAddRouteModal(true);
+          }} className="btn-golden">
             <Plus className="h-4 w-4 mr-2" />
             Add New Route
           </Button>
@@ -477,104 +583,137 @@ export default function RoutesPage() {
         </Card>
 
         {/* Add Route Modal */}
-        {showAddRouteModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <Card className="w-full max-w-2xl">
-              <CardHeader>
-                <CardTitle>Add New Route</CardTitle>
-                <CardDescription>
-                  Create a new travel route with all necessary details
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <form className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm font-medium">From</label>
-                      <Input
-                        placeholder="Origin city"
-                        value={newRoute.from}
-                        onChange={(e) => setNewRoute({...newRoute, from: e.target.value})}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium">To</label>
-                      <Input
-                        placeholder="Destination city"
-                        value={newRoute.to}
-                        onChange={(e) => setNewRoute({...newRoute, to: e.target.value})}
-                        required
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm font-medium">Distance (km)</label>
-                      <Input
-                        placeholder="720"
-                        value={newRoute.distance}
-                        onChange={(e) => setNewRoute({...newRoute, distance: e.target.value})}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium">Duration</label>
-                      <Input
-                        placeholder="8h 30m"
-                        value={newRoute.duration}
-                        onChange={(e) => setNewRoute({...newRoute, duration: e.target.value})}
-                        required
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="text-sm font-medium">Price (₦)</label>
-                      <Input
-                        placeholder="7500"
-                        value={newRoute.price}
-                        onChange={(e) => setNewRoute({...newRoute, price: e.target.value})}
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="text-sm font-medium">Status</label>
-                      <select
-                        className="w-full p-2 border rounded-md"
-                        value={newRoute.status}
-                        onChange={(e) => setNewRoute({...newRoute, status: e.target.value as 'active' | 'inactive'})}
-                      >
-                        <option value="active">Active</option>
-                        <option value="inactive">Inactive</option>
-                      </select>
-                    </div>
-                  </div>
-                  
-                  <div className="flex space-x-2 pt-4">
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={() => setShowAddRouteModal(false)}
-                      className="flex-1"
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      type="button"
-                      onClick={handleAddRoute}
-                      className="flex-1"
-                    >
-                      Add Route
-                    </Button>
-                  </div>
-                </form>
-              </CardContent>
-            </Card>
+        <Modal
+          isOpen={showAddRouteModal}
+          onClose={() => {
+            setShowAddRouteModal(false);
+            setIsEditing(false);
+            setEditingRouteId(null);
+            setNewRoute({
+              from: '',
+              to: '',
+              distance: '',
+              duration: '',
+              price: '',
+              status: 'active'
+            });
+          }}
+          title={isEditing ? "Edit Route" : "Add New Route"}
+          size="lg"
+        >
+          <div className="space-y-4">
+            <p className="text-gray-600">
+              {isEditing ? "Update the travel route details" : "Create a new travel route with all necessary details"}
+            </p>
+            
+            <form className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium">From</label>
+                  <Input
+                    placeholder="Origin city"
+                    value={newRoute.from}
+                    onChange={(e) => setNewRoute({...newRoute, from: e.target.value})}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">To</label>
+                  <Input
+                    placeholder="Destination city"
+                    value={newRoute.to}
+                    onChange={(e) => setNewRoute({...newRoute, to: e.target.value})}
+                    required
+                  />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium">Distance (km)</label>
+                  <Input
+                    placeholder="720"
+                    value={newRoute.distance}
+                    onChange={(e) => setNewRoute({...newRoute, distance: e.target.value})}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Duration</label>
+                  <Input
+                    placeholder="8h 30m"
+                    value={newRoute.duration}
+                    onChange={(e) => setNewRoute({...newRoute, duration: e.target.value})}
+                    required
+                  />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-sm font-medium">Price (₦)</label>
+                  <Input
+                    placeholder="7500"
+                    value={newRoute.price}
+                    onChange={(e) => setNewRoute({...newRoute, price: e.target.value})}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="text-sm font-medium">Status</label>
+                  <select
+                    className="w-full p-2 border rounded-md"
+                    value={newRoute.status}
+                    onChange={(e) => setNewRoute({...newRoute, status: e.target.value as 'active' | 'inactive'})}
+                  >
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                  </select>
+                </div>
+              </div>
+              
+              <div className="flex space-x-2 pt-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setShowAddRouteModal(false)}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="button"
+                  onClick={handleAddRoute}
+                  className="flex-1"
+                >
+                  {isEditing ? "Save Changes" : "Add Route"}
+                </Button>
+              </div>
+            </form>
           </div>
-        )}
+        </Modal>
+
+        {/* Route Details Modal */}
+        <RouteDetailsModal
+          route={selectedRoute}
+          isOpen={showRouteDetailsModal}
+          onClose={() => {
+            setShowRouteDetailsModal(false);
+            setSelectedRoute(null);
+          }}
+        />
+
+        {/* Alert Modal */}
+        <AlertModal
+          isOpen={alertModal.isOpen}
+          onClose={() => setAlertModal({...alertModal, isOpen: false})}
+          title={alertModal.title}
+          message={alertModal.message}
+          type={alertModal.type}
+          onConfirm={alertModal.onConfirm}
+          showCancel={alertModal.type === 'warning'}
+          confirmText={alertModal.type === 'warning' ? 'Delete' : 'OK'}
+        />
       </div>
     </AdminLayout>
   );

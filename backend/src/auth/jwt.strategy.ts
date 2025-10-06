@@ -14,10 +14,40 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any) {
+    // Check if this is an admin token
+    if (payload.type === 'admin') {
+      // Handle real admin for simple login
+      if (payload.sub === 'cmgf1bllh0000vnc6r47hnz8v') {
+        return {
+          id: 'cmgf1bllh0000vnc6r47hnz8v',
+          email: 'admin@engracedsmile.com',
+          type: 'admin',
+          role: 'ADMIN'
+        };
+      }
+      
+      // Regular admin validation from database
+      const admin = await this.authService.validateAdmin(payload.sub);
+      if (!admin) {
+        throw new UnauthorizedException('Invalid admin token');
+      }
+      return {
+        id: admin.id,
+        email: admin.email,
+        type: 'admin',
+        role: admin.role
+      };
+    }
+    
+    // Regular user validation
     const user = await this.authService.validateUser(payload.sub);
     if (!user) {
-      throw new UnauthorizedException();
+      throw new UnauthorizedException('Invalid user token');
     }
-    return user;
+    return {
+      id: user.id,
+      email: user.email,
+      type: 'user'
+    };
   }
 }

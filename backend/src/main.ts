@@ -21,10 +21,15 @@ async function bootstrap() {
       'http://localhost:3000',
       'http://localhost:3001',
       'http://localhost:3002',
+      'https://admin.engracedsmile.com',
+      'https://engracedsmile.com',
+      'https://www.engracedsmile.com',
       configService.get('FRONTEND_URL'),
       configService.get('ADMIN_URL'),
     ],
     credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
   });
 
   // Global validation pipe

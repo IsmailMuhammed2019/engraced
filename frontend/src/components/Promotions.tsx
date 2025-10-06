@@ -16,65 +16,21 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import Image from "next/image";
+import { useState, useEffect } from "react";
 
-const promotions = [
-  {
-    id: 1,
-    title: "Student Discount",
-    description: "Up to 30% off on student fares with valid ID.",
-    discount: "30% OFF",
-    badge: "Limited Time",
-    icon: GraduationCap,
-    color: "from-blue-500 to-blue-600",
-    bgColor: "bg-blue-50",
-    iconColor: "text-blue-600",
-    validUntil: "2024-12-31",
-    terms: "Valid student ID required",
-    image: "/students.jpeg",
-  },
-  {
-    id: 2,
-    title: "Early Bird Special",
-    description: "Book 14+ days early to save on all routes.",
-    discount: "25% OFF",
-    badge: "Popular",
-    icon: Clock,
-    color: "from-green-500 to-green-600",
-    bgColor: "bg-green-50",
-    iconColor: "text-green-600",
-    validUntil: "2024-12-31",
-    terms: "Minimum 14 days advance booking",
-    image: "/earlybird.jpg",
-  },
-  {
-    id: 3,
-    title: "Weekend Special",
-    description: "Flat discounts on weekend trips across all routes.",
-    discount: "20% OFF",
-    badge: "Hot Deal",
-    icon: Calendar,
-    color: "from-purple-500 to-purple-600",
-    bgColor: "bg-purple-50",
-    iconColor: "text-purple-600",
-    validUntil: "2024-12-31",
-    terms: "Valid for Friday-Sunday travel",
-    image: "/weekend.jpeg",
-  },
-  {
-    id: 4,
-    title: "Group Travel",
-    description: "Special rates for groups of 10+ passengers.",
-    discount: "15% OFF",
-    badge: "Group Deal",
-    icon: Users,
-    color: "from-orange-500 to-orange-600",
-    bgColor: "bg-orange-50",
-    iconColor: "text-orange-600",
-    validUntil: "2024-12-31",
-    terms: "Minimum 10 passengers",
-    image: "/grouptravel.jpg",
-  },
-];
+interface Promotion {
+  id: string;
+  title: string;
+  description: string;
+  type: string;
+  value: number;
+  code?: string;
+  startDate: string;
+  endDate: string;
+  isActive: boolean;
+  usedCount: number;
+  usageLimit?: number;
+}
 
 const loyaltyProgram = {
   title: "Engracedsmile Rewards",
@@ -89,6 +45,105 @@ const loyaltyProgram = {
 };
 
 export default function Promotions() {
+  const [promotions, setPromotions] = useState<Promotion[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPromotions = async () => {
+      try {
+        const response = await fetch('http://localhost:3003/api/v1/promotions/active');
+        if (response.ok) {
+          const data = await response.json();
+          setPromotions(data);
+        }
+      } catch (error) {
+        console.error('Error fetching promotions:', error);
+        // Fallback to static data if API fails
+        setPromotions([
+          {
+            id: '1',
+            title: "Student Discount",
+            description: "Up to 30% off on student fares with valid ID.",
+            type: "PERCENTAGE",
+            value: 30,
+            code: "STUDENT30",
+            startDate: "2024-01-01",
+            endDate: "2024-12-31",
+            isActive: true,
+            usedCount: 45,
+            usageLimit: 100,
+          },
+          {
+            id: '2',
+            title: "Early Bird Special",
+            description: "Book 14+ days early to save on all routes.",
+            type: "PERCENTAGE",
+            value: 25,
+            code: "EARLY25",
+            startDate: "2024-01-01",
+            endDate: "2024-12-31",
+            isActive: true,
+            usedCount: 23,
+            usageLimit: 50,
+          },
+        ]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPromotions();
+  }, []);
+
+  const getPromotionIcon = (type: string) => {
+    switch (type) {
+      case 'PERCENTAGE':
+        return Percent;
+      case 'FIXED_AMOUNT':
+        return Gift;
+      case 'FREE_RIDE':
+        return Star;
+      default:
+        return Gift;
+    }
+  };
+
+  const getPromotionColor = (index: number) => {
+    const colors = [
+      { color: "from-blue-500 to-blue-600", bgColor: "bg-blue-50", iconColor: "text-blue-600" },
+      { color: "from-green-500 to-green-600", bgColor: "bg-green-50", iconColor: "text-green-600" },
+      { color: "from-purple-500 to-purple-600", bgColor: "bg-purple-50", iconColor: "text-purple-600" },
+      { color: "from-orange-500 to-orange-600", bgColor: "bg-orange-50", iconColor: "text-orange-600" },
+    ];
+    return colors[index % colors.length];
+  };
+
+  const formatDiscount = (promotion: Promotion) => {
+    switch (promotion.type) {
+      case 'PERCENTAGE':
+        return `${promotion.value}% OFF`;
+      case 'FIXED_AMOUNT':
+        return `₦${promotion.value} OFF`;
+      case 'FREE_RIDE':
+        return 'FREE RIDE';
+      default:
+        return `${promotion.value}% OFF`;
+    }
+  };
+
+  if (loading) {
+    return (
+      <section className="py-16 bg-gradient-to-br from-gray-50 to-amber-50">
+        <div className="container mx-auto px-4">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#5d4a15] mx-auto"></div>
+            <p className="mt-4 text-gray-600">Loading promotions...</p>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="py-16 bg-gradient-to-br from-gray-50 to-amber-50">
       <div className="container mx-auto px-4">
@@ -110,62 +165,86 @@ export default function Promotions() {
 
         {/* Promotions Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
-          {promotions.map((promo, index) => (
-            <motion.div
-              key={promo.id}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, delay: index * 0.1 }}
-              viewport={{ once: true }}
-              whileHover={{ y: -5 }}
-            >
-              <Card className="h-full hover:shadow-xl transition-all duration-300 border-0 shadow-lg overflow-hidden group flex flex-col">
-                {/* Promotion Header */}
-                <div className={`relative h-32 bg-gradient-to-r ${promo.color}`}>
-                  <Image
-                    src={promo.image}
-                    alt={promo.title}
-                    fill
-                    className="object-cover opacity-30"
-                  />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="text-center text-white">
-                      <promo.icon className="h-8 w-8 mx-auto mb-2" />
-                      <div className="text-2xl font-bold">{promo.discount}</div>
+          {promotions && promotions.length > 0 ? promotions.map((promo, index) => {
+            const IconComponent = getPromotionIcon(promo.type);
+            const colors = getPromotionColor(index);
+            const discount = formatDiscount(promo);
+            
+            return (
+              <motion.div
+                key={promo.id}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: index * 0.1 }}
+                viewport={{ once: true }}
+                whileHover={{ y: -5 }}
+              >
+                <Card className="h-full hover:shadow-xl transition-all duration-300 border-0 shadow-lg overflow-hidden group flex flex-col">
+                  {/* Promotion Header */}
+                  <div className={`relative h-32 bg-gradient-to-r ${colors.color}`}>
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="text-center text-white">
+                        <IconComponent className="h-8 w-8 mx-auto mb-2" />
+                        <div className="text-2xl font-bold">{discount}</div>
+                      </div>
                     </div>
-                  </div>
-                  <Badge className="absolute top-2 right-2 bg-white text-gray-900 hover:bg-gray-100">
-                    {promo.badge}
-                  </Badge>
-                </div>
-
-                <CardContent className="p-6 flex flex-col flex-1">
-                  <h3 className="font-bold text-gray-900 mb-2">{promo.title}</h3>
-                  <p className="text-sm text-gray-600 mb-4 leading-relaxed">
-                    {promo.description}
-                  </p>
-
-                  {/* Terms */}
-                  <div className="mb-4">
-                    <p className="text-xs text-gray-500 mb-1">Terms:</p>
-                    <p className="text-xs text-gray-600">{promo.terms}</p>
+                    <Badge className="absolute top-2 right-2 bg-white text-gray-900 hover:bg-gray-100">
+                      {promo.usageLimit ? `${promo.usedCount}/${promo.usageLimit} used` : 'Active'}
+                    </Badge>
                   </div>
 
-                  {/* Valid Until */}
-                  <div className="flex items-center gap-2 mb-4 text-xs text-gray-500">
-                    <Clock3 className="h-3 w-3" />
-                    <span>Valid until {new Date(promo.validUntil).toLocaleDateString()}</span>
-                  </div>
+                  <CardContent className="p-6 flex flex-col flex-1">
+                    <h3 className="font-bold text-gray-900 mb-2">{promo.title}</h3>
+                    <p className="text-sm text-gray-600 mb-4 leading-relaxed">
+                      {promo.description}
+                    </p>
 
-                  {/* CTA Button - Aligned to bottom */}
-                  <Button className="w-full group-hover:shadow-lg transition-all duration-300 mt-auto">
-                    Apply Offer
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ))}
+                    {/* Promotion Code */}
+                    {promo.code && (
+                      <div className="mb-4">
+                        <p className="text-xs text-gray-500 mb-1">Code:</p>
+                        <p className="text-xs text-gray-600 font-mono bg-gray-100 px-2 py-1 rounded">
+                          {promo.code}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Valid Until */}
+                    <div className="flex items-center gap-2 mb-4 text-xs text-gray-500">
+                      <Clock3 className="h-3 w-3" />
+                      <span>Valid until {new Date(promo.endDate).toLocaleDateString()}</span>
+                    </div>
+
+                    {/* CTA Button - Aligned to bottom */}
+                    <Button 
+                      className="w-full group-hover:shadow-lg transition-all duration-300 mt-auto"
+                      onClick={() => {
+                        // Store promotion code for booking
+                        localStorage.setItem('selectedPromotion', JSON.stringify({
+                          id: promo.id,
+                          code: promo.code,
+                          title: promo.title,
+                          type: promo.type,
+                          value: promo.value
+                        }));
+                        // Scroll to booking section or redirect
+                        window.location.href = '/#booking';
+                      }}
+                    >
+                      Apply Offer
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            );
+          }) : (
+            <div className="col-span-full text-center py-8">
+              <Gift className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No Promotions Available</h3>
+              <p className="text-gray-600">Check back later for exciting offers and discounts!</p>
+            </div>
+          )}
         </div>
 
         {/* Loyalty Program Section */}

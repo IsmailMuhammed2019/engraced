@@ -298,10 +298,10 @@ export default function PromotionsPage() {
       applicableRoutes: promotion.applicableRoutes,
       applicableTrips: promotion.applicableTrips,
       applicableVehicles: promotion.applicableVehicles,
-      conditions: promotion.conditions || {
-        minBookingDays: 0,
-        userType: 'all',
-        timeRestriction: ''
+      conditions: {
+        minBookingDays: promotion.conditions?.minBookingDays ?? 0,
+        userType: promotion.conditions?.userType ?? 'all',
+        timeRestriction: promotion.conditions?.timeRestriction ?? ''
       }
     });
     setShowEditPromotionModal(true);
@@ -508,10 +508,6 @@ export default function PromotionsPage() {
             <h1 className="text-3xl font-bold text-gray-900">Promotions</h1>
             <p className="text-gray-600 mt-1">Manage promotional campaigns and discounts</p>
           </div>
-          <Button className="btn-golden">
-            <Plus className="h-4 w-4 mr-2" />
-            Create Promotion
-          </Button>
         </div>
 
         {/* Promotion Stats */}
@@ -836,7 +832,7 @@ export default function PromotionsPage() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="">No Restriction</SelectItem>
+                          <SelectItem value="none">No Restriction</SelectItem>
                           <SelectItem value="weekdays">Weekdays Only</SelectItem>
                           <SelectItem value="weekends">Weekends Only</SelectItem>
                           <SelectItem value="morning">Morning Only</SelectItem>

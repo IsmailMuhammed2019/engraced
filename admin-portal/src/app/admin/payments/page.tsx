@@ -34,6 +34,7 @@ import {
   BarChart, 
   Bar, 
   PieChart as RechartsPieChart, 
+  Pie,
   Cell, 
   XAxis, 
   YAxis, 
@@ -84,6 +85,33 @@ export default function PaymentsPage() {
   });
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [dateFilter, setDateFilter] = useState("all");
+
+  // Export functionality
+  const exportToCSV = () => {
+    const csvContent = [
+      ['ID', 'Amount', 'Status', 'Method', 'Date', 'Customer', 'Reference'],
+      ...payments.map(payment => [
+        payment.id,
+        payment.amount,
+        payment.status,
+        payment.method,
+        payment.createdAt,
+        `${payment.booking.user.firstName} ${payment.booking.user.lastName}`,
+        payment.reference
+      ])
+    ].map(row => row.join(',')).join('\n');
+    
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `payments-${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    window.URL.revokeObjectURL(url);
+  };
 
   // Chart data
   const dailyRevenueData = [
@@ -117,7 +145,6 @@ export default function PaymentsPage() {
     { name: 'Pending', value: 10, count: 24, color: '#f59e0b' },
     { name: 'Failed', value: 5, count: 12, color: '#ef4444' }
   ];
-  const [statusFilter, setStatusFilter] = useState("all");
 
   // Fetch payments data
   useEffect(() => {
@@ -312,16 +339,75 @@ export default function PaymentsPage() {
               <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
               Refresh
             </Button>
-            <Button variant="outline">
+            <Button variant="outline" onClick={exportToCSV}>
               <Download className="h-4 w-4 mr-2" />
               Export
             </Button>
-            <Button className="btn-golden">
+            <Button 
+              className="btn-golden"
+              onClick={() => setShowAdvancedFilter(!showAdvancedFilter)}
+            >
               <Filter className="h-4 w-4 mr-2" />
               Advanced Filter
             </Button>
           </div>
         </div>
+
+        {/* Advanced Filter Panel */}
+        {showAdvancedFilter && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Advanced Filter</CardTitle>
+              <CardDescription>Filter payments by multiple criteria</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Status</label>
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className="w-full p-2 border border-gray-300 rounded-md"
+                  >
+                    <option value="all">All Statuses</option>
+                    <option value="successful">Successful</option>
+                    <option value="failed">Failed</option>
+                    <option value="pending">Pending</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Date Range</label>
+                  <select
+                    value={dateFilter}
+                    onChange={(e) => setDateFilter(e.target.value)}
+                    className="w-full p-2 border border-gray-300 rounded-md"
+                  >
+                    <option value="all">All Time</option>
+                    <option value="today">Today</option>
+                    <option value="week">This Week</option>
+                    <option value="month">This Month</option>
+                    <option value="year">This Year</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2">Amount Range</label>
+                  <div className="flex gap-2">
+                    <Input placeholder="Min Amount" type="number" />
+                    <Input placeholder="Max Amount" type="number" />
+                  </div>
+                </div>
+              </div>
+              <div className="flex justify-end gap-2 mt-4">
+                <Button variant="outline" onClick={() => setShowAdvancedFilter(false)}>
+                  Cancel
+                </Button>
+                <Button onClick={() => setShowAdvancedFilter(false)}>
+                  Apply Filter
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Payment Stats */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">

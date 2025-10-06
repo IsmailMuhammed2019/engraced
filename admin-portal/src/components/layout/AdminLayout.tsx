@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import AuthWrapper from "../AuthWrapper";
 import { 
   LayoutDashboard, 
   Route, 
@@ -50,8 +51,18 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
   const [isNotificationOpen, setIsNotificationOpen] = useState(false);
   const pathname = usePathname();
 
+  const handleLogout = () => {
+    // Clear localStorage
+    localStorage.removeItem('adminToken');
+    localStorage.removeItem('adminUser');
+    
+    // Redirect to login page
+    window.location.href = '/';
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <AuthWrapper>
+      <div className="min-h-screen bg-gray-50">
       {/* Mobile sidebar */}
       <div className={`fixed inset-0 z-50 lg:hidden ${sidebarOpen ? 'block' : 'hidden'}`}>
         <div className="fixed inset-0 bg-gray-600 bg-opacity-75" onClick={() => setSidebarOpen(false)} />
@@ -90,6 +101,18 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
               );
             })}
           </nav>
+          
+          {/* Mobile logout button */}
+          <div className="p-4 border-t">
+            <Button 
+              variant="ghost" 
+              className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
+              onClick={handleLogout}
+            >
+              <LogOut className="h-5 w-5 mr-3" />
+              Logout
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -120,7 +143,11 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
             })}
           </nav>
           <div className="p-4 border-t">
-            <Button variant="ghost" className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50">
+            <Button 
+              variant="ghost" 
+              className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50"
+              onClick={handleLogout}
+            >
               <LogOut className="h-5 w-5 mr-3" />
               Logout
             </Button>
@@ -193,6 +220,15 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                   <p className="text-sm font-medium text-gray-900">Admin User</p>
                   <p className="text-xs text-gray-500">admin@engracedsmile.com</p>
                 </div>
+                <Button 
+                  variant="ghost" 
+                  size="sm"
+                  onClick={handleLogout}
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  Logout
+                </Button>
               </div>
             </div>
           </div>
@@ -219,6 +255,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
         onClose={() => setIsChatOpen(false)}
         adminId="admin-user"
       />
-    </div>
+      </div>
+    </AuthWrapper>
   );
 }
