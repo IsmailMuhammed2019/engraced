@@ -97,12 +97,11 @@ export default function VehicleAvailabilityPage() {
         const data = await response.json();
         setVehicles(data);
       } else {
-        // Fallback to mock data
-        setVehicles(getMockVehicleAvailability());
+        setVehicles([]);
       }
     } catch (error) {
       console.error('Error fetching vehicle availability:', error);
-      setVehicles(getMockVehicleAvailability());
+      setVehicles([]);
     } finally {
       setLoading(false);
     }
@@ -122,95 +121,14 @@ export default function VehicleAvailabilityPage() {
         const data = await response.json();
         setSeatOccupancy(data);
       } else {
-        // Fallback to mock data
-        setSeatOccupancy(getMockSeatOccupancy());
+        setSeatOccupancy([]);
       }
     } catch (error) {
       console.error('Error fetching seat occupancy:', error);
-      setSeatOccupancy(getMockSeatOccupancy());
+      setSeatOccupancy([]);
     }
   };
 
-  const getMockVehicleAvailability = (): VehicleAvailability[] => [
-    {
-      id: "1",
-      make: "Toyota",
-      model: "Sienna",
-      plateNumber: "ABC123XY",
-      capacity: 30,
-      availableSeats: 12,
-      occupiedSeats: 18,
-      maintenanceStatus: "active",
-      currentLocation: "Lagos Terminal",
-      nextTrip: {
-        id: "TRIP001",
-        route: "Lagos to Abuja",
-        departureTime: "14:00",
-        passengers: 8
-      },
-      utilizationRate: 60,
-      lastUpdated: "2024-01-15T10:30:00Z",
-      features: ["AC", "WiFi", "USB Charging", "Reclining Seats"],
-      driver: {
-        name: "John Doe",
-        phone: "+2348071116229",
-        status: "available"
-      }
-    },
-    {
-      id: "2",
-      make: "Toyota",
-      model: "Sienna",
-      plateNumber: "XYZ789AB",
-      capacity: 30,
-      availableSeats: 0,
-      occupiedSeats: 30,
-      maintenanceStatus: "active",
-      currentLocation: "En Route to Abuja",
-      utilizationRate: 100,
-      lastUpdated: "2024-01-15T11:00:00Z",
-      features: ["AC", "WiFi", "USB Charging"],
-      driver: {
-        name: "Jane Smith",
-        phone: "+2348071116230",
-        status: "on_trip"
-      }
-    },
-    {
-      id: "3",
-      make: "Ford",
-      model: "Transit",
-      plateNumber: "DEF456CD",
-      capacity: 25,
-      availableSeats: 25,
-      occupiedSeats: 0,
-      maintenanceStatus: "maintenance",
-      currentLocation: "Service Center",
-      utilizationRate: 0,
-      lastUpdated: "2024-01-15T09:00:00Z",
-      features: ["AC", "WiFi", "Entertainment System"],
-      driver: {
-        name: "Mike Johnson",
-        phone: "+2348071116231",
-        status: "off_duty"
-      }
-    }
-  ];
-
-  const getMockSeatOccupancy = (): SeatOccupancy[] => [
-    {
-      vehicleId: "1",
-      tripId: "TRIP001",
-      route: "Lagos to Abuja",
-      date: "2024-01-15",
-      seats: Array.from({ length: 30 }, (_, i) => ({
-        seatNumber: `${Math.floor(i / 4) + 1}${String.fromCharCode(65 + (i % 4))}`,
-        isOccupied: Math.random() > 0.4,
-        passengerName: Math.random() > 0.4 ? `Passenger ${i + 1}` : undefined,
-        bookingId: Math.random() > 0.4 ? `BK${1000 + i}` : undefined
-      }))
-    }
-  ];
 
   const getStatusColor = (status: string) => {
     switch (status) {

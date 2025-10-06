@@ -113,38 +113,13 @@ export default function PaymentsPage() {
     window.URL.revokeObjectURL(url);
   };
 
-  // Chart data
-  const dailyRevenueData = [
-    { date: '2024-01-01', revenue: 45000, transactions: 12, successRate: 95 },
-    { date: '2024-01-02', revenue: 52000, transactions: 15, successRate: 93 },
-    { date: '2024-01-03', revenue: 38000, transactions: 10, successRate: 90 },
-    { date: '2024-01-04', revenue: 61000, transactions: 18, successRate: 97 },
-    { date: '2024-01-05', revenue: 48000, transactions: 14, successRate: 92 },
-    { date: '2024-01-06', revenue: 55000, transactions: 16, successRate: 94 },
-    { date: '2024-01-07', revenue: 42000, transactions: 13, successRate: 91 }
-  ];
-
-  const paymentMethodData = [
-    { name: 'Paystack', value: 65, count: 156, color: '#5d4a15' },
-    { name: 'Bank Transfer', value: 20, count: 48, color: '#3b82f6' },
-    { name: 'Card Payment', value: 10, count: 24, color: '#10b981' },
-    { name: 'Mobile Money', value: 5, count: 12, color: '#f59e0b' }
-  ];
-
-  const monthlyTrendData = [
-    { month: 'Jan', revenue: 120000, transactions: 45, growth: 15 },
-    { month: 'Feb', revenue: 135000, transactions: 52, growth: 12 },
-    { month: 'Mar', revenue: 148000, transactions: 58, growth: 9 },
-    { month: 'Apr', revenue: 162000, transactions: 65, growth: 8 },
-    { month: 'May', revenue: 175000, transactions: 72, growth: 7 },
-    { month: 'Jun', revenue: 189000, transactions: 78, growth: 6 }
-  ];
-
-  const statusDistributionData = [
-    { name: 'Completed', value: 85, count: 204, color: '#10b981' },
-    { name: 'Pending', value: 10, count: 24, color: '#f59e0b' },
-    { name: 'Failed', value: 5, count: 12, color: '#ef4444' }
-  ];
+  // Chart data - will be populated from real data
+  const [chartData, setChartData] = useState({
+    dailyRevenueData: [] as any[],
+    paymentMethodData: [] as any[],
+    monthlyTrendData: [] as any[],
+    statusDistributionData: [] as any[]
+  });
 
   // Fetch payments data
   useEffect(() => {
@@ -156,7 +131,7 @@ export default function PaymentsPage() {
     try {
       setLoading(true);
       const token = localStorage.getItem('adminToken');
-      const response = await fetch('http://localhost:3003/api/v1/payments', {
+      const response = await fetch('/api/v1/payments', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -168,13 +143,11 @@ export default function PaymentsPage() {
         setPayments(data);
       } else {
         console.error('Failed to fetch payments');
-        // Fallback to mock data for development
-        setPayments(getMockPayments());
+        setPayments([]);
       }
     } catch (error) {
       console.error('Error fetching payments:', error);
-      // Fallback to mock data for development
-      setPayments(getMockPayments());
+      setPayments([]);
     } finally {
       setLoading(false);
     }
@@ -183,7 +156,7 @@ export default function PaymentsPage() {
   const fetchStats = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch('http://localhost:3003/api/v1/payments/stats', {
+      const response = await fetch('/api/v1/payments/stats', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -195,73 +168,26 @@ export default function PaymentsPage() {
         setStats(data);
       } else {
         console.error('Failed to fetch stats');
-        // Fallback to calculated stats from mock data
-        const mockPayments = getMockPayments();
-        setStats(calculateStats(mockPayments));
+        setStats({
+          totalPayments: 0,
+          successfulPayments: 0,
+          failedPayments: 0,
+          totalRevenue: 0,
+          averageTransactionValue: 0
+        });
       }
     } catch (error) {
       console.error('Error fetching stats:', error);
-      // Fallback to calculated stats from mock data
-      const mockPayments = getMockPayments();
-      setStats(calculateStats(mockPayments));
+      setStats({
+        totalPayments: 0,
+        successfulPayments: 0,
+        failedPayments: 0,
+        totalRevenue: 0,
+        averageTransactionValue: 0
+      });
     }
   };
 
-  // Mock data for development
-  const getMockPayments = (): Payment[] => [
-    {
-      id: "PAY-001234",
-      amount: 7500,
-      status: "completed",
-      method: "Card",
-      reference: "TXN_001234567",
-      createdAt: "2024-01-15T06:00:00Z",
-      booking: {
-        id: "BK-001234",
-        user: { firstName: "John", lastName: "Doe", email: "john@example.com" },
-        route: { from: "Lagos", to: "Abuja" }
-      }
-    },
-    {
-      id: "PAY-001235",
-      amount: 3200,
-      status: "pending",
-      method: "Bank Transfer",
-      reference: "TXN_001234568",
-      createdAt: "2024-01-15T14:30:00Z",
-      booking: {
-        id: "BK-001235",
-        user: { firstName: "Jane", lastName: "Smith", email: "jane@example.com" },
-        route: { from: "Abuja", to: "Lagos" }
-      }
-    },
-    {
-      id: "PAY-001236",
-      amount: 6200,
-      status: "completed",
-      method: "Card",
-      reference: "TXN_001234569",
-      createdAt: "2024-01-16T08:00:00Z",
-      booking: {
-        id: "BK-001236",
-        user: { firstName: "Mike", lastName: "Johnson", email: "mike@example.com" },
-        route: { from: "Lagos", to: "Kano" }
-      }
-    },
-    {
-      id: "PAY-001237",
-      amount: 8500,
-      status: "failed",
-      method: "Card",
-      reference: "TXN_001234570",
-      createdAt: "2024-01-16T12:00:00Z",
-      booking: {
-        id: "BK-001237",
-        user: { firstName: "Sarah", lastName: "Wilson", email: "sarah@example.com" },
-        route: { from: "Kano", to: "Lagos" }
-      }
-    }
-  ];
 
   const calculateStats = (payments: Payment[]): PaymentStats => {
     const totalPayments = payments.length;
@@ -488,7 +414,7 @@ export default function PaymentsPage() {
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
-                <ComposedChart data={dailyRevenueData}>
+                <ComposedChart data={chartData.dailyRevenueData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="date" />
                   <YAxis yAxisId="left" />
@@ -520,7 +446,7 @@ export default function PaymentsPage() {
               <ResponsiveContainer width="100%" height={300}>
                 <RechartsPieChart>
                   <Pie
-                    data={paymentMethodData}
+                    data={chartData.paymentMethodData}
                     cx="50%"
                     cy="50%"
                     labelLine={false}
@@ -529,7 +455,7 @@ export default function PaymentsPage() {
                     fill="#8884d8"
                     dataKey="value"
                   >
-                    {paymentMethodData.map((entry, index) => (
+                    {chartData.paymentMethodData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
@@ -537,7 +463,7 @@ export default function PaymentsPage() {
                 </RechartsPieChart>
               </ResponsiveContainer>
               <div className="mt-4 space-y-2">
-                {paymentMethodData.map((method, index) => (
+                {chartData.paymentMethodData.map((method, index) => (
                   <div key={index} className="flex items-center justify-between text-sm">
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 rounded-full" style={{ backgroundColor: method.color }}></div>
@@ -564,7 +490,7 @@ export default function PaymentsPage() {
             </CardHeader>
             <CardContent>
               <ResponsiveContainer width="100%" height={300}>
-                <AreaChart data={monthlyTrendData}>
+                <AreaChart data={chartData.monthlyTrendData}>
                   <CartesianGrid strokeDasharray="3 3" />
                   <XAxis dataKey="month" />
                   <YAxis />
@@ -594,7 +520,7 @@ export default function PaymentsPage() {
               <ResponsiveContainer width="100%" height={300}>
                 <RechartsPieChart>
                   <Pie
-                    data={statusDistributionData}
+                    data={chartData.statusDistributionData}
                     cx="50%"
                     cy="50%"
                     labelLine={false}
@@ -603,7 +529,7 @@ export default function PaymentsPage() {
                     fill="#8884d8"
                     dataKey="value"
                   >
-                    {statusDistributionData.map((entry, index) => (
+                    {chartData.statusDistributionData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
                   </Pie>
@@ -611,7 +537,7 @@ export default function PaymentsPage() {
                 </RechartsPieChart>
               </ResponsiveContainer>
               <div className="mt-4 space-y-2">
-                {statusDistributionData.map((status, index) => (
+                {chartData.statusDistributionData.map((status, index) => (
                   <div key={index} className="flex items-center justify-between text-sm">
                     <div className="flex items-center gap-2">
                       <div className="w-3 h-3 rounded-full" style={{ backgroundColor: status.color }}></div>

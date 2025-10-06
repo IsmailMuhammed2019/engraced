@@ -23,23 +23,27 @@ async function main() {
 
   console.log('✅ Created admin user:', admin.email);
 
-  // Create sample driver
-  const driver = await prisma.driver.upsert({
-    where: { email: 'driver@engracedsmile.com' },
-    update: {},
-    create: {
-      firstName: 'John',
-      lastName: 'Doe',
-      email: 'driver@engracedsmile.com',
-      phone: '+2348071116229',
-      licenseNumber: 'NGR123456789',
-      licenseExpiry: new Date('2025-12-31'),
-      address: 'Lagos, Nigeria',
-      isActive: true,
-    },
-  });
-
-  console.log('✅ Created driver:', driver.email);
+  // Get or create a driver for sample trips (only if needed)
+  let driver = await prisma.driver.findFirst();
+  
+  if (!driver) {
+    // Only create a sample driver if none exist and we need one for trips
+    driver = await prisma.driver.create({
+      data: {
+        firstName: 'Sample',
+        lastName: 'Driver',
+        email: 'sample@engracedsmile.com',
+        phone: '+2348071116229',
+        licenseNumber: 'SAMPLE123456',
+        licenseExpiry: new Date('2025-12-31'),
+        address: 'Lagos, Nigeria',
+        isActive: true,
+      },
+    });
+    console.log('✅ Created sample driver for trips:', driver.email);
+  } else {
+    console.log('✅ Using existing driver for trips:', driver.email);
+  }
 
   // Create sample vehicle
   const vehicle = await prisma.vehicle.upsert({

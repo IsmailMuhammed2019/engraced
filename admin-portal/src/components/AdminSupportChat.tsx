@@ -57,112 +57,6 @@ interface AdminSupportChatProps {
   adminId: string;
 }
 
-const getMockCustomerSessions = (): CustomerSession[] => [
-  {
-    id: "session1",
-    customerId: "customer1",
-    customerName: "Alice Smith",
-    customerEmail: "alice@example.com",
-    customerPhone: "+2348071116229",
-    status: "open",
-    priority: "urgent",
-    lastMessage: "I need help with my booking #12345!",
-    lastMessageTimestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
-    unreadCount: 2,
-    issueType: "booking"
-  },
-  {
-    id: "session2",
-    customerId: "customer2",
-    customerName: "Bob Johnson",
-    customerEmail: "bob@example.com",
-    customerPhone: "+2348071116230",
-    status: "pending",
-    priority: "high",
-    lastMessage: "Question about payment refund.",
-    lastMessageTimestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-    unreadCount: 1,
-    issueType: "payment"
-  },
-  {
-    id: "session3",
-    customerId: "customer3",
-    customerName: "Charlie Brown",
-    customerEmail: "charlie@example.com",
-    customerPhone: "+2348071116231",
-    status: "closed",
-    priority: "low",
-    lastMessage: "Thanks for your help!",
-    lastMessageTimestamp: new Date(Date.now() - 2 * 24 * 3600 * 1000).toISOString(),
-    unreadCount: 0,
-    issueType: "general"
-  },
-];
-
-const getMockMessages = (sessionId: string): AdminMessage[] => {
-  if (sessionId === "session1") {
-    return [
-      {
-        id: "msg1",
-        senderId: "customer1",
-        senderType: "customer",
-        content: "Hi, I have an urgent issue with my booking #12345.",
-        timestamp: new Date(Date.now() - 10 * 60 * 1000).toISOString(),
-        read: true,
-        priority: "urgent"
-      },
-      {
-        id: "msg2",
-        senderId: "admin1",
-        senderType: "admin",
-        content: "Hello Alice, I'm here to help. What seems to be the problem?",
-        timestamp: new Date(Date.now() - 8 * 60 * 1000).toISOString(),
-        read: true
-      },
-      {
-        id: "msg3",
-        senderId: "customer1",
-        senderType: "customer",
-        content: "My departure date needs to be changed, but the app isn't letting me.",
-        timestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
-        read: false,
-        priority: "urgent"
-      },
-      {
-        id: "msg4",
-        senderId: "customer1",
-        senderType: "customer",
-        content: "Can you assist me with this?",
-        timestamp: new Date(Date.now() - 4 * 60 * 1000).toISOString(),
-        read: false,
-        priority: "urgent"
-      },
-    ];
-  }
-  if (sessionId === "session2") {
-    return [
-      {
-        id: "msg5",
-        senderId: "customer2",
-        senderType: "customer",
-        content: "I'd like to know about the refund policy for cancelled trips.",
-        timestamp: new Date(Date.now() - 35 * 60 * 1000).toISOString(),
-        read: true,
-        priority: "high"
-      },
-      {
-        id: "msg6",
-        senderId: "customer2",
-        senderType: "customer",
-        content: "How long does it take to process refunds?",
-        timestamp: new Date(Date.now() - 30 * 60 * 1000).toISOString(),
-        read: false,
-        priority: "high"
-      },
-    ];
-  }
-  return [];
-};
 
 const getPriorityColor = (priority: CustomerSession["priority"]) => {
   switch (priority) {
@@ -208,16 +102,60 @@ export default function AdminSupportChat({ isOpen, onClose, adminId }: AdminSupp
 
   useEffect(() => {
     if (isOpen) {
-      setCustomerSessions(getMockCustomerSessions());
-      // Auto-select the first open/pending session
-      const firstSession = getMockCustomerSessions().find(s => s.status !== "closed");
-      if (firstSession) {
-        setActiveSession(firstSession);
-        setMessages(getMockMessages(firstSession.id));
-        setShowSessionList(false);
-      }
+      fetchCustomerSessions();
     }
   }, [isOpen]);
+
+  const fetchCustomerSessions = async () => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch('/api/v1/support/sessions', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setCustomerSessions(data);
+        // Auto-select the first open/pending session
+        const firstSession = data.find((s: CustomerSession) => s.status !== "closed");
+        if (firstSession) {
+          setActiveSession(firstSession);
+          fetchMessages(firstSession.id);
+          setShowSessionList(false);
+        }
+      } else {
+        setCustomerSessions([]);
+      }
+    } catch (error) {
+      console.error('Error fetching customer sessions:', error);
+      setCustomerSessions([]);
+    }
+  };
+
+  const fetchMessages = async (sessionId: string) => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`/api/v1/support/sessions/${sessionId}/messages`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setMessages(data);
+      } else {
+        setMessages([]);
+      }
+    } catch (error) {
+      console.error('Error fetching messages:', error);
+      setMessages([]);
+    }
+  };
 
   useEffect(() => {
     scrollToBottom();
@@ -254,7 +192,7 @@ export default function AdminSupportChat({ isOpen, onClose, adminId }: AdminSupp
 
   const handleSessionClick = (session: CustomerSession) => {
     setActiveSession(session);
-    setMessages(getMockMessages(session.id));
+    fetchMessages(session.id);
     setShowSessionList(false);
     // Mark messages as read
     setMessages(prev => prev.map(msg => ({ ...msg, read: true })));

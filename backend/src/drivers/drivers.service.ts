@@ -182,6 +182,25 @@ export class DriversService {
     });
   }
 
+  async delete(id: string) {
+    const driver = await this.findOne(id);
+
+    // Check if driver has any trips (active or completed)
+    const tripsCount = await this.prisma.trip.count({
+      where: {
+        driverId: id,
+      },
+    });
+
+    if (tripsCount > 0) {
+      throw new ConflictException('Cannot delete driver with existing trips. Please deactivate instead.');
+    }
+
+    return this.prisma.driver.delete({
+      where: { id },
+    });
+  }
+
   async getDriverStats(id: string) {
     const driver = await this.findOne(id);
 

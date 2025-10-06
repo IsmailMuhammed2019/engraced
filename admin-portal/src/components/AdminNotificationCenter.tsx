@@ -28,88 +28,6 @@ interface AdminNotificationCenterProps {
   adminId: string;
 }
 
-const getMockAdminNotifications = (adminId: string): AdminNotification[] => [
-  {
-    id: "admin-notif1",
-    type: "booking",
-    category: "new_booking",
-    message: "New booking #12345 received from Lagos to Abuja",
-    timestamp: new Date(Date.now() - 5 * 60 * 1000).toISOString(),
-    read: false,
-    priority: "high",
-    actionLink: "/admin/bookings/12345",
-  },
-  {
-    id: "admin-notif2",
-    type: "payment",
-    category: "payment_received",
-    message: "Payment of ₦15,000 received for booking #12344",
-    timestamp: new Date(Date.now() - 15 * 60 * 1000).toISOString(),
-    read: false,
-    priority: "medium",
-    actionLink: "/admin/payments/12344",
-  },
-  {
-    id: "admin-notif3",
-    type: "trip",
-    category: "trip_completed",
-    message: "Trip #TRP-001 from Lagos to Abuja completed successfully",
-    timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(),
-    read: true,
-    priority: "low",
-    actionLink: "/admin/trips/TRP-001",
-  },
-  {
-    id: "admin-notif4",
-    type: "driver",
-    category: "driver_assigned",
-    message: "Driver John Doe assigned to trip #TRP-002",
-    timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString(),
-    read: false,
-    priority: "medium",
-    actionLink: "/admin/drivers/john-doe",
-  },
-  {
-    id: "admin-notif5",
-    type: "vehicle",
-    category: "vehicle_maintenance",
-    message: "Vehicle ABC123XY requires maintenance - service due",
-    timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString(),
-    read: false,
-    priority: "high",
-    actionLink: "/admin/vehicles/ABC123XY",
-  },
-  {
-    id: "admin-notif6",
-    type: "customer",
-    category: "customer_support",
-    message: "Customer support request from Alice Smith",
-    timestamp: new Date(Date.now() - 8 * 60 * 60 * 1000).toISOString(),
-    read: true,
-    priority: "medium",
-    actionLink: "/admin/support/alice-smith",
-  },
-  {
-    id: "admin-notif7",
-    type: "route",
-    category: "route_updated",
-    message: "Route Lagos → Abuja updated with new pricing",
-    timestamp: new Date(Date.now() - 12 * 60 * 60 * 1000).toISOString(),
-    read: true,
-    priority: "low",
-    actionLink: "/admin/routes/lagos-abuja",
-  },
-  {
-    id: "admin-notif8",
-    type: "system",
-    category: "system_alert",
-    message: "System maintenance scheduled for tonight at 2 AM",
-    timestamp: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
-    read: true,
-    priority: "low",
-    actionLink: "/admin/settings",
-  },
-];
 
 export default function AdminNotificationCenter({ isOpen, onClose, adminId }: AdminNotificationCenterProps) {
   const [notifications, setNotifications] = useState<AdminNotification[]>([]);
@@ -119,10 +37,31 @@ export default function AdminNotificationCenter({ isOpen, onClose, adminId }: Ad
 
   useEffect(() => {
     if (isOpen) {
-      const fetched = getMockAdminNotifications(adminId);
-      setNotifications(fetched);
+      fetchNotifications();
     }
   }, [isOpen, adminId]);
+
+  const fetchNotifications = async () => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch('/api/v1/notifications', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setNotifications(data);
+      } else {
+        setNotifications([]);
+      }
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+      setNotifications([]);
+    }
+  };
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 

@@ -78,6 +78,17 @@ export class DriversController {
     return this.driversService.update(id, updateDriverDto);
   }
 
+  @Patch(':id/profile-image')
+  @ApiOperation({ summary: 'Update driver profile image (Admin only)' })
+  @ApiResponse({ status: 200, description: 'Driver profile image updated successfully' })
+  @ApiResponse({ status: 404, description: 'Driver not found' })
+  updateProfileImage(@Param('id') id: string, @Body() body: { profileImage: string }, @Request() req) {
+    if (req.user.type !== 'admin') {
+      throw new Error('Only admins can update driver profile images');
+    }
+    return this.driversService.updateProfileImage(id, body.profileImage);
+  }
+
   @Delete(':id')
   @ApiOperation({ summary: 'Deactivate driver (Admin only)' })
   @ApiResponse({ status: 200, description: 'Driver deactivated successfully' })
@@ -88,5 +99,17 @@ export class DriversController {
       throw new Error('Only admins can deactivate drivers');
     }
     return this.driversService.remove(id);
+  }
+
+  @Delete(':id/delete')
+  @ApiOperation({ summary: 'Permanently delete driver (Admin only)' })
+  @ApiResponse({ status: 200, description: 'Driver deleted successfully' })
+  @ApiResponse({ status: 404, description: 'Driver not found' })
+  @ApiResponse({ status: 409, description: 'Driver has existing trips' })
+  delete(@Param('id') id: string, @Request() req) {
+    if (req.user.type !== 'admin') {
+      throw new Error('Only admins can delete drivers');
+    }
+    return this.driversService.delete(id);
   }
 }

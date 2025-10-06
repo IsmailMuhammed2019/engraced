@@ -83,92 +83,6 @@ export default function PromotionsPage() {
     }
   });
 
-  const mockPromotions: Promotion[] = [
-    {
-      id: "PROMO-001",
-      name: "Early Bird Special",
-      type: "discount",
-      value: "15%",
-      description: "Get 15% off on bookings made 7 days in advance",
-      status: "active",
-      startDate: "2024-01-01",
-      endDate: "2024-03-31",
-      usage: 45,
-      maxUsage: 100,
-      applicableRoutes: ["Lagos-Abuja", "Abuja-Kaduna"],
-      applicableTrips: ["TRIP-001", "TRIP-002"],
-      applicableVehicles: ["VEH-001"],
-      conditions: {
-        minBookingDays: 7,
-        userType: "all",
-        timeRestriction: "weekdays"
-      },
-      createdAt: "2024-01-01T00:00:00Z"
-    },
-    {
-      id: "PROMO-002",
-      name: "Weekend Warrior",
-      type: "fixed",
-      value: "₦1,000",
-      description: "Fixed discount of ₦1,000 for weekend travels",
-      status: "active",
-      startDate: "2024-01-15",
-      endDate: "2024-02-15",
-      usage: 23,
-      maxUsage: 50,
-      applicableRoutes: ["All Routes"],
-      applicableTrips: [],
-      applicableVehicles: [],
-      conditions: {
-        minBookingDays: 0,
-        userType: "all",
-        timeRestriction: "weekends"
-      },
-      createdAt: "2024-01-15T00:00:00Z"
-    },
-    {
-      id: "PROMO-003",
-      name: "New User Welcome",
-      type: "discount",
-      value: "20%",
-      description: "Welcome discount for new users",
-      status: "expired",
-      startDate: "2023-12-01",
-      endDate: "2023-12-31",
-      usage: 89,
-      maxUsage: 100,
-      applicableRoutes: ["All Routes"],
-      applicableTrips: [],
-      applicableVehicles: [],
-      conditions: {
-        minBookingDays: 0,
-        userType: "new",
-        timeRestriction: ""
-      },
-      createdAt: "2023-12-01T00:00:00Z"
-    },
-    {
-      id: "PROMO-004",
-      name: "Holiday Special",
-      type: "discount",
-      value: "25%",
-      description: "Special holiday discount",
-      status: "scheduled",
-      startDate: "2024-02-01",
-      endDate: "2024-02-29",
-      usage: 0,
-      maxUsage: 200,
-      applicableRoutes: ["Lagos-Port Harcourt", "Enugu-Lagos"],
-      applicableTrips: ["TRIP-003", "TRIP-004"],
-      applicableVehicles: ["VEH-002", "VEH-003"],
-      conditions: {
-        minBookingDays: 0,
-        userType: "all",
-        timeRestriction: ""
-      },
-      createdAt: "2024-01-20T00:00:00Z"
-    }
-  ];
 
   // Fetch promotions data
   useEffect(() => {
@@ -179,7 +93,7 @@ export default function PromotionsPage() {
     try {
       setLoading(true);
       const token = localStorage.getItem('adminToken');
-      const response = await fetch('http://localhost:3003/api/v1/promotions', {
+      const response = await fetch('/api/v1/promotions', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -190,12 +104,11 @@ export default function PromotionsPage() {
         const data = await response.json();
         setPromotions(data);
       } else {
-        // Use mock data for development
-        setPromotions(mockPromotions);
+        setPromotions([]);
       }
     } catch (error) {
       console.error('Error fetching promotions:', error);
-      setPromotions(mockPromotions);
+      setPromotions([]);
     } finally {
       setLoading(false);
     }
@@ -204,7 +117,7 @@ export default function PromotionsPage() {
   const handleAddPromotion = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch('http://localhost:3003/api/v1/promotions', {
+      const response = await fetch('/api/v1/promotions', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -244,7 +157,7 @@ export default function PromotionsPage() {
 
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`http://localhost:3003/api/v1/promotions/${selectedPromotion.id}`, {
+      const response = await fetch(`/api/v1/promotions/${selectedPromotion.id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,

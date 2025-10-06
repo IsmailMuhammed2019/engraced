@@ -117,11 +117,11 @@ export default function RatingsPage() {
         const data = await response.json();
         setRatings(data);
       } else {
-        setRatings(getMockRatings());
+        setRatings([]);
       }
     } catch (error) {
       console.error('Error fetching ratings:', error);
-      setRatings(getMockRatings());
+      setRatings([]);
     } finally {
       setLoading(false);
     }
@@ -141,95 +141,30 @@ export default function RatingsPage() {
         const data = await response.json();
         setStats(data);
       } else {
-        setStats(getMockStats());
+        setStats({
+          totalRatings: 0,
+          averageRating: 0,
+          ratingDistribution: [],
+          categoryStats: [],
+          recentRatings: [],
+          topRated: [],
+          lowRated: []
+        });
       }
     } catch (error) {
       console.error('Error fetching rating stats:', error);
-      setStats(getMockStats());
+      setStats({
+        totalRatings: 0,
+        averageRating: 0,
+        ratingDistribution: [],
+        categoryStats: [],
+        recentRatings: [],
+        topRated: [],
+        lowRated: []
+      });
     }
   };
 
-  const getMockRatings = (): Rating[] => [
-    {
-      id: "1",
-      userId: "USER-001",
-      userName: "John Doe",
-      userAvatar: "https://randomuser.me/api/portraits/men/1.jpg",
-      rating: 5,
-      review: "Excellent service! The driver was very professional and the vehicle was clean and comfortable. Highly recommended!",
-      category: "trip",
-      targetId: "TRIP-001",
-      targetName: "Lagos to Abuja",
-      targetType: "trip",
-      timestamp: new Date(Date.now() - 86400000).toISOString(),
-      helpful: 12,
-      verified: true,
-      images: ["https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=400&q=60"],
-      tags: ["comfortable", "professional", "clean"]
-    },
-    {
-      id: "2",
-      userId: "USER-002",
-      userName: "Jane Smith",
-      userAvatar: "https://randomuser.me/api/portraits/women/2.jpg",
-      rating: 4,
-      review: "Good experience overall. The trip was smooth and on time. The driver was friendly and helpful.",
-      category: "driver",
-      targetId: "DRIVER-001",
-      targetName: "Sarah Johnson",
-      targetType: "driver",
-      timestamp: new Date(Date.now() - 172800000).toISOString(),
-      helpful: 8,
-      verified: true,
-      tags: ["on-time", "friendly"]
-    },
-    {
-      id: "3",
-      userId: "USER-003",
-      userName: "Mike Johnson",
-      userAvatar: "https://randomuser.me/api/portraits/men/3.jpg",
-      rating: 2,
-      review: "Poor experience. The vehicle was dirty and the driver was unprofessional. Would not recommend.",
-      category: "vehicle",
-      targetId: "VEHICLE-001",
-      targetName: "Toyota Sienna ABC-123",
-      targetType: "vehicle",
-      timestamp: new Date(Date.now() - 259200000).toISOString(),
-      helpful: 3,
-      verified: false,
-      tags: ["dirty", "unprofessional"]
-    }
-  ];
-
-  const getMockStats = (): RatingStats => ({
-    totalRatings: 156,
-    averageRating: 4.2,
-    ratingDistribution: [
-      { star: 5, count: 78, percentage: 50 },
-      { star: 4, count: 45, percentage: 28.8 },
-      { star: 3, count: 20, percentage: 12.8 },
-      { star: 2, count: 8, percentage: 5.1 },
-      { star: 1, count: 5, percentage: 3.2 }
-    ],
-    categoryStats: [
-      { category: "trip", count: 45, average: 4.3 },
-      { category: "driver", count: 38, average: 4.1 },
-      { category: "vehicle", count: 35, average: 4.0 },
-      { category: "route", count: 28, average: 4.2 },
-      { category: "service", count: 10, average: 4.5 }
-    ],
-    recentRatings: getMockRatings().slice(0, 5),
-    topRated: [
-      { id: "TRIP-001", name: "Lagos to Abuja", type: "trip", averageRating: 4.8, totalRatings: 25 },
-      { id: "DRIVER-001", name: "Sarah Johnson", type: "driver", averageRating: 4.7, totalRatings: 18 },
-      { id: "VEHICLE-002", name: "Mercedes Sprinter", type: "vehicle", averageRating: 4.6, totalRatings: 12 }
-    ],
-    lowRated: [
-      { id: "TRIP-003", name: "Abuja to Kano", type: "trip", averageRating: 2.1, totalRatings: 8 },
-      { id: "DRIVER-003", name: "Mike Wilson", type: "driver", averageRating: 2.3, totalRatings: 5 },
-      { id: "VEHICLE-001", name: "Toyota Sienna", type: "vehicle", averageRating: 2.5, totalRatings: 6 }
-    ]
-  });
 
   const filteredRatings = ratings.filter(rating => {
     const matchesSearch = searchTerm === "" ||

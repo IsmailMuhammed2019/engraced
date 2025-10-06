@@ -22,9 +22,21 @@ interface RouteDetailsModalProps {
   route: Route | null;
   isOpen: boolean;
   onClose: () => void;
+  onViewAnalytics?: (routeId: string) => void;
+  onViewBookings?: (routeId: string) => void;
+  onScheduleTrips?: (routeId: string) => void;
+  onEditRoute?: (routeId: string) => void;
 }
 
-export default function RouteDetailsModal({ route, isOpen, onClose }: RouteDetailsModalProps) {
+export default function RouteDetailsModal({ 
+  route, 
+  isOpen, 
+  onClose, 
+  onViewAnalytics, 
+  onViewBookings, 
+  onScheduleTrips, 
+  onEditRoute 
+}: RouteDetailsModalProps) {
   if (!isOpen || !route) return null;
 
   const getStatusColor = (status: string) => {
@@ -134,15 +146,27 @@ export default function RouteDetailsModal({ route, isOpen, onClose }: RouteDetai
                 <CardTitle className="text-sm font-medium text-gray-600">Quick Actions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-2">
-                <Button className="w-full" variant="outline">
+                <Button 
+                  className="w-full" 
+                  variant="outline"
+                  onClick={() => onViewAnalytics?.(route.id)}
+                >
                   <TrendingUp className="h-4 w-4 mr-2" />
                   View Analytics
                 </Button>
-                <Button className="w-full" variant="outline">
+                <Button 
+                  className="w-full" 
+                  variant="outline"
+                  onClick={() => onViewBookings?.(route.id)}
+                >
                   <BarChart3 className="h-4 w-4 mr-2" />
                   View Bookings
                 </Button>
-                <Button className="w-full" variant="outline">
+                <Button 
+                  className="w-full" 
+                  variant="outline"
+                  onClick={() => onScheduleTrips?.(route.id)}
+                >
                   <Calendar className="h-4 w-4 mr-2" />
                   Schedule Trips
                 </Button>
@@ -245,7 +269,10 @@ export default function RouteDetailsModal({ route, isOpen, onClose }: RouteDetai
             <Button variant="outline" onClick={onClose}>
               Close
             </Button>
-            <Button className="bg-[#5d4a15] hover:bg-[#6b5618]">
+            <Button 
+              className="bg-[#5d4a15] hover:bg-[#6b5618]"
+              onClick={() => onEditRoute?.(route.id)}
+            >
               Edit Route
             </Button>
           </div>

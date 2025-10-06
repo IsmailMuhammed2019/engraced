@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -20,84 +20,35 @@ import {
   DollarSign,
 } from "lucide-react";
 
-// Mock data - replace with real API calls
-const mockTrips = [
-  {
-    id: "1",
-    route: {
-      from: "Lagos",
-      to: "Abuja",
-    },
-    driver: {
-      name: "John Doe",
-      phone: "+2348071116229",
-    },
-    vehicle: {
-      plateNumber: "ABC123XY",
-      make: "Toyota",
-      model: "Sienna",
-    },
-    departureTime: "2024-10-16T06:00:00Z",
-    arrivalTime: "2024-10-16T14:30:00Z",
-    price: 7500,
-    status: "ACTIVE",
-    availableSeats: 3,
-    totalSeats: 7,
-    bookingsCount: 4,
-    features: ["Wi-Fi", "AC", "Refreshments"],
-  },
-  {
-    id: "2",
-    route: {
-      from: "Abuja",
-      to: "Kaduna",
-    },
-    driver: {
-      name: "Jane Smith",
-      phone: "+2348071116230",
-    },
-    vehicle: {
-      plateNumber: "XYZ789AB",
-      make: "Toyota",
-      model: "Sienna",
-    },
-    departureTime: "2024-10-16T08:00:00Z",
-    arrivalTime: "2024-10-16T10:15:00Z",
-    price: 2000,
-    status: "ACTIVE",
-    availableSeats: 1,
-    totalSeats: 7,
-    bookingsCount: 6,
-    features: ["Wi-Fi", "AC"],
-  },
-  {
-    id: "3",
-    route: {
-      from: "Lagos",
-      to: "Port Harcourt",
-    },
-    driver: {
-      name: "Mike Johnson",
-      phone: "+2348071116231",
-    },
-    vehicle: {
-      plateNumber: "DEF456GH",
-      make: "Toyota",
-      model: "Sienna",
-    },
-    departureTime: "2024-10-17T07:30:00Z",
-    arrivalTime: "2024-10-17T13:30:00Z",
-    price: 6200,
-    status: "CANCELLED",
-    availableSeats: 0,
-    totalSeats: 7,
-    bookingsCount: 0,
-    features: ["Wi-Fi", "AC", "Refreshments"],
-  },
-];
+
+interface Trip {
+  id: string;
+  route: {
+    from: string;
+    to: string;
+  };
+  driver: {
+    name: string;
+    phone: string;
+  };
+  vehicle: {
+    plateNumber: string;
+    make: string;
+    model: string;
+  };
+  departureTime: string;
+  arrivalTime: string;
+  price: number;
+  status: string;
+  availableSeats: number;
+  totalSeats: number;
+  bookingsCount: number;
+  features: string[];
+}
 
 export default function TripsPage() {
-  const [trips, setTrips] = useState(mockTrips);
+  const [trips, setTrips] = useState<Trip[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [newTrip, setNewTrip] = useState({
@@ -108,6 +59,37 @@ export default function TripsPage() {
     arrivalTime: '',
     price: ''
   });
+
+  // Fetch trips data
+  useEffect(() => {
+    fetchTrips();
+  }, []);
+
+  const fetchTrips = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch('/api/v1/trips', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setTrips(data);
+      } else {
+        console.error('Failed to fetch trips');
+        setTrips([]);
+      }
+    } catch (error) {
+      console.error('Error fetching trips:', error);
+      setTrips([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredTrips = trips.filter(
     (trip) =>

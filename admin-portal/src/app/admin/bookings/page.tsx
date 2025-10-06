@@ -88,39 +88,13 @@ export default function BookingsPage() {
   const [showStatusModal, setShowStatusModal] = useState(false);
   const [statusUpdate, setStatusUpdate] = useState({ status: '', reason: '' });
 
-  // Chart data
-  const dailyBookingsData = [
-    { date: '2024-01-01', bookings: 12, confirmed: 10, pending: 2, revenue: 45000 },
-    { date: '2024-01-02', bookings: 15, confirmed: 14, pending: 1, revenue: 52000 },
-    { date: '2024-01-03', bookings: 10, confirmed: 9, pending: 1, revenue: 38000 },
-    { date: '2024-01-04', bookings: 18, confirmed: 17, pending: 1, revenue: 61000 },
-    { date: '2024-01-05', bookings: 14, confirmed: 13, pending: 1, revenue: 48000 },
-    { date: '2024-01-06', bookings: 16, confirmed: 15, pending: 1, revenue: 55000 },
-    { date: '2024-01-07', bookings: 13, confirmed: 12, pending: 1, revenue: 42000 }
-  ];
-
-  const routePopularityData = [
-    { route: 'Lagos-Abuja', bookings: 45, revenue: 180000, color: '#5d4a15' },
-    { route: 'Abuja-Kaduna', bookings: 32, revenue: 128000, color: '#3b82f6' },
-    { route: 'Lagos-Port Harcourt', bookings: 28, revenue: 112000, color: '#10b981' },
-    { route: 'Enugu-Lagos', bookings: 22, revenue: 88000, color: '#f59e0b' },
-    { route: 'Kano-Abuja', bookings: 18, revenue: 72000, color: '#ef4444' }
-  ];
-
-  const bookingStatusData = [
-    { name: 'Confirmed', value: 75, count: 180, color: '#10b981' },
-    { name: 'Pending', value: 20, count: 48, color: '#f59e0b' },
-    { name: 'Cancelled', value: 5, count: 12, color: '#ef4444' }
-  ];
-
-  const monthlyBookingsData = [
-    { month: 'Jan', bookings: 45, confirmed: 40, revenue: 180000, growth: 15 },
-    { month: 'Feb', bookings: 52, confirmed: 48, revenue: 208000, growth: 12 },
-    { month: 'Mar', bookings: 58, confirmed: 54, revenue: 232000, growth: 9 },
-    { month: 'Apr', bookings: 65, confirmed: 61, revenue: 260000, growth: 8 },
-    { month: 'May', bookings: 72, confirmed: 68, revenue: 288000, growth: 7 },
-    { month: 'Jun', bookings: 78, confirmed: 74, revenue: 312000, growth: 6 }
-  ];
+  // Chart data - will be populated from real data
+  const [chartData, setChartData] = useState({
+    dailyBookingsData: [] as any[],
+    routePopularityData: [] as any[],
+    bookingStatusData: [] as any[],
+    monthlyBookingsData: [] as any[]
+  });
 
   // Fetch bookings data
   useEffect(() => {
@@ -143,13 +117,11 @@ export default function BookingsPage() {
         setBookings(data);
       } else {
         console.error('Failed to fetch bookings');
-        // Fallback to mock data for development
-        setBookings(getMockBookings());
+        setBookings([]);
       }
     } catch (error) {
       console.error('Error fetching bookings:', error);
-      // Fallback to mock data for development
-      setBookings(getMockBookings());
+      setBookings([]);
     } finally {
       setLoading(false);
     }
@@ -261,81 +233,6 @@ export default function BookingsPage() {
     }
   };
 
-  // Mock data for development
-  const getMockBookings = (): Booking[] => [
-    {
-      id: "BK-001234",
-      bookingNumber: "BK-001234",
-      route: "Lagos → Abuja",
-      passenger: {
-        name: "John Doe",
-        email: "john@example.com",
-        phone: "+2348071116229"
-      },
-      date: "2024-01-15",
-      time: "06:00",
-      status: "confirmed",
-      paymentStatus: "paid",
-      amount: "₦7,500",
-      passengers: 2,
-      seats: ["1A", "1B"],
-      createdAt: "2024-01-14T10:30:00Z"
-    },
-    {
-      id: "BK-001235",
-      bookingNumber: "BK-001235",
-      route: "Abuja → Kaduna",
-      passenger: {
-        name: "Jane Smith",
-        email: "jane@example.com",
-        phone: "+2348071116230"
-      },
-      date: "2024-01-15",
-      time: "14:30",
-      status: "pending",
-      paymentStatus: "pending",
-      amount: "₦3,200",
-      passengers: 1,
-      seats: ["2A"],
-      createdAt: "2024-01-14T15:45:00Z"
-    },
-    {
-      id: "BK-001236",
-      bookingNumber: "BK-001236",
-      route: "Lagos → Port Harcourt",
-      passenger: {
-        name: "Mike Johnson",
-        email: "mike@example.com",
-        phone: "+2348071116231"
-      },
-      date: "2024-01-16",
-      time: "08:00",
-      status: "confirmed",
-      paymentStatus: "paid",
-      amount: "₦6,200",
-      passengers: 1,
-      seats: ["3B"],
-      createdAt: "2024-01-15T09:20:00Z"
-    },
-    {
-      id: "BK-001237",
-      bookingNumber: "BK-001237",
-      route: "Enugu → Lagos",
-      passenger: {
-        name: "Sarah Wilson",
-        email: "sarah@example.com",
-        phone: "+2348071116232"
-      },
-      date: "2024-01-16",
-      time: "12:00",
-      status: "cancelled",
-      paymentStatus: "failed",
-      amount: "₦8,500",
-      passengers: 3,
-      seats: ["4A", "4B", "4C"],
-      createdAt: "2024-01-15T11:15:00Z"
-    }
-  ];
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -609,7 +506,7 @@ export default function BookingsPage() {
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <ComposedChart data={dailyBookingsData}>
+              <ComposedChart data={chartData.dailyBookingsData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="date" />
                 <YAxis yAxisId="left" />
@@ -640,7 +537,7 @@ export default function BookingsPage() {
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={routePopularityData} layout="horizontal">
+              <BarChart data={chartData.routePopularityData} layout="horizontal">
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis type="number" />
                 <YAxis dataKey="route" type="category" width={100} />
@@ -655,7 +552,7 @@ export default function BookingsPage() {
               </BarChart>
             </ResponsiveContainer>
             <div className="mt-4 space-y-2">
-              {routePopularityData.map((route, index) => (
+              {chartData.routePopularityData.map((route, index) => (
                 <div key={index} className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full" style={{ backgroundColor: route.color }}></div>
@@ -685,7 +582,7 @@ export default function BookingsPage() {
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={monthlyBookingsData}>
+              <AreaChart data={chartData.monthlyBookingsData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
                 <YAxis />
@@ -716,7 +613,7 @@ export default function BookingsPage() {
             <ResponsiveContainer width="100%" height={300}>
               <RechartsPieChart>
                 <Pie
-                  data={bookingStatusData}
+                  data={chartData.bookingStatusData}
                   cx="50%"
                   cy="50%"
                   labelLine={false}
@@ -725,7 +622,7 @@ export default function BookingsPage() {
                   fill="#8884d8"
                   dataKey="value"
                 >
-                  {bookingStatusData.map((entry, index) => (
+                  {chartData.bookingStatusData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.color} />
                   ))}
                 </Pie>
@@ -733,7 +630,7 @@ export default function BookingsPage() {
               </RechartsPieChart>
             </ResponsiveContainer>
             <div className="mt-4 space-y-2">
-              {bookingStatusData.map((status, index) => (
+              {chartData.bookingStatusData.map((status, index) => (
                 <div key={index} className="flex items-center justify-between text-sm">
                   <div className="flex items-center gap-2">
                     <div className="w-3 h-3 rounded-full" style={{ backgroundColor: status.color }}></div>

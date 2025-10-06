@@ -93,13 +93,11 @@ export default function VehiclesPage() {
         setVehicles(data);
       } else {
         console.error('Failed to fetch vehicles');
-        // Fallback to mock data for development
-        setVehicles(getMockVehicles());
+        setVehicles([]);
       }
     } catch (error) {
       console.error('Error fetching vehicles:', error);
-      // Fallback to mock data for development
-      setVehicles(getMockVehicles());
+      setVehicles([]);
     } finally {
       setLoading(false);
     }
@@ -231,73 +229,6 @@ export default function VehiclesPage() {
     }
   };
 
-  // Mock data for development
-  const getMockVehicles = (): Vehicle[] => [
-  {
-    id: "1",
-    plateNumber: "ABC123XY",
-    make: "Toyota",
-    model: "Sienna",
-    year: 2022,
-    capacity: 7,
-    features: ["AC", "WiFi", "USB Charging", "Reclining Seats"],
-    mileage: 45000,
-    lastService: "2024-01-15",
-    nextService: "2024-07-15",
-    isActive: true,
-    tripsCount: 23,
-      images: ["image1.jpg", "image2.jpg"],
-    createdAt: "2024-01-15",
-  },
-  {
-    id: "2",
-    plateNumber: "XYZ789AB",
-    make: "Toyota",
-    model: "Sienna",
-    year: 2021,
-    capacity: 7,
-    features: ["AC", "WiFi", "USB Charging"],
-    mileage: 62000,
-    lastService: "2024-02-01",
-    nextService: "2024-08-01",
-    isActive: true,
-    tripsCount: 18,
-      images: ["image3.jpg"],
-      createdAt: "2024-01-10",
-  },
-  {
-    id: "3",
-      plateNumber: "DEF456CD",
-      make: "Ford",
-      model: "Transit",
-      year: 2020,
-      capacity: 8,
-      features: ["AC", "WiFi", "USB Charging", "Reclining Seats", "Entertainment System"],
-      mileage: 78000,
-      lastService: "2024-01-20",
-      nextService: "2024-07-20",
-      isActive: true,
-      tripsCount: 31,
-      images: ["image4.jpg", "image5.jpg", "image6.jpg"],
-      createdAt: "2024-01-05",
-    },
-    {
-      id: "4",
-      plateNumber: "GHI789EF",
-      make: "Mercedes",
-      model: "Sprinter",
-    year: 2023,
-      capacity: 9,
-      features: ["AC", "WiFi", "USB Charging", "Reclining Seats", "Entertainment System", "Climate Control"],
-      mileage: 12000,
-      lastService: "2024-02-10",
-      nextService: "2024-08-10",
-    isActive: false,
-      tripsCount: 5,
-      images: [],
-      createdAt: "2024-02-01",
-    }
-  ];
 
   const getStatusBadge = (isActive: boolean) => {
     return isActive ? (

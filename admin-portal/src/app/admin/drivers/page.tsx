@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DataTable } from "@/components/ui/data-table";
+import { Modal, AlertModal } from "@/components/ui/modal";
 import {
   Plus,
   Search,
@@ -64,24 +65,49 @@ export default function DriversPage() {
     phone: '',
     licenseNumber: '',
     licenseExpiry: '',
-    address: ''
+    address: '',
+    experience: 0
   });
   const [driverImage, setDriverImage] = useState<File | null>(null);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [showImageViewer, setShowImageViewer] = useState(false);
   const [viewerImages, setViewerImages] = useState<string[]>([]);
   const [viewerIndex, setViewerIndex] = useState(0);
+  
+  // Modal states
+  const [alertModal, setAlertModal] = useState({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'info' as 'success' | 'error' | 'warning' | 'info',
+    onConfirm: () => {}
+  });
+  const [showDriverDetailsModal, setShowDriverDetailsModal] = useState(false);
+  const [showEditDriverModal, setShowEditDriverModal] = useState(false);
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+  const [showDeactivateConfirmModal, setShowDeactivateConfirmModal] = useState(false);
+  const [selectedDriver, setSelectedDriver] = useState<Driver | null>(null);
 
   // Fetch drivers data
   useEffect(() => {
     fetchDrivers();
   }, []);
 
+  const showAlert = (title: string, message: string, type: 'success' | 'error' | 'warning' | 'info' = 'info', onConfirm?: () => void) => {
+    setAlertModal({
+      isOpen: true,
+      title,
+      message,
+      type,
+      onConfirm: onConfirm || (() => {})
+    });
+  };
+
   const fetchDrivers = async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('adminToken');
-      const response = await fetch('http://localhost:3003/api/v1/drivers', {
+      const response = await fetch('/api/v1/drivers', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -93,13 +119,11 @@ export default function DriversPage() {
         setDrivers(data);
       } else {
         console.error('Failed to fetch drivers');
-        // Fallback to mock data for development
-        setDrivers(getMockDrivers());
+        setDrivers([]);
       }
     } catch (error) {
       console.error('Error fetching drivers:', error);
-      // Fallback to mock data for development
-      setDrivers(getMockDrivers());
+      setDrivers([]);
     } finally {
       setLoading(false);
     }
@@ -109,8 +133,22 @@ export default function DriversPage() {
     try {
       setIsUploadingImage(true);
       
-      // Upload driver image first if provided
-      let profileImageUrl = '';
+      const token = localStorage.getItem('adminToken');
+      
+      // First, create the driver without profile image
+      const response = await fetch('/api/v1/drivers', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(newDriver)
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        
+        // If driver image was provided, upload it and update the driver
       if (driverImage) {
         const formData = new FormData();
         formData.append('image', driverImage);
@@ -119,35 +157,47 @@ export default function DriversPage() {
         const uploadResponse = await fetch('http://localhost:3003/api/v1/upload/driver', {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
+              'Authorization': `Bearer ${token}`
           },
           body: formData
         });
         
         if (uploadResponse.ok) {
           const uploadData = await uploadResponse.json();
-          profileImageUrl = uploadData.url;
-        }
-      }
-
-      const token = localStorage.getItem('adminToken');
-      const driverData = {
-        ...newDriver,
-        profileImage: profileImageUrl
-      };
-      
-      const response = await fetch('http://localhost:3003/api/v1/drivers', {
-        method: 'POST',
+          console.log('Upload response:', uploadData);
+          console.log('Image URL from upload:', uploadData.data?.url);
+          
+          // Update driver with profile image
+          const updateResponse = await fetch(`/api/v1/drivers/${data.id}/profile-image`, {
+            method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(driverData)
-      });
-
-      if (response.ok) {
-        const data = await response.json();
+            body: JSON.stringify({ profileImage: uploadData.data.url })
+          });
+          
+          console.log('Update response status:', updateResponse.status);
+          
+          if (updateResponse.ok) {
+            const updatedDriver = await updateResponse.json();
+            console.log('Updated driver with image:', updatedDriver);
+            console.log('Driver profile image URL:', updatedDriver.profileImage);
+            setDrivers(prev => [...prev, updatedDriver]);
+          } else {
+            const errorData = await updateResponse.json();
+            console.error('Failed to update driver with profile image:', errorData);
+            // If profile image update fails, still add the driver without image
+            setDrivers(prev => [...prev, data]);
+          }
+          } else {
+            // If image upload fails, still add the driver without image
+            setDrivers(prev => [...prev, data]);
+          }
+        } else {
+          // If no image provided, add the driver without image
         setDrivers(prev => [...prev, data]);
+        }
         setShowAddDriverModal(false);
         setNewDriver({
           firstName: '',
@@ -156,132 +206,128 @@ export default function DriversPage() {
           phone: '',
           licenseNumber: '',
           licenseExpiry: '',
-          address: ''
+          address: '',
+          experience: 0
         });
         setDriverImage(null);
-        alert('Driver added successfully!');
+        showAlert('Success', 'Driver added successfully!', 'success');
       } else {
-        // Mock add for development
-        const mockDriver: Driver = {
-          id: Date.now().toString(),
-          ...newDriver,
-          profileImage: profileImageUrl,
-          rating: 4.5,
-          experience: 2,
-          isActive: true,
-          tripsCount: 0,
-          createdAt: new Date().toISOString()
-        };
-        setDrivers(prev => [...prev, mockDriver]);
-        setShowAddDriverModal(false);
-        setNewDriver({
-          firstName: '',
-          lastName: '',
-          email: '',
-          phone: '',
-          licenseNumber: '',
-          licenseExpiry: '',
-          address: ''
-        });
-        setDriverImage(null);
-        alert('Driver added successfully! (Mock)');
+        const errorData = await response.json();
+        console.error('Failed to add driver:', errorData);
+        showAlert('Error', `Failed to add driver: ${errorData.message || 'Unknown error'}`, 'error');
       }
     } catch (error) {
       console.error('Error adding driver:', error);
-      alert('Failed to add driver');
+      showAlert('Error', 'Failed to add driver', 'error');
     } finally {
       setIsUploadingImage(false);
     }
   };
 
   const handleViewDriver = (driver: Driver) => {
-    alert(`Viewing driver: ${driver.firstName} ${driver.lastName}`);
+    setSelectedDriver(driver);
+    setShowDriverDetailsModal(true);
   };
 
   const handleEditDriver = (driver: Driver) => {
-    alert(`Editing driver: ${driver.firstName} ${driver.lastName}`);
+    setSelectedDriver(driver);
+    setNewDriver({
+      firstName: driver.firstName,
+      lastName: driver.lastName,
+      email: driver.email,
+      phone: driver.phone,
+      licenseNumber: driver.licenseNumber,
+      licenseExpiry: driver.licenseExpiry,
+      address: driver.address,
+      experience: driver.experience || 0
+    });
+    setShowEditDriverModal(true);
   };
 
   const handleDeleteDriver = (driver: Driver) => {
-    if (confirm(`Are you sure you want to delete ${driver.firstName} ${driver.lastName}?`)) {
-      setDrivers(prev => prev.filter(d => d.id !== driver.id));
-      alert('Driver deleted successfully!');
+    setSelectedDriver(driver);
+    setShowDeleteConfirmModal(true);
+  };
+
+  const handleDeactivateDriver = (driver: Driver) => {
+    setSelectedDriver(driver);
+    setShowDeactivateConfirmModal(true);
+  };
+
+  const confirmDeleteDriver = async () => {
+    if (!selectedDriver) return;
+    
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`/api/v1/drivers/${selectedDriver.id}/delete`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        // Remove driver from list completely
+        setDrivers(prev => prev.filter(d => d.id !== selectedDriver.id));
+        showAlert('Success', 'Driver deleted successfully!', 'success');
+      } else {
+        const errorData = await response.json();
+        showAlert('Error', `Failed to delete driver: ${errorData.message || 'Unknown error'}`, 'error');
+      }
+    } catch (error) {
+      console.error('Error deleting driver:', error);
+      showAlert('Error', 'Failed to delete driver', 'error');
+    } finally {
+      setShowDeleteConfirmModal(false);
+      setSelectedDriver(null);
+    }
+  };
+
+  const confirmDeactivateDriver = async () => {
+    if (!selectedDriver) return;
+    
+    try {
+      const token = localStorage.getItem('adminToken');
+      const response = await fetch(`/api/v1/drivers/${selectedDriver.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (response.ok) {
+        // Update the driver's status to inactive instead of removing from list
+        setDrivers(prev => prev.map(d => 
+          d.id === selectedDriver.id ? { ...d, isActive: false } : d
+        ));
+        showAlert('Success', 'Driver deactivated successfully!', 'success');
+      } else {
+        const errorData = await response.json();
+        showAlert('Error', `Failed to deactivate driver: ${errorData.message || 'Unknown error'}`, 'error');
+      }
+    } catch (error) {
+      console.error('Error deactivating driver:', error);
+      showAlert('Error', 'Failed to deactivate driver', 'error');
+    } finally {
+      setShowDeactivateConfirmModal(false);
+      setSelectedDriver(null);
     }
   };
 
   const handleViewDriverImage = (driver: Driver) => {
+    console.log('Viewing driver image for:', driver.firstName, driver.lastName);
+    console.log('Driver profile image URL:', driver.profileImage);
     if (driver.profileImage) {
       setViewerImages([driver.profileImage]);
       setViewerIndex(0);
       setShowImageViewer(true);
     } else {
-      alert('No profile image available for this driver');
+      showAlert('Info', 'No profile image available for this driver', 'info');
     }
   };
 
-  // Mock data for development
-  const getMockDrivers = (): Driver[] => [
-  {
-    id: "1",
-    firstName: "John",
-    lastName: "Doe",
-    email: "john.doe@example.com",
-    phone: "+2348071116229",
-    licenseNumber: "DL123456789",
-    licenseExpiry: "2025-12-31",
-    address: "123 Main Street, Lagos",
-    rating: 4.8,
-    experience: 5,
-    isActive: true,
-    tripsCount: 45,
-    createdAt: "2024-01-15",
-  },
-  {
-    id: "2",
-    firstName: "Jane",
-    lastName: "Smith",
-    email: "jane.smith@example.com",
-    phone: "+2348071116230",
-    licenseNumber: "DL987654321",
-    licenseExpiry: "2024-08-15",
-    address: "456 Oak Avenue, Abuja",
-    rating: 4.6,
-    experience: 3,
-    isActive: true,
-    tripsCount: 32,
-      createdAt: "2024-01-10",
-  },
-  {
-    id: "3",
-    firstName: "Mike",
-    lastName: "Johnson",
-    email: "mike.johnson@example.com",
-    phone: "+2348071116231",
-    licenseNumber: "DL456789123",
-      licenseExpiry: "2024-06-20",
-    address: "789 Pine Road, Port Harcourt",
-    rating: 4.9,
-    experience: 7,
-      isActive: true,
-    tripsCount: 67,
-      createdAt: "2024-01-05",
-    },
-    {
-      id: "4",
-      firstName: "Sarah",
-      lastName: "Wilson",
-      email: "sarah.wilson@example.com",
-      phone: "+2348071116232",
-      licenseNumber: "DL789123456",
-      licenseExpiry: "2024-03-10",
-      address: "321 Elm Street, Kano",
-      rating: 4.3,
-      experience: 2,
-      isActive: false,
-      tripsCount: 18,
-      createdAt: "2024-01-20",
-    }
-  ];
 
   const getStatusBadge = (isActive: boolean) => {
     return isActive ? (
@@ -306,9 +352,26 @@ export default function DriversPage() {
       header: "Driver",
       cell: ({ row }) => {
         const driver = row.original;
+        console.log('Rendering driver row for:', driver.firstName, driver.lastName, 'Profile image:', driver.profileImage);
         return (
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-[#5d4a15] rounded-full flex items-center justify-center text-white font-semibold">
+            {driver.profileImage ? (
+              <img
+                src={driver.profileImage}
+                alt={`${driver.firstName} ${driver.lastName}`}
+                className="w-10 h-10 rounded-full object-cover border border-[#5d4a15]"
+                onError={(e) => {
+                  console.error('Image failed to load:', driver.profileImage);
+                  // Fallback to initials if image fails to load
+                  e.currentTarget.style.display = 'none';
+                  e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                }}
+                onLoad={() => {
+                  console.log('Image loaded successfully:', driver.profileImage);
+                }}
+              />
+            ) : null}
+            <div className={`w-10 h-10 bg-[#5d4a15] rounded-full flex items-center justify-center text-white font-semibold ${driver.profileImage ? 'hidden' : ''}`}>
               {driver.firstName[0]}{driver.lastName[0]}
             </div>
             <div className="space-y-1">
@@ -437,11 +500,18 @@ export default function DriversPage() {
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem 
+                className="text-orange-600"
+                onClick={() => handleDeactivateDriver(row.original)}
+              >
+                <Clock className="mr-2 h-4 w-4" />
+                Deactivate driver
+              </DropdownMenuItem>
+              <DropdownMenuItem 
                 className="text-red-600"
                 onClick={() => handleDeleteDriver(row.original)}
               >
                 <Trash2 className="mr-2 h-4 w-4" />
-                Remove driver
+                Delete driver
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
@@ -551,7 +621,7 @@ export default function DriversPage() {
             {/* Add Driver Modal */}
             {showAddDriverModal && (
               <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                <div className="bg-white rounded-lg p-6 w-full max-w-md mx-4">
+                <div className="bg-white rounded-lg p-6 w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
                   <h3 className="text-lg font-semibold mb-4">Add New Driver</h3>
                   <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
@@ -626,6 +696,18 @@ export default function DriversPage() {
                       />
                     </div>
                     <div>
+                      <label className="block text-sm font-medium mb-1">Experience (Years)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        max="50"
+                        value={newDriver.experience}
+                        onChange={(e) => setNewDriver(prev => ({ ...prev, experience: parseInt(e.target.value) || 0 }))}
+                        className="w-full p-2 border rounded-md"
+                        placeholder="Enter years of experience"
+                      />
+                    </div>
+                    <div>
                       <label className="block text-sm font-medium mb-1">Profile Image</label>
                       <input
                         type="file"
@@ -670,6 +752,274 @@ export default function DriversPage() {
               images={viewerImages}
               currentIndex={viewerIndex}
               title="Driver Profile Image"
+            />
+
+            {/* Driver Details Modal */}
+            {showDriverDetailsModal && selectedDriver && (
+              <Modal
+                isOpen={showDriverDetailsModal}
+                onClose={() => {
+                  setShowDriverDetailsModal(false);
+                  setSelectedDriver(null);
+                }}
+                title="Driver Details"
+                size="lg"
+              >
+                <div className="space-y-6">
+                  <div className="flex items-center space-x-4">
+                    {selectedDriver.profileImage ? (
+                      <img
+                        src={selectedDriver.profileImage}
+                        alt={`${selectedDriver.firstName} ${selectedDriver.lastName}`}
+                        className="w-20 h-20 rounded-full object-cover border-2 border-[#5d4a15]"
+                        onError={(e) => {
+                          console.error('Profile modal image failed to load:', selectedDriver.profileImage);
+                          // Fallback to initials if image fails to load
+                          e.currentTarget.style.display = 'none';
+                          e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                        }}
+                        onLoad={() => {
+                          console.log('Profile modal image loaded successfully:', selectedDriver.profileImage);
+                        }}
+                      />
+                    ) : null}
+                    <div className={`w-20 h-20 bg-[#5d4a15] rounded-full flex items-center justify-center text-white font-semibold text-2xl ${selectedDriver.profileImage ? 'hidden' : ''}`}>
+                      {selectedDriver.firstName[0]}{selectedDriver.lastName[0]}
+                    </div>
+                    <div>
+                      <h3 className="text-2xl font-bold">{selectedDriver.firstName} {selectedDriver.lastName}</h3>
+                      <p className="text-gray-600">{selectedDriver.email}</p>
+                      <p className="text-gray-600">{selectedDriver.phone}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-6">
+                    <div>
+                      <h4 className="font-semibold mb-2">License Information</h4>
+                      <p><strong>License Number:</strong> {selectedDriver.licenseNumber}</p>
+                      <p><strong>Expiry Date:</strong> {selectedDriver.licenseExpiry}</p>
+                    </div>
+                    <div>
+                      <h4 className="font-semibold mb-2">Performance</h4>
+                      <p><strong>Rating:</strong> {selectedDriver.rating}/5</p>
+                      <p><strong>Experience:</strong> {selectedDriver.experience} years</p>
+                      <p><strong>Total Trips:</strong> {selectedDriver.tripsCount}</p>
+                    </div>
+                  </div>
+                  
+                  <div>
+                    <h4 className="font-semibold mb-2">Address</h4>
+                    <p className="text-gray-600">{selectedDriver.address}</p>
+                  </div>
+                  
+                  <div className="flex justify-end space-x-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setShowDriverDetailsModal(false);
+                        setSelectedDriver(null);
+                      }}
+                    >
+                      Close
+                    </Button>
+                    <Button
+                      onClick={() => {
+                        setShowDriverDetailsModal(false);
+                        handleEditDriver(selectedDriver);
+                      }}
+                      className="bg-[#5d4a15] hover:bg-[#6b5618]"
+                    >
+                      Edit Driver
+                    </Button>
+                  </div>
+                </div>
+              </Modal>
+            )}
+
+            {/* Edit Driver Modal */}
+            {showEditDriverModal && selectedDriver && (
+              <Modal
+                isOpen={showEditDriverModal}
+                onClose={() => {
+                  setShowEditDriverModal(false);
+                  setSelectedDriver(null);
+                  setNewDriver({
+                    firstName: '',
+                    lastName: '',
+                    email: '',
+                    phone: '',
+                    licenseNumber: '',
+                    licenseExpiry: '',
+                    address: '',
+                    experience: 0
+                  });
+                }}
+                title="Edit Driver"
+                size="lg"
+              >
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">First Name</label>
+                      <input
+                        type="text"
+                        value={newDriver.firstName}
+                        onChange={(e) => setNewDriver(prev => ({ ...prev, firstName: e.target.value }))}
+                        className="w-full p-2 border rounded-md"
+                        placeholder="Enter first name"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Last Name</label>
+                      <input
+                        type="text"
+                        value={newDriver.lastName}
+                        onChange={(e) => setNewDriver(prev => ({ ...prev, lastName: e.target.value }))}
+                        className="w-full p-2 border rounded-md"
+                        placeholder="Enter last name"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Email</label>
+                    <input
+                      type="email" 
+                      value={newDriver.email}
+                      onChange={(e) => setNewDriver(prev => ({ ...prev, email: e.target.value }))}
+                      className="w-full p-2 border rounded-md"
+                      placeholder="Enter email"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Phone</label>
+                    <input
+                      type="tel"
+                      value={newDriver.phone}
+                      onChange={(e) => setNewDriver(prev => ({ ...prev, phone: e.target.value }))}
+                      className="w-full p-2 border rounded-md"
+                      placeholder="Enter phone number"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">License Number</label>
+                    <input
+                      type="text"
+                      value={newDriver.licenseNumber}
+                      onChange={(e) => setNewDriver(prev => ({ ...prev, licenseNumber: e.target.value }))}
+                      className="w-full p-2 border rounded-md"
+                      placeholder="Enter license number"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">License Expiry</label>
+                    <input
+                      type="date" 
+                      value={newDriver.licenseExpiry}
+                      onChange={(e) => setNewDriver(prev => ({ ...prev, licenseExpiry: e.target.value }))}
+                      className="w-full p-2 border rounded-md"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Address</label>
+                    <textarea
+                      value={newDriver.address}
+                      onChange={(e) => setNewDriver(prev => ({ ...prev, address: e.target.value }))}
+                      className="w-full p-2 border rounded-md"
+                      placeholder="Enter address"
+                      rows={3}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Experience (Years)</label>
+                    <input
+                      type="number"
+                      min="0"
+                      max="50"
+                      value={newDriver.experience}
+                      onChange={(e) => setNewDriver(prev => ({ ...prev, experience: parseInt(e.target.value) || 0 }))}
+                      className="w-full p-2 border rounded-md"
+                      placeholder="Enter years of experience"
+                    />
+                  </div>
+                  
+                  <div className="flex justify-end space-x-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setShowEditDriverModal(false);
+                        setSelectedDriver(null);
+                        setNewDriver({
+                          firstName: '',
+                          lastName: '',
+                          email: '',
+                          phone: '',
+                          licenseNumber: '',
+                          licenseExpiry: '',
+                          address: '',
+                          experience: 0
+                        });
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      onClick={async () => {
+                        // Update driver logic here
+                        setShowEditDriverModal(false);
+                        setSelectedDriver(null);
+                        showAlert('Success', 'Driver updated successfully!', 'success');
+                      }}
+                      className="bg-[#5d4a15] hover:bg-[#6b5618]"
+                    >
+                      Update Driver
+                    </Button>
+                  </div>
+                </div>
+              </Modal>
+            )}
+
+            {/* Delete Confirmation Modal */}
+            <AlertModal
+              isOpen={showDeleteConfirmModal}
+              onClose={() => {
+                setShowDeleteConfirmModal(false);
+                setSelectedDriver(null);
+              }}
+              title="Delete Driver"
+              message={`Are you sure you want to permanently delete ${selectedDriver?.firstName} ${selectedDriver?.lastName}? This action cannot be undone and will remove all driver data.`}
+              type="error"
+              onConfirm={confirmDeleteDriver}
+              confirmText="Delete"
+              cancelText="Cancel"
+              showCancel={true}
+            />
+
+            {/* Deactivate Confirmation Modal */}
+            <AlertModal
+              isOpen={showDeactivateConfirmModal}
+              onClose={() => {
+                setShowDeactivateConfirmModal(false);
+                setSelectedDriver(null);
+              }}
+              title="Deactivate Driver"
+              message={`Are you sure you want to deactivate ${selectedDriver?.firstName} ${selectedDriver?.lastName}? They will no longer be available for new trips but their data will be preserved.`}
+              type="warning"
+              onConfirm={confirmDeactivateDriver}
+              confirmText="Deactivate"
+              cancelText="Cancel"
+              showCancel={true}
+            />
+
+            {/* Alert Modal */}
+            <AlertModal
+              isOpen={alertModal.isOpen}
+              onClose={() => setAlertModal({...alertModal, isOpen: false})}
+              title={alertModal.title}
+              message={alertModal.message}
+              type={alertModal.type}
+              onConfirm={alertModal.onConfirm}
+              showCancel={alertModal.type === 'warning'}
+              confirmText={alertModal.type === 'warning' ? 'Delete' : 'OK'}
             />
       </div>
     </AdminLayout>

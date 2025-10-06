@@ -97,8 +97,8 @@ export default function RoutesPage() {
           duration: formatMinutesToDuration(route.duration),
           price: `₦${route.basePrice.toLocaleString()}`,
           status: route.isActive ? 'active' : 'inactive',
-          bookings: Math.floor(Math.random() * 200) + 10, // Mock bookings count
-          lastTrip: new Date().toISOString().split('T')[0] // Mock last trip
+          bookings: route._count?.bookings || 0, // Use actual booking count from backend
+          lastTrip: route.trips?.[0]?.departureTime ? new Date(route.trips[0].departureTime).toISOString().split('T')[0] : 'No trips yet'
         }));
         setRoutes(formattedRoutes);
       } else if (response.status === 401) {
@@ -117,53 +117,6 @@ export default function RoutesPage() {
     }
   };
 
-  // Mock data for development
-  const getMockRoutes = (): Route[] => [
-    {
-      id: "1",
-      from: "Lagos",
-      to: "Abuja",
-      distance: "720 km",
-      duration: "8h 30m",
-      price: "₦7,500",
-      status: "active",
-      bookings: 234,
-      lastTrip: "2024-01-15"
-    },
-    {
-      id: "2",
-      from: "Lagos",
-      to: "Port Harcourt",
-      distance: "540 km",
-      duration: "6h 00m",
-      price: "₦6,200",
-      status: "active",
-      bookings: 189,
-      lastTrip: "2024-01-15"
-    },
-    {
-      id: "3",
-      from: "Abuja",
-      to: "Kaduna",
-      distance: "200 km",
-      duration: "2h 15m",
-      price: "₦3,200",
-      status: "active",
-      bookings: 156,
-      lastTrip: "2024-01-14"
-    },
-    {
-      id: "4",
-      from: "Enugu",
-      to: "Lagos",
-      distance: "750 km",
-      duration: "9h 30m",
-      price: "₦8,500",
-      status: "inactive",
-      bookings: 98,
-      lastTrip: "2024-01-10"
-    }
-  ];
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -332,16 +285,62 @@ export default function RoutesPage() {
     }
   };
 
-  const handleDeleteRoute = (routeId: string) => {
+  const handleDeleteRoute = async (routeId: string) => {
     showAlert(
       'Delete Route',
       'Are you sure you want to delete this route? This action cannot be undone.',
       'warning',
-      () => {
-        setRoutes(routes.filter(r => r.id !== routeId));
-        showAlert('Success', 'Route deleted successfully!', 'success');
+      async () => {
+        try {
+          const token = localStorage.getItem('adminToken');
+          const response = await fetch(`/api/v1/routes/${routeId}`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            }
+          });
+
+          if (response.ok) {
+            // Remove from local state
+            setRoutes(routes.filter(r => r.id !== routeId));
+            showAlert('Success', 'Route deleted successfully!', 'success');
+          } else if (response.status === 401) {
+            showAlert('Session Expired', 'Your session has expired. Please login again.', 'error', () => {
+              localStorage.clear();
+              window.location.href = '/';
+            });
+          } else {
+            const errorData = await response.json();
+            showAlert('Error', errorData.message || 'Failed to delete route', 'error');
+          }
+        } catch (error) {
+          console.error('Error deleting route:', error);
+          showAlert('Connection Error', 'Failed to connect to server. Please try again.', 'error');
+        }
       }
     );
+  };
+
+  const handleViewAnalytics = (routeId: string) => {
+    const route = routes.find(r => r.id === routeId);
+    if (route) {
+      showAlert('Analytics', `Analytics for route ${route.from} → ${route.to} will be displayed here.`, 'info');
+    }
+  };
+
+  const handleViewBookings = (routeId: string) => {
+    const route = routes.find(r => r.id === routeId);
+    if (route) {
+      showAlert('Bookings', `Bookings for route ${route.from} → ${route.to} will be displayed here.`, 'info');
+    }
+  };
+
+  const handleScheduleTrips = (routeId: string) => {
+    const route = routes.find(r => r.id === routeId);
+    if (route) {
+      showAlert('Schedule Trips', `Trip scheduling for route ${route.from} → ${route.to} will be displayed here.`, 'info');
+    }
   };
 
   const columns: ColumnDef<Route>[] = [
@@ -701,6 +700,10 @@ export default function RoutesPage() {
             setShowRouteDetailsModal(false);
             setSelectedRoute(null);
           }}
+          onViewAnalytics={handleViewAnalytics}
+          onViewBookings={handleViewBookings}
+          onScheduleTrips={handleScheduleTrips}
+          onEditRoute={handleEditRoute}
         />
 
         {/* Alert Modal */}
