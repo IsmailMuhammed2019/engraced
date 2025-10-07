@@ -48,9 +48,9 @@ import {
 interface Payment {
   id: string;
   amount: number;
-  status: 'completed' | 'pending' | 'failed';
-  method: string;
-  reference: string;
+  paymentStatus: 'PAID' | 'PENDING' | 'FAILED';
+  paymentMethod?: string;
+  paystackRef: string;
   createdAt: string;
   booking: {
     id: string;
@@ -96,11 +96,11 @@ export default function PaymentsPage() {
       ...payments.map(payment => [
         payment.id,
         payment.amount,
-        payment.status,
-        payment.method,
+        payment.paymentStatus,
+        payment.paymentMethod || 'Card',
         payment.createdAt,
         `${payment.booking.user.firstName} ${payment.booking.user.lastName}`,
-        payment.reference
+        payment.paystackRef
       ])
     ].map(row => row.join(',')).join('\n');
     
@@ -127,11 +127,102 @@ export default function PaymentsPage() {
     fetchStats();
   }, []);
 
+  // Generate chart data when payments are loaded
+  useEffect(() => {
+    if (payments.length > 0) {
+      generateChartData();
+    }
+  }, [payments]);
+
+  const generateChartData = () => {
+    // Generate daily revenue data for the last 7 days
+    const dailyRevenueData = [];
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date();
+      date.setDate(date.getDate() - i);
+      const dateStr = date.toISOString().split('T')[0];
+      
+      const dayPayments = payments.filter(p => 
+        p.paymentStatus === 'PAID' && 
+        p.createdAt.startsWith(dateStr)
+      );
+      
+      const revenue = dayPayments.reduce((sum, p) => sum + Number(p.amount), 0);
+      const transactions = dayPayments.length;
+      
+      dailyRevenueData.push({
+        date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+        revenue,
+        transactions,
+        successRate: transactions > 0 ? 100 : 0
+      });
+    }
+
+    // Generate payment method data
+    const methodCounts = payments.reduce((acc, payment) => {
+      const method = payment.paymentMethod || 'Card';
+      acc[method] = (acc[method] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const totalPayments = payments.length;
+    const paymentMethodData = Object.entries(methodCounts).map(([method, count]) => ({
+      name: method,
+      value: Math.round((count / totalPayments) * 100),
+      count,
+      color: method === 'Card' ? '#3b82f6' : method === 'Bank Transfer' ? '#10b981' : '#f59e0b'
+    }));
+
+    // Generate monthly trend data for the last 6 months
+    const monthlyTrendData = [];
+    for (let i = 5; i >= 0; i--) {
+      const date = new Date();
+      date.setMonth(date.getMonth() - i);
+      const monthStr = date.toISOString().substring(0, 7);
+      
+      const monthPayments = payments.filter(p => 
+        p.paymentStatus === 'PAID' && 
+        p.createdAt.startsWith(monthStr)
+      );
+      
+      const revenue = monthPayments.reduce((sum, p) => sum + Number(p.amount), 0);
+      const transactions = monthPayments.length;
+      const growth = i === 5 ? 0 : 10; // Mock growth percentage
+      
+      monthlyTrendData.push({
+        month: date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+        revenue,
+        transactions,
+        growth
+      });
+    }
+
+    // Generate status distribution data
+    const statusCounts = payments.reduce((acc, payment) => {
+      acc[payment.paymentStatus] = (acc[payment.paymentStatus] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const statusDistributionData = Object.entries(statusCounts).map(([status, count]) => ({
+      name: status === 'PAID' ? 'Paid' : status === 'PENDING' ? 'Pending' : 'Failed',
+      value: Math.round((count / totalPayments) * 100),
+      count,
+      color: status === 'PAID' ? '#10b981' : status === 'PENDING' ? '#f59e0b' : '#ef4444'
+    }));
+
+    setChartData({
+      dailyRevenueData,
+      paymentMethodData,
+      monthlyTrendData,
+      statusDistributionData
+    });
+  };
+
   const fetchPayments = async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('adminToken');
-      const response = await fetch('/api/v1/payments', {
+      const response = await fetch('http://localhost:3003/api/v1/payments', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -140,9 +231,10 @@ export default function PaymentsPage() {
       
       if (response.ok) {
         const data = await response.json();
+        console.log('Fetched payments:', data);
         setPayments(data);
       } else {
-        console.error('Failed to fetch payments');
+        console.error('Failed to fetch payments:', response.status, response.statusText);
         setPayments([]);
       }
     } catch (error) {
@@ -156,7 +248,7 @@ export default function PaymentsPage() {
   const fetchStats = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch('/api/v1/payments/stats', {
+      const response = await fetch('http://localhost:3003/api/v1/payments/stats', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -165,9 +257,16 @@ export default function PaymentsPage() {
       
       if (response.ok) {
         const data = await response.json();
-        setStats(data);
+        console.log('Fetched payment stats:', data);
+        setStats({
+          totalPayments: data.totalPayments || 0,
+          successfulPayments: data.successfulPayments || 0,
+          failedPayments: data.failedPayments || 0,
+          totalRevenue: Number(data.totalRevenue) || 0,
+          averageTransactionValue: data.successfulPayments > 0 ? Number(data.totalRevenue) / data.successfulPayments : 0
+        });
       } else {
-        console.error('Failed to fetch stats');
+        console.error('Failed to fetch stats:', response.status, response.statusText);
         setStats({
           totalPayments: 0,
           successfulPayments: 0,
@@ -191,11 +290,11 @@ export default function PaymentsPage() {
 
   const calculateStats = (payments: Payment[]): PaymentStats => {
     const totalPayments = payments.length;
-    const successfulPayments = payments.filter(p => p.status === "completed").length;
-    const failedPayments = payments.filter(p => p.status === "failed").length;
+    const successfulPayments = payments.filter(p => p.paymentStatus === "PAID").length;
+    const failedPayments = payments.filter(p => p.paymentStatus === "FAILED").length;
     const totalRevenue = payments
-      .filter(p => p.status === "completed")
-      .reduce((sum, p) => sum + p.amount, 0);
+      .filter(p => p.paymentStatus === "PAID")
+      .reduce((sum, p) => sum + Number(p.amount), 0);
     const averageTransactionValue = totalRevenue / successfulPayments || 0;
 
     return {
@@ -210,11 +309,11 @@ export default function PaymentsPage() {
   // Helper functions
   const getStatusBadge = (status: string) => {
     switch (status) {
-      case "completed":
-        return <Badge variant="default"><CheckCircle className="h-3 w-3 mr-1" />Completed</Badge>;
-      case "pending":
+      case "PAID":
+        return <Badge variant="default"><CheckCircle className="h-3 w-3 mr-1" />Paid</Badge>;
+      case "PENDING":
         return <Badge variant="secondary"><Clock className="h-3 w-3 mr-1" />Pending</Badge>;
-      case "failed":
+      case "FAILED":
         return <Badge variant="destructive"><XCircle className="h-3 w-3 mr-1" />Failed</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
@@ -246,7 +345,7 @@ export default function PaymentsPage() {
       payment.booking.user.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
       payment.booking.user.email.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesStatus = statusFilter === "all" || payment.status === statusFilter;
+    const matchesStatus = statusFilter === "all" || payment.paymentStatus === statusFilter;
     
     return matchesSearch && matchesStatus;
   });
@@ -296,9 +395,9 @@ export default function PaymentsPage() {
                     className="w-full p-2 border border-gray-300 rounded-md"
                   >
                     <option value="all">All Statuses</option>
-                    <option value="successful">Successful</option>
-                    <option value="failed">Failed</option>
-                    <option value="pending">Pending</option>
+                    <option value="PAID">Paid</option>
+                    <option value="FAILED">Failed</option>
+                    <option value="PENDING">Pending</option>
                   </select>
                 </div>
                 <div>
@@ -575,9 +674,9 @@ export default function PaymentsPage() {
                   onChange={(e) => setStatusFilter(e.target.value)}
                 >
                   <option value="all">All Status</option>
-                  <option value="completed">Completed</option>
-                  <option value="pending">Pending</option>
-                  <option value="failed">Failed</option>
+                  <option value="PAID">Paid</option>
+                  <option value="PENDING">Pending</option>
+                  <option value="FAILED">Failed</option>
                 </select>
               </div>
             </div>
@@ -595,7 +694,7 @@ export default function PaymentsPage() {
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-2">
                         <p className="font-medium text-gray-900">{payment.id}</p>
-                        {getStatusBadge(payment.status)}
+                        {getStatusBadge(payment.paymentStatus)}
                       </div>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm text-gray-600">
                         <div>
@@ -605,14 +704,14 @@ export default function PaymentsPage() {
                           <span className="font-medium">Booking:</span> {payment.booking.id}
                         </div>
                         <div>
-                          <span className="font-medium">Method:</span> {payment.method}
+                          <span className="font-medium">Method:</span> {payment.paymentMethod || 'Card'}
                         </div>
                         <div>
                           <span className="font-medium">Date:</span> {formatDate(payment.createdAt)}
                         </div>
                       </div>
                       <div className="mt-2 text-xs text-gray-500">
-                        <span className="font-medium">Reference:</span> {payment.reference}
+                        <span className="font-medium">Reference:</span> {payment.paystackRef}
                         <span className="ml-4 font-medium">Route:</span> {payment.booking.route.from} → {payment.booking.route.to}
                       </div>
                     </div>

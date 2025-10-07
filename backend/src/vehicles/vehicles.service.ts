@@ -271,8 +271,15 @@ export class VehiclesService {
       throw new NotFoundException('Vehicle not found');
     }
 
+    console.log('Current vehicle images:', vehicle.images);
+    console.log('Current vehicle images length:', vehicle.images.length);
+    console.log('New image URLs to add:', imageUrls);
+    console.log('New image URLs length:', imageUrls.length);
+
     // Add new images to existing ones
     const updatedImages = [...vehicle.images, ...imageUrls];
+    console.log('Combined images:', updatedImages);
+    console.log('Combined images length:', updatedImages.length);
 
     return this.prisma.vehicle.update({
       where: { id: vehicleId },

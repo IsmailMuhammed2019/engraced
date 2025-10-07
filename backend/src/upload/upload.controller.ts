@@ -111,7 +111,7 @@ export class UploadController {
   }
 
   @Post('vehicles/:id/images')
-  @UseInterceptors(FilesInterceptor('images', 6)) // Max 6 images
+  @UseInterceptors(FilesInterceptor('images', 8)) // Max 8 images
   @ApiOperation({ summary: 'Upload vehicle images (Admin only)' })
   @ApiConsumes('multipart/form-data')
   @ApiResponse({ status: 201, description: 'Images uploaded successfully' })
@@ -130,10 +130,13 @@ export class UploadController {
       throw new Error('No files uploaded');
     }
 
-    if (files.length > 6) {
-      throw new Error('Maximum 6 images allowed per vehicle');
+    if (files.length > 8) {
+      throw new Error('Maximum 8 images allowed per vehicle');
     }
 
+    console.log(`Uploading ${files.length} images for vehicle ${vehicleId}`);
+    console.log('Files received:', files.map(f => ({ name: f.originalname, size: f.size })));
+    
     // Upload images to Cloudinary
     const uploadResults = await this.cloudinaryService.uploadMultipleImages(
       files,
@@ -142,15 +145,18 @@ export class UploadController {
 
     // Extract URLs from upload results
     const imageUrls = uploadResults.map(result => result.url);
+    console.log('Uploaded image URLs:', imageUrls);
 
     // Update vehicle with new images
     const updatedVehicle = await this.vehiclesService.addImages(vehicleId, imageUrls);
+    console.log('Updated vehicle images:', updatedVehicle.images);
+    console.log('Total images after update:', updatedVehicle.images.length);
 
     return {
       message: 'Vehicle images uploaded successfully',
       data: {
         vehicleId,
-        images: imageUrls,
+        images: updatedVehicle.images, // Return all images (existing + new)
         vehicle: updatedVehicle,
       },
     };

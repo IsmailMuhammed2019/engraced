@@ -180,7 +180,10 @@ export default function ImageViewer({
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={zoomOut}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    zoomOut();
+                  }}
                   className="text-white hover:bg-white/20"
                 >
                   <ZoomOut className="h-4 w-4" />
@@ -193,7 +196,10 @@ export default function ImageViewer({
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={zoomIn}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    zoomIn();
+                  }}
                   className="text-white hover:bg-white/20"
                 >
                   <ZoomIn className="h-4 w-4" />
@@ -202,7 +208,10 @@ export default function ImageViewer({
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={rotateImage}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    rotateImage();
+                  }}
                   className="text-white hover:bg-white/20"
                 >
                   <RotateCw className="h-4 w-4" />
@@ -211,7 +220,10 @@ export default function ImageViewer({
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={downloadImage}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    downloadImage();
+                  }}
                   className="text-white hover:bg-white/20"
                 >
                   <Download className="h-4 w-4" />
@@ -220,7 +232,10 @@ export default function ImageViewer({
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={toggleFullscreen}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleFullscreen();
+                  }}
                   className="text-white hover:bg-white/20"
                 >
                   {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
@@ -229,7 +244,10 @@ export default function ImageViewer({
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={onClose}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onClose();
+                  }}
                   className="text-white hover:bg-white/20"
                 >
                   <X className="h-4 w-4" />
@@ -269,7 +287,10 @@ export default function ImageViewer({
               <Button
                 variant="ghost"
                 size="lg"
-                onClick={goToPrevious}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  goToPrevious();
+                }}
                 className="absolute left-4 top-1/2 -translate-y-1/2 text-white hover:bg-white/20"
               >
                 <ChevronLeft className="h-6 w-6" />
@@ -278,7 +299,10 @@ export default function ImageViewer({
               <Button
                 variant="ghost"
                 size="lg"
-                onClick={goToNext}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  goToNext();
+                }}
                 className="absolute right-4 top-1/2 -translate-y-1/2 text-white hover:bg-white/20"
               >
                 <ChevronRight className="h-6 w-6" />
@@ -293,7 +317,8 @@ export default function ImageViewer({
                 {images.map((image, index) => (
                   <button
                     key={index}
-                    onClick={() => {
+                    onClick={(e) => {
+                      e.stopPropagation();
                       setActiveIndex(index);
                       resetView();
                     }}

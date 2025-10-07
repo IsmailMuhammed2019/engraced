@@ -131,34 +131,22 @@ export default function VehiclesPage() {
     try {
       setIsUploadingImages(true);
       
-      // Upload vehicle images first if provided
-      let imageUrls: string[] = [];
-      if (selectedImages.length > 0) {
-        for (const image of selectedImages) {
-          const formData = new FormData();
-          formData.append('image', image);
-          formData.append('type', 'vehicle');
-          
-          const uploadResponse = await fetch('http://localhost:3003/api/v1/upload/vehicle', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
-            },
-            body: formData
-          });
-          
-          if (uploadResponse.ok) {
-            const uploadData = await uploadResponse.json();
-            imageUrls.push(uploadData.url);
-          }
-        }
-      }
-
       const token = localStorage.getItem('adminToken');
+      
+      // First, create the vehicle without images
       const vehicleData = {
-        ...newVehicle,
-        images: imageUrls
+        plateNumber: newVehicle.plateNumber,
+        make: newVehicle.make,
+        model: newVehicle.model,
+        year: newVehicle.year,
+        capacity: newVehicle.capacity,
+        features: newVehicle.features,
+        mileage: newVehicle.mileage,
+        isActive: newVehicle.isActive
       };
+      
+      console.log('Creating vehicle with data:', vehicleData);
+      console.log('Auth token:', token ? 'Present' : 'Missing');
       
       const response = await fetch('http://localhost:3003/api/v1/vehicles', {
         method: 'POST',
@@ -168,9 +156,61 @@ export default function VehiclesPage() {
         },
         body: JSON.stringify(vehicleData)
       });
+      
+      console.log('Vehicle creation response status:', response.status);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Vehicle creation error response:', errorText);
+      }
 
       if (response.ok) {
         const data = await response.json();
+        console.log('Vehicle created successfully:', data);
+        
+        // If images were provided, upload them to the created vehicle
+        if (selectedImages.length > 0) {
+          console.log('=== STARTING IMAGE UPLOAD ===');
+          console.log('Uploading images:', selectedImages.length, selectedImages);
+          console.log('Vehicle ID for upload:', data.id);
+          
+          const formData = new FormData();
+          selectedImages.forEach((image, index) => {
+            console.log(`Adding image ${index + 1}:`, image.name, image.size, image.type);
+            formData.append('images', image);
+          });
+          
+          console.log('FormData entries:', Array.from(formData.entries()));
+          console.log('Upload URL:', `http://localhost:3003/api/v1/upload/vehicles/${data.id}/images`);
+          
+          const uploadResponse = await fetch(`http://localhost:3003/api/v1/upload/vehicles/${data.id}/images`, {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`
+            },
+            body: formData
+          });
+          
+          console.log('Upload response status:', uploadResponse.status);
+          console.log('Upload response headers:', Object.fromEntries(uploadResponse.headers.entries()));
+          
+          if (uploadResponse.ok) {
+            const uploadData = await uploadResponse.json();
+            console.log('=== IMAGES UPLOADED SUCCESSFULLY ===');
+            console.log('Upload response data:', uploadData);
+            // Update the vehicle data with the uploaded images
+            data.images = uploadData.data.images;
+            console.log('Updated vehicle data with images:', data.images);
+          } else {
+            const errorText = await uploadResponse.text();
+            console.error('=== IMAGE UPLOAD FAILED ===');
+            console.error('Upload error status:', uploadResponse.status);
+            console.error('Upload error response:', errorText);
+          }
+        } else {
+          console.log('No images to upload');
+        }
+        
         setVehicles(prev => [...prev, data]);
         setShowAddVehicleModal(false);
         setNewVehicle({
@@ -186,13 +226,16 @@ export default function VehiclesPage() {
         setSelectedImages([]);
         showAlert('Success', 'Vehicle added successfully!', 'success');
       } else {
+        const errorData = await response.json();
+        console.error('Failed to create vehicle:', response.status, errorData);
+        showAlert('Error', `Failed to create vehicle: ${errorData.message || 'Unknown error'}`, 'error');
         // Mock add for development
         const mockVehicle: Vehicle = {
           id: Date.now().toString(),
           ...newVehicle,
           isActive: true,
           tripsCount: 0,
-          images: imageUrls,
+          images: selectedImages.map((_, index) => `https://via.placeholder.com/300x200/cccccc/666666?text=Vehicle+${index + 1}`),
           createdAt: new Date().toISOString()
         };
         setVehicles(prev => [...prev, mockVehicle]);
@@ -219,11 +262,17 @@ export default function VehiclesPage() {
   };
 
   const handleViewImages = (vehicle: Vehicle) => {
+    console.log('Viewing images for vehicle:', vehicle.plateNumber);
+    console.log('Vehicle images:', vehicle.images);
+    console.log('Images length:', vehicle.images?.length);
+    
     if (vehicle.images && vehicle.images.length > 0) {
       setViewerImages(vehicle.images);
       setViewerIndex(0);
       setShowImageViewer(true);
+      console.log('Image viewer opened with images:', vehicle.images);
     } else {
+      console.log('No images available for vehicle');
       showAlert('Info', 'No images available for this vehicle', 'info');
     }
   };
@@ -703,36 +752,82 @@ export default function VehiclesPage() {
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-1">Vehicle Images (up to 8)</label>
+                      <p className="text-xs text-gray-500 mb-2">
+                        Hold Ctrl/Cmd to select multiple images at once, or select one at a time to add more
+                      </p>
                       <input
                         type="file"
                         accept="image/*"
                         multiple
+                        id="vehicle-images-input"
                         onChange={(e) => {
                           const files = Array.from(e.target.files || []);
+                          console.log('File input changed. Selected files:', files.length, files);
+                          console.log('File names:', files.map(f => f.name));
+                          console.log('File sizes:', files.map(f => f.size));
+                          
                           if (files.length > 8) {
                             showAlert('Warning', 'Maximum 8 images allowed', 'warning');
                             return;
                           }
+                          
+                          if (files.length === 0) {
+                            console.log('No files selected');
+                            setSelectedImages([]);
+                            return;
+                          }
+                          
+                          // If we already have images, add to existing ones instead of replacing
+                          if (selectedImages.length > 0) {
+                            console.log('Adding to existing images. Current:', selectedImages.length, 'New:', files.length);
+                            setSelectedImages(prev => [...prev, ...files]);
+                          } else {
+                            console.log('Setting new images');
                           setSelectedImages(files);
+                          }
+                          console.log('Selected images state updated:', selectedImages.length + files.length);
                         }}
                         className="w-full p-2 border rounded-md"
                       />
                       {selectedImages.length > 0 && (
                         <div className="mt-2">
-                          <p className="text-sm text-gray-600 mb-2">
+                          <div className="flex justify-between items-center mb-2">
+                            <p className="text-sm text-gray-600">
                             Selected {selectedImages.length} image(s):
                           </p>
+                            <div className="flex space-x-2">
+                              <button
+                                onClick={() => {
+                                  const input = document.getElementById('vehicle-images-input') as HTMLInputElement;
+                                  if (input) input.click();
+                                }}
+                                className="text-xs text-blue-600 hover:text-blue-800 underline"
+                              >
+                                Add More
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setSelectedImages([]);
+                                  const input = document.getElementById('vehicle-images-input') as HTMLInputElement;
+                                  if (input) input.value = '';
+                                }}
+                                className="text-xs text-red-600 hover:text-red-800 underline"
+                              >
+                                Clear all
+                              </button>
+                            </div>
+                          </div>
                           <div className="grid grid-cols-4 gap-2">
                             {selectedImages.map((image, index) => (
                               <div key={index} className="relative">
                                 <img
                                   src={URL.createObjectURL(image)}
                                   alt={`Preview ${index + 1}`}
-                                  className="w-16 h-16 object-cover rounded-md"
+                                  className="w-16 h-16 object-cover rounded-md border"
                                 />
                                 <button
                                   onClick={() => setSelectedImages(prev => prev.filter((_, i) => i !== index))}
-                                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                                  className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs hover:bg-red-600"
                                 >
                                   ×
                                 </button>
@@ -1033,11 +1128,44 @@ export default function VehiclesPage() {
                             className="w-full h-24 object-cover rounded-md"
                           />
                           <button
-                            onClick={() => {
-                              // Remove image logic here
-                              showAlert('Info', 'Image removal functionality coming soon', 'info');
+                            onClick={async () => {
+                              if (selectedVehicle) {
+                                try {
+                                  const token = localStorage.getItem('adminToken');
+                                  const response = await fetch(`http://localhost:3003/api/v1/upload/vehicles/${selectedVehicle.id}/images/${index}`, {
+                                    method: 'DELETE',
+                                    headers: {
+                                      'Authorization': `Bearer ${token}`,
+                                      'Content-Type': 'application/json'
+                                    }
+                                  });
+                                  
+                                  if (response.ok) {
+                                    const data = await response.json();
+                                    console.log('Image deleted successfully:', data);
+                                    
+                                    // Update the vehicle in the local state
+                                    setVehicles(prev => prev.map(vehicle => 
+                                      vehicle.id === selectedVehicle.id 
+                                        ? { ...vehicle, images: data.data.vehicle.images }
+                                        : vehicle
+                                    ));
+                                    
+                                    // Update the selected vehicle
+                                    setSelectedVehicle(prev => prev ? { ...prev, images: data.data.vehicle.images } : null);
+                                    
+                                    showAlert('Success', 'Image removed successfully!', 'success');
+                                  } else {
+                                    const errorData = await response.json();
+                                    showAlert('Error', `Failed to remove image: ${errorData.message || 'Unknown error'}`, 'error');
+                                  }
+                                } catch (error) {
+                                  console.error('Error removing image:', error);
+                                  showAlert('Error', 'Failed to remove image', 'error');
+                                }
+                              }
                             }}
-                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs"
+                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
                           >
                             ×
                           </button>
@@ -1052,13 +1180,53 @@ export default function VehiclesPage() {
                       type="file"
                       accept="image/*"
                       multiple
-                      onChange={(e) => {
+                      onChange={async (e) => {
                         const files = Array.from(e.target.files || []);
                         if (files.length > 8) {
                           showAlert('Warning', 'Maximum 8 images allowed', 'warning');
                           return;
                         }
-                        showAlert('Info', 'Image upload functionality coming soon', 'info');
+                        
+                        if (files.length > 0 && selectedVehicle) {
+                          try {
+                            const token = localStorage.getItem('adminToken');
+                            const formData = new FormData();
+                            files.forEach((file) => {
+                              formData.append('images', file);
+                          });
+                            
+                            const uploadResponse = await fetch(`http://localhost:3003/api/v1/upload/vehicles/${selectedVehicle.id}/images`, {
+                              method: 'POST',
+                              headers: {
+                                'Authorization': `Bearer ${token}`
+                              },
+                              body: formData
+                            });
+                            
+                            if (uploadResponse.ok) {
+                              const uploadData = await uploadResponse.json();
+                              console.log('Images uploaded successfully:', uploadData);
+                              
+                              // Update the vehicle in the local state
+                              setVehicles(prev => prev.map(vehicle => 
+                                vehicle.id === selectedVehicle.id 
+                                  ? { ...vehicle, images: uploadData.data.images }
+                                  : vehicle
+                              ));
+                              
+                              // Update the selected vehicle
+                              setSelectedVehicle(prev => prev ? { ...prev, images: uploadData.data.images } : null);
+                              
+                              showAlert('Success', `${files.length} image(s) uploaded successfully!`, 'success');
+                            } else {
+                              const errorData = await uploadResponse.json();
+                              showAlert('Error', `Failed to upload images: ${errorData.message || 'Unknown error'}`, 'error');
+                            }
+                          } catch (error) {
+                            console.error('Error uploading images:', error);
+                            showAlert('Error', 'Failed to upload images', 'error');
+                          }
+                        }
                       }}
                       className="w-full p-2 border rounded-md"
                     />
