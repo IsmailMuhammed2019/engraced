@@ -38,4 +38,99 @@ export class SystemService {
       recentBookings,
     };
   }
+
+  // Settings Management
+  async getAllSettings() {
+    const settings = await this.prisma.systemSettings.findMany();
+    
+    // Convert to key-value object
+    const settingsObj: any = {};
+    settings.forEach(setting => {
+      let value: any = setting.value;
+      
+      // Parse value based on type
+      switch (setting.type) {
+        case 'boolean':
+          value = value === 'true';
+          break;
+        case 'number':
+          value = parseFloat(value);
+          break;
+        case 'json':
+          try {
+            value = JSON.parse(value);
+          } catch (e) {
+            value = setting.value;
+          }
+          break;
+        default:
+          value = setting.value;
+      }
+      
+      settingsObj[setting.key] = value;
+    });
+    
+    return settingsObj;
+  }
+
+  async getSetting(key: string) {
+    const setting = await this.prisma.systemSettings.findUnique({
+      where: { key },
+    });
+    
+    if (!setting) {
+      return null;
+    }
+    
+    let value: any = setting.value;
+    switch (setting.type) {
+      case 'boolean':
+        value = value === 'true';
+        break;
+      case 'number':
+        value = parseFloat(value);
+        break;
+      case 'json':
+        try {
+          value = JSON.parse(value);
+        } catch (e) {
+          value = setting.value;
+        }
+        break;
+    }
+    
+    return value;
+  }
+
+  async updateSetting(key: string, value: any, type: string = 'string') {
+    let stringValue = value;
+    
+    if (type === 'json') {
+      stringValue = JSON.stringify(value);
+    } else {
+      stringValue = String(value);
+    }
+    
+    return this.prisma.systemSettings.upsert({
+      where: { key },
+      update: { value: stringValue, type },
+      create: { key, value: stringValue, type },
+    });
+  }
+
+  async updateMultipleSettings(settings: Array<{key: string; value: any; type?: string}>) {
+    const promises = settings.map(setting => 
+      this.updateSetting(setting.key, setting.value, setting.type || 'string')
+    );
+    
+    await Promise.all(promises);
+    
+    return this.getAllSettings();
+  }
+
+  async deleteSetting(key: string) {
+    return this.prisma.systemSettings.delete({
+      where: { key },
+    });
+  }
 }

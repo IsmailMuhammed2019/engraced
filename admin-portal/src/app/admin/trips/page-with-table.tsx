@@ -46,7 +46,7 @@ import {
 
 interface Trip {
   id: string;
-    route: {
+  route: {
     from: string;
     to: string;
   };
@@ -221,14 +221,10 @@ export default function TripsPage() {
     total: trips.length,
     active: trips.filter(t => t.status === 'ACTIVE').length,
     completed: trips.filter(t => t.status === 'COMPLETED').length,
-    totalRevenue: trips.reduce((sum, t) => sum + ((t.price || 0) * (t.bookingsCount || 0)), 0),
-    totalBookings: trips.reduce((sum, t) => sum + (t.bookingsCount || 0), 0),
+    totalRevenue: trips.reduce((sum, t) => sum + (t.price * t.bookingsCount), 0),
+    totalBookings: trips.reduce((sum, t) => sum + t.bookingsCount, 0),
     avgOccupancy: trips.length > 0 
-      ? trips.reduce((sum, t) => {
-          const totalSeats = t.totalSeats || 1;
-          const availableSeats = t.availableSeats || 0;
-          return sum + ((totalSeats - availableSeats) / totalSeats * 100);
-        }, 0) / trips.length
+      ? trips.reduce((sum, t) => sum + ((t.totalSeats - t.availableSeats) / t.totalSeats * 100), 0) / trips.length
       : 0
   };
 
@@ -238,9 +234,9 @@ export default function TripsPage() {
     const existing = acc.find(item => item.route === routeName);
     if (existing) {
       existing.count += 1;
-      existing.bookings += (trip.bookingsCount || 0);
+      existing.bookings += trip.bookingsCount;
     } else {
-      acc.push({ route: routeName, count: 1, bookings: (trip.bookingsCount || 0) });
+      acc.push({ route: routeName, count: 1, bookings: trip.bookingsCount });
     }
     return acc;
   }, []).slice(0, 5); // Top 5 routes
@@ -261,11 +257,11 @@ export default function TripsPage() {
   });
 
   const dailyTripsData = last7Days.map(date => {
-    const dayTrips = trips.filter(t => t.departureTime && t.departureTime.startsWith(date));
+    const dayTrips = trips.filter(t => t.departureTime.startsWith(date));
     return {
       date: new Date(date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
       trips: dayTrips.length,
-      bookings: dayTrips.reduce((sum, t) => sum + (t.bookingsCount || 0), 0)
+      bookings: dayTrips.reduce((sum, t) => sum + t.bookingsCount, 0)
     };
   });
 
@@ -449,25 +445,25 @@ export default function TripsPage() {
             <div className="flex items-center justify-between">
               <CardTitle>All Trips</CardTitle>
               <div className="flex items-center space-x-2">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-          <Input
-            placeholder="Search trips..."
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="Search trips..."
                     className="pl-10 w-64"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent>
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
             {loading ? (
               <div className="text-center py-8">Loading trips...</div>
             ) : filteredTrips.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 No trips found. Schedule your first trip to get started!
-                        </div>
+              </div>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full">
@@ -487,22 +483,18 @@ export default function TripsPage() {
                   <tbody className="divide-y divide-gray-200">
                     {filteredTrips.map((trip) => {
                       const departure = formatDateTime(trip.departureTime);
-                      const totalSeats = trip.totalSeats || 1;
-                      const availableSeats = trip.availableSeats || 0;
-                      const occupancyRate = totalSeats > 0 
-                        ? (((totalSeats - availableSeats) / totalSeats * 100).toFixed(0))
-                        : '0';
+                      const occupancyRate = ((trip.totalSeats - trip.availableSeats) / trip.totalSeats * 100).toFixed(0);
                       
                       return (
                         <tr key={trip.id} className="hover:bg-gray-50">
                           <td className="px-4 py-4">
-                      <div className="flex items-center space-x-2">
+                            <div className="flex items-center space-x-2">
                               <MapPin className="h-4 w-4 text-gray-400" />
                               <div>
                                 <p className="font-medium text-gray-900">{trip.route.from}</p>
                                 <p className="text-sm text-gray-500">→ {trip.route.to}</p>
-                      </div>
-                    </div>
+                              </div>
+                            </div>
                           </td>
                           <td className="px-4 py-4">
                             {trip.driver ? (
@@ -511,7 +503,7 @@ export default function TripsPage() {
                                   {trip.driver.firstName} {trip.driver.lastName}
                                 </p>
                                 <p className="text-xs text-gray-500">{trip.driver.phone}</p>
-                      </div>
+                              </div>
                             ) : (
                               <span className="text-sm text-gray-400">Not assigned</span>
                             )}
@@ -521,16 +513,16 @@ export default function TripsPage() {
                               <div>
                                 <p className="text-sm font-medium text-gray-900">{trip.vehicle.plateNumber}</p>
                                 <p className="text-xs text-gray-500">{trip.vehicle.make} {trip.vehicle.model}</p>
-                    </div>
+                              </div>
                             ) : (
                               <span className="text-sm text-gray-400">Not assigned</span>
                             )}
                           </td>
                           <td className="px-4 py-4">
-                    <div>
+                            <div>
                               <p className="text-sm font-medium text-gray-900">{departure.date}</p>
                               <p className="text-xs text-gray-500">{departure.time}</p>
-                      </div>
+                            </div>
                           </td>
                           <td className="px-4 py-4">
                             {getStatusBadge(trip.status)}
@@ -538,22 +530,22 @@ export default function TripsPage() {
                           <td className="px-4 py-4">
                             <div>
                               <p className="text-sm font-medium text-gray-900">
-                                {availableSeats}/{totalSeats}
+                                {trip.availableSeats}/{trip.totalSeats}
                               </p>
                               <p className="text-xs text-gray-500">{occupancyRate}% occupied</p>
-                    </div>
+                            </div>
                           </td>
                           <td className="px-4 py-4">
-                            <p className="text-sm font-medium text-gray-900">₦{(trip.price || 0).toLocaleString()}</p>
+                            <p className="text-sm font-medium text-gray-900">₦{trip.price.toLocaleString()}</p>
                           </td>
                           <td className="px-4 py-4">
-                            <p className="text-sm font-medium text-gray-900">{trip.bookingsCount || 0}</p>
+                            <p className="text-sm font-medium text-gray-900">{trip.bookingsCount}</p>
                           </td>
                           <td className="px-4 py-4 text-right">
                             <div className="flex justify-end space-x-2">
-                      <Button 
+                              <Button
                                 variant="ghost"
-                        size="sm" 
+                                size="sm"
                                 onClick={() => {
                                   const driverName = trip.driver ? `${trip.driver.firstName} ${trip.driver.lastName}` : 'Not assigned';
                                   const vehiclePlate = trip.vehicle ? trip.vehicle.plateNumber : 'Not assigned';
@@ -565,25 +557,25 @@ export default function TripsPage() {
                                 }}
                               >
                                 <Eye className="h-4 w-4" />
-                      </Button>
-                      <Button 
+                              </Button>
+                              <Button
                                 variant="ghost"
-                        size="sm" 
-                        onClick={() => handleDeleteTrip(trip.id)}
-                      >
+                                size="sm"
+                                onClick={() => handleDeleteTrip(trip.id)}
+                              >
                                 <Trash2 className="h-4 w-4 text-red-600" />
-                      </Button>
-                    </div>
+                              </Button>
+                            </div>
                           </td>
                         </tr>
                       );
                     })}
                   </tbody>
                 </table>
-                  </div>
+              </div>
             )}
-                </CardContent>
-              </Card>
+          </CardContent>
+        </Card>
 
         {/* Create Trip Modal */}
         <Modal
@@ -603,17 +595,17 @@ export default function TripsPage() {
           size="lg"
         >
           <div className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
                 <Label htmlFor="routeId">Route ID *</Label>
                 <Input
                   id="routeId"
-                        value={newTrip.routeId}
+                  value={newTrip.routeId}
                   onChange={(e) => setNewTrip(prev => ({ ...prev, routeId: e.target.value }))}
                   placeholder="Enter route ID"
                 />
-                    </div>
-                    <div>
+              </div>
+              <div>
                 <Label htmlFor="price">Price (₦) *</Label>
                 <Input
                   id="price"
@@ -622,9 +614,9 @@ export default function TripsPage() {
                   onChange={(e) => setNewTrip(prev => ({ ...prev, price: e.target.value }))}
                   placeholder="e.g., 5000"
                 />
-                    </div>
-                  </div>
-                  
+              </div>
+            </div>
+
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <Label htmlFor="driverId">Driver ID *</Label>
@@ -635,41 +627,41 @@ export default function TripsPage() {
                   placeholder="Enter driver ID"
                 />
               </div>
-                  <div>
+              <div>
                 <Label htmlFor="vehicleId">Vehicle ID *</Label>
                 <Input
                   id="vehicleId"
-                      value={newTrip.vehicleId}
+                  value={newTrip.vehicleId}
                   onChange={(e) => setNewTrip(prev => ({ ...prev, vehicleId: e.target.value }))}
                   placeholder="Enter vehicle ID"
                 />
               </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
                 <Label htmlFor="departureTime">Departure Time *</Label>
-                      <Input 
+                <Input
                   id="departureTime"
-                        type="datetime-local" 
-                        value={newTrip.departureTime}
+                  type="datetime-local"
+                  value={newTrip.departureTime}
                   onChange={(e) => setNewTrip(prev => ({ ...prev, departureTime: e.target.value }))}
-                      />
-                    </div>
-                    <div>
+                />
+              </div>
+              <div>
                 <Label htmlFor="arrivalTime">Arrival Time *</Label>
-                      <Input 
+                <Input
                   id="arrivalTime"
-                        type="datetime-local" 
-                        value={newTrip.arrivalTime}
+                  type="datetime-local"
+                  value={newTrip.arrivalTime}
                   onChange={(e) => setNewTrip(prev => ({ ...prev, arrivalTime: e.target.value }))}
-                      />
-                    </div>
-                  </div>
-                  
+                />
+              </div>
+            </div>
+
             <div className="flex justify-end space-x-2 pt-4">
-                    <Button
-                      variant="outline"
+              <Button
+                variant="outline"
                 onClick={() => {
                   setShowCreateForm(false);
                   setNewTrip({
@@ -681,16 +673,16 @@ export default function TripsPage() {
                     price: ''
                   });
                 }}
-                    >
-                      Cancel
-                    </Button>
-                    <Button 
-                      onClick={handleScheduleTrip}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleScheduleTrip}
                 className="bg-[#5d4a15] hover:bg-[#6b5618]"
-                    >
-                      Schedule Trip
-                    </Button>
-                  </div>
+              >
+                Schedule Trip
+              </Button>
+            </div>
           </div>
         </Modal>
 

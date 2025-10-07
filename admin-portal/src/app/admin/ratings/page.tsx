@@ -38,54 +38,25 @@ import {
 interface Rating {
   id: string;
   userId: string;
-  userName: string;
-  userAvatar?: string;
   rating: number;
-  review: string;
-  category: "trip" | "route" | "driver" | "vehicle" | "service";
-  targetId: string;
-  targetName: string;
-  targetType: string;
-  timestamp: string;
-  helpful: number;
-  verified: boolean;
-  images?: string[];
-  tags?: string[];
-  response?: {
-    text: string;
-    author: string;
-    timestamp: string;
+  comment?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+  user: {
+    firstName: string;
+    lastName: string;
   };
 }
 
 interface RatingStats {
-  totalRatings: number;
+  totalReviews: number;
   averageRating: number;
   ratingDistribution: {
-    star: number;
+    rating: number;
     count: number;
-    percentage: number;
   }[];
-  categoryStats: {
-    category: string;
-    count: number;
-    average: number;
-  }[];
-  recentRatings: Rating[];
-  topRated: {
-    id: string;
-    name: string;
-    type: string;
-    averageRating: number;
-    totalRatings: number;
-  }[];
-  lowRated: {
-    id: string;
-    name: string;
-    type: string;
-    averageRating: number;
-    totalRatings: number;
-  }[];
+  recentReviews: number;
 }
 
 export default function RatingsPage() {
@@ -106,7 +77,7 @@ export default function RatingsPage() {
     try {
       setLoading(true);
       const token = localStorage.getItem('adminToken');
-      const response = await fetch('http://localhost:3003/api/v1/admin/ratings', {
+      const response = await fetch('http://localhost:3003/api/v1/reviews', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -130,7 +101,7 @@ export default function RatingsPage() {
   const fetchStats = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch('http://localhost:3003/api/v1/admin/ratings/stats', {
+      const response = await fetch('http://localhost:3003/api/v1/reviews/stats', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -142,50 +113,41 @@ export default function RatingsPage() {
         setStats(data);
       } else {
         setStats({
-          totalRatings: 0,
+          totalReviews: 0,
           averageRating: 0,
           ratingDistribution: [],
-          categoryStats: [],
-          recentRatings: [],
-          topRated: [],
-          lowRated: []
+          recentReviews: 0
         });
       }
     } catch (error) {
       console.error('Error fetching rating stats:', error);
       setStats({
-        totalRatings: 0,
+        totalReviews: 0,
         averageRating: 0,
         ratingDistribution: [],
-        categoryStats: [],
-        recentRatings: [],
-        topRated: [],
-        lowRated: []
+        recentReviews: 0
       });
     }
   };
 
 
   const filteredRatings = ratings.filter(rating => {
+    const userName = `${rating.user.firstName} ${rating.user.lastName}`;
     const matchesSearch = searchTerm === "" ||
-      rating.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      rating.review.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      rating.targetName.toLowerCase().includes(searchTerm.toLowerCase());
+      userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (rating.comment && rating.comment.toLowerCase().includes(searchTerm.toLowerCase()));
     
-    const matchesCategory = filterCategory === "all" || rating.category === filterCategory;
     const matchesRating = filterRating === "all" || rating.rating === parseInt(filterRating);
     
-    return matchesSearch && matchesCategory && matchesRating;
+    return matchesSearch && matchesRating;
   }).sort((a, b) => {
     switch (sortBy) {
       case "newest":
-        return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
       case "oldest":
-        return new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime();
+        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
       case "rating":
         return b.rating - a.rating;
-      case "helpful":
-        return b.helpful - a.helpful;
       default:
         return 0;
     }
@@ -260,7 +222,7 @@ export default function RatingsPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-600">Total Ratings</p>
-                    <p className="text-2xl font-bold">{stats.totalRatings}</p>
+                    <p className="text-2xl font-bold">{stats.totalReviews}</p>
                   </div>
                   <Star className="h-8 w-8 text-[#5d4a15]" />
                 </div>
@@ -284,7 +246,9 @@ export default function RatingsPage() {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-gray-600">5-Star Ratings</p>
-                    <p className="text-2xl font-bold text-yellow-600">{stats.ratingDistribution[0].count}</p>
+                    <p className="text-2xl font-bold text-yellow-600">
+                      {stats.ratingDistribution.find(r => r.rating === 5)?.count || 0}
+                    </p>
                   </div>
                   <Crown className="h-8 w-8 text-yellow-600" />
                 </div>
@@ -297,7 +261,8 @@ export default function RatingsPage() {
                   <div>
                     <p className="text-sm text-gray-600">Low Ratings</p>
                     <p className="text-2xl font-bold text-red-600">
-                      {stats.ratingDistribution[3].count + stats.ratingDistribution[4].count}
+                      {(stats.ratingDistribution.find(r => r.rating === 1)?.count || 0) + 
+                       (stats.ratingDistribution.find(r => r.rating === 2)?.count || 0)}
                     </p>
                   </div>
                   <AlertCircle className="h-8 w-8 text-red-600" />
@@ -316,10 +281,12 @@ export default function RatingsPage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-3">
-                {stats.ratingDistribution.map(({ star, count, percentage }) => (
-                  <div key={star} className="flex items-center gap-4">
+                {stats.ratingDistribution.map(({ rating, count }) => {
+                  const percentage = stats.totalReviews > 0 ? (count / stats.totalReviews) * 100 : 0;
+                  return (
+                  <div key={rating} className="flex items-center gap-4">
                     <div className="flex items-center gap-1 w-16">
-                      <span className="text-sm font-medium">{star}</span>
+                      <span className="text-sm font-medium">{rating}</span>
                       <Star className="h-4 w-4 text-yellow-400 fill-current" />
                     </div>
                     <div className="flex-1 bg-gray-200 rounded-full h-3">
@@ -332,7 +299,8 @@ export default function RatingsPage() {
                       {count} ({percentage.toFixed(1)}%)
                     </div>
                   </div>
-                ))}
+                  );
+                })}
               </div>
             </CardContent>
           </Card>
@@ -396,26 +364,20 @@ export default function RatingsPage() {
               <CardContent className="p-6">
                 <div className="flex items-start gap-4">
                   <div className="w-12 h-12 bg-[#5d4a15] rounded-full flex items-center justify-center text-white font-medium">
-                    {rating.userName.charAt(0)}
+                    {rating.user.firstName.charAt(0)}
                   </div>
                   
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-3">
-                        <h3 className="font-semibold">{rating.userName}</h3>
+                        <h3 className="font-semibold">{rating.user.firstName} {rating.user.lastName}</h3>
                         <Badge className={getRatingColor(rating.rating)}>
                           {rating.rating} Stars
                         </Badge>
-                        {rating.verified && (
-                          <Badge variant="outline" className="text-xs">
-                            <CheckCircle className="h-3 w-3 mr-1" />
-                            Verified
-                          </Badge>
-                        )}
                       </div>
                       <div className="flex items-center gap-2">
                         <span className="text-sm text-gray-500">
-                          {new Date(rating.timestamp).toLocaleDateString()}
+                          {new Date(rating.createdAt).toLocaleDateString()}
                         </span>
                         <Button variant="ghost" size="sm">
                           <Eye className="h-4 w-4" />
@@ -423,48 +385,10 @@ export default function RatingsPage() {
                       </div>
                     </div>
                     
-                    <div className="flex items-center gap-2 mb-3">
-                      {getCategoryIcon(rating.category)}
-                      <span className="text-sm text-gray-600">
-                        {rating.category.charAt(0).toUpperCase() + rating.category.slice(1)}: {rating.targetName}
-                      </span>
-                    </div>
-                    
-                    <p className="text-gray-700 mb-3">{rating.review}</p>
-                    
-                    {rating.tags && rating.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mb-3">
-                        {rating.tags.map((tag, index) => (
-                          <Badge key={index} variant="outline" className="text-xs">
-                            {tag.replace('-', ' ')}
-                          </Badge>
-                        ))}
-                      </div>
+                    {rating.comment && (
+                      <p className="text-gray-700 mb-3">{rating.comment}</p>
                     )}
                     
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-4 text-sm text-gray-500">
-                        <div className="flex items-center gap-1">
-                          <ThumbsUp className="h-4 w-4" />
-                          <span>{rating.helpful} helpful</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <MessageCircle className="h-4 w-4" />
-                          <span>Reply</span>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center gap-2">
-                        <Button variant="outline" size="sm">
-                          <Reply className="h-4 w-4 mr-1" />
-                          Respond
-                        </Button>
-                        <Button variant="outline" size="sm">
-                          <Flag className="h-4 w-4 mr-1" />
-                          Flag
-                        </Button>
-                      </div>
-                    </div>
                   </div>
                 </div>
               </CardContent>

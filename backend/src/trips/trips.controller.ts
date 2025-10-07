@@ -89,10 +89,24 @@ export class TripsController {
   @Delete(':id')
   @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
+  @ApiOperation({ summary: 'Delete trip permanently (Admin only)' })
+  @ApiResponse({ status: 200, description: 'Trip deleted successfully' })
+  @ApiResponse({ status: 404, description: 'Trip not found' })
+  @ApiResponse({ status: 400, description: 'Cannot delete trip with bookings' })
+  remove(@Param('id') id: string, @Request() req) {
+    if (req.user.type !== 'admin') {
+      throw new Error('Only admins can delete trips');
+    }
+    return this.tripsService.delete(id);
+  }
+
+  @Patch(':id/cancel')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Cancel trip (Admin only)' })
   @ApiResponse({ status: 200, description: 'Trip cancelled successfully' })
   @ApiResponse({ status: 404, description: 'Trip not found' })
-  remove(@Param('id') id: string, @Request() req) {
+  cancel(@Param('id') id: string, @Request() req) {
     if (req.user.type !== 'admin') {
       throw new Error('Only admins can cancel trips');
     }

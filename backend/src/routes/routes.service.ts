@@ -179,6 +179,24 @@ export class RoutesService {
     });
   }
 
+  async delete(id: string) {
+    const route = await this.findOne(id);
+    
+    // Check if route has trips
+    const tripsCount = await this.prisma.trip.count({
+      where: { routeId: id },
+    });
+
+    if (tripsCount > 0) {
+      throw new Error('Cannot delete route with existing trips. Deactivate the route instead.');
+    }
+
+    // Delete the route permanently
+    return this.prisma.route.delete({
+      where: { id },
+    });
+  }
+
   async getRouteStats(id: string) {
     const route = await this.findOne(id);
     

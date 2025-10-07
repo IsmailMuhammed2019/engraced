@@ -13,4 +13,10 @@ export class ReviewsController {
   findAll() {
     return this.reviewsService.findAll();
   }
+
+  @Get('stats')
+  @ApiOperation({ summary: 'Get review statistics' })
+  getStats() {
+    return this.reviewsService.getStats();
+  }
 }

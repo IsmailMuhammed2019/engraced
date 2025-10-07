@@ -44,7 +44,7 @@ export default function AdminNotificationCenter({ isOpen, onClose, adminId }: Ad
   const fetchNotifications = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch('/api/v1/notifications', {
+      const response = await fetch('http://localhost:3003/api/v1/notifications', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

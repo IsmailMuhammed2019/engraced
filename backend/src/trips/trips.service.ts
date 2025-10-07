@@ -354,6 +354,24 @@ export class TripsService {
     });
   }
 
+  async delete(id: string) {
+    const trip = await this.findOne(id);
+    
+    // Check if trip has bookings
+    const bookingsCount = await this.prisma.booking.count({
+      where: { tripId: id },
+    });
+
+    if (bookingsCount > 0) {
+      throw new Error('Cannot delete trip with existing bookings. Cancel the trip instead.');
+    }
+
+    // Delete the trip permanently
+    return this.prisma.trip.delete({
+      where: { id },
+    });
+  }
+
   async getAvailableSeats(tripId: string) {
     const trip = await this.findOne(tripId);
     

@@ -86,12 +86,26 @@ export class RoutesController {
   @Delete(':id')
   @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
-  @ApiOperation({ summary: 'Delete route (Admin only)' })
+  @ApiOperation({ summary: 'Delete route permanently (Admin only)' })
   @ApiResponse({ status: 200, description: 'Route deleted successfully' })
   @ApiResponse({ status: 404, description: 'Route not found' })
+  @ApiResponse({ status: 400, description: 'Cannot delete route with trips' })
   remove(@Param('id') id: string, @Request() req) {
     if (req.user.type !== 'admin') {
       throw new Error('Only admins can delete routes');
+    }
+    return this.routesService.delete(id);
+  }
+
+  @Patch(':id/deactivate')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Deactivate route (Admin only)' })
+  @ApiResponse({ status: 200, description: 'Route deactivated successfully' })
+  @ApiResponse({ status: 404, description: 'Route not found' })
+  deactivate(@Param('id') id: string, @Request() req) {
+    if (req.user.type !== 'admin') {
+      throw new Error('Only admins can deactivate routes');
     }
     return this.routesService.remove(id);
   }

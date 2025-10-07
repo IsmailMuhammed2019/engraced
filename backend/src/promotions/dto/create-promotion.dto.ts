@@ -6,13 +6,23 @@ export class CreatePromotionDto {
   @IsString()
   name: string;
 
-  @ApiProperty({ description: 'Promotion type', enum: ['discount', 'fixed', 'free'] })
-  @IsEnum(['discount', 'fixed', 'free'])
-  type: 'discount' | 'fixed' | 'free';
+  @ApiProperty({ description: 'Promotion type', enum: ['PERCENTAGE', 'FIXED_AMOUNT', 'FREE_RIDE'] })
+  @IsEnum(['PERCENTAGE', 'FIXED_AMOUNT', 'FREE_RIDE'])
+  type: 'PERCENTAGE' | 'FIXED_AMOUNT' | 'FREE_RIDE';
 
   @ApiProperty({ description: 'Promotion value' })
   @IsString()
   value: string;
+
+  @ApiProperty({ description: 'Minimum amount', required: false })
+  @IsOptional()
+  @IsString()
+  minAmount?: string;
+
+  @ApiProperty({ description: 'Maximum discount', required: false })
+  @IsOptional()
+  @IsString()
+  maxDiscount?: string;
 
   @ApiProperty({ description: 'Promotion description' })
   @IsString()

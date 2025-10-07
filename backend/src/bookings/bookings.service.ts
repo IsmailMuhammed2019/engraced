@@ -275,6 +275,36 @@ export class BookingsService {
     });
   }
 
+  async delete(id: string) {
+    const booking = await this.findOne(id);
+
+    // Check if booking has payment
+    const payment = await this.prisma.payment.findUnique({
+      where: { bookingId: id },
+    });
+
+    if (payment && payment.paymentStatus === 'PAID') {
+      throw new Error('Cannot delete booking with successful payment. Cancel the booking instead.');
+    }
+
+    // Delete payment if exists
+    if (payment) {
+      await this.prisma.payment.delete({
+        where: { bookingId: id },
+      });
+    }
+
+    // Free up and delete seats
+    await this.prisma.seat.deleteMany({
+      where: { bookingId: id },
+    });
+
+    // Delete the booking permanently
+    return this.prisma.booking.delete({
+      where: { id },
+    });
+  }
+
   async getBookingStats() {
     const [
       totalBookings,

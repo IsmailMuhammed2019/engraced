@@ -114,10 +114,24 @@ export class BookingsController {
   @Delete(':id')
   @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
+  @ApiOperation({ summary: 'Delete booking permanently' })
+  @ApiResponse({ status: 200, description: 'Booking deleted successfully' })
+  @ApiResponse({ status: 404, description: 'Booking not found' })
+  @ApiResponse({ status: 400, description: 'Cannot delete booking with payment' })
+  remove(@Param('id') id: string, @Request() req) {
+    if (req.user.type === 'admin') {
+      return this.bookingsService.delete(id);
+    }
+    return this.bookingsService.remove(id);
+  }
+
+  @Patch(':id/cancel')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiBearerAuth()
   @ApiOperation({ summary: 'Cancel booking' })
   @ApiResponse({ status: 200, description: 'Booking cancelled successfully' })
   @ApiResponse({ status: 404, description: 'Booking not found' })
-  remove(@Param('id') id: string, @Request() req) {
+  cancel(@Param('id') id: string, @Request() req) {
     return this.bookingsService.remove(id);
   }
 }

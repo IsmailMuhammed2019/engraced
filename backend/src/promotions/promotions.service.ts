@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreatePromotionDto } from './dto/create-promotion.dto';
 import { UpdatePromotionDto } from './dto/update-promotion.dto';
@@ -16,11 +16,13 @@ export class PromotionsService {
         title: createPromotionDto.name,
         description: createPromotionDto.description,
         code,
-        type: createPromotionDto.type.toUpperCase() as any,
+        type: createPromotionDto.type as any,
         value: parseFloat(createPromotionDto.value),
+        minAmount: createPromotionDto.minAmount ? parseFloat(createPromotionDto.minAmount) : null,
+        maxDiscount: createPromotionDto.maxDiscount ? parseFloat(createPromotionDto.maxDiscount) : null,
         startDate: new Date(createPromotionDto.startDate),
         endDate: new Date(createPromotionDto.endDate),
-        usageLimit: createPromotionDto.maxUsage,
+        usageLimit: createPromotionDto.maxUsage || null,
         isActive: createPromotionDto.status === 'active' || true,
       },
     });
@@ -30,6 +32,84 @@ export class PromotionsService {
     return this.prisma.promotion.findMany({
       orderBy: {
         createdAt: 'desc',
+      },
+    });
+  }
+
+  async validatePromoCode(code: string, bookingAmount: number) {
+    const promotion = await this.prisma.promotion.findUnique({
+      where: { code },
+    });
+
+    if (!promotion) {
+      throw new NotFoundException('Promotion code not found');
+    }
+
+    const now = new Date();
+    
+    // Check if promotion is active
+    if (!promotion.isActive) {
+      throw new BadRequestException('Promotion code is inactive');
+    }
+
+    // Check if promotion has started
+    if (promotion.startDate > now) {
+      throw new BadRequestException('Promotion has not started yet');
+    }
+
+    // Check if promotion has expired
+    if (promotion.endDate < now) {
+      throw new BadRequestException('Promotion has expired');
+    }
+
+    // Check usage limit
+    if (promotion.usageLimit && promotion.usedCount >= promotion.usageLimit) {
+      throw new BadRequestException('Promotion usage limit reached');
+    }
+
+    // Check minimum amount
+    if (promotion.minAmount && bookingAmount < promotion.minAmount.toNumber()) {
+      throw new BadRequestException(`Minimum booking amount is ₦${promotion.minAmount}`);
+    }
+
+    // Calculate discount
+    let discountAmount = 0;
+    switch (promotion.type) {
+      case 'PERCENTAGE':
+        discountAmount = (bookingAmount * promotion.value.toNumber()) / 100;
+        break;
+      case 'FIXED_AMOUNT':
+        discountAmount = promotion.value.toNumber();
+        break;
+      case 'FREE_RIDE':
+        discountAmount = bookingAmount;
+        break;
+    }
+
+    // Apply max discount limit
+    if (promotion.maxDiscount && discountAmount > promotion.maxDiscount.toNumber()) {
+      discountAmount = promotion.maxDiscount.toNumber();
+    }
+
+    // Ensure discount doesn't exceed booking amount
+    if (discountAmount > bookingAmount) {
+      discountAmount = bookingAmount;
+    }
+
+    return {
+      promotion,
+      discountAmount,
+      finalAmount: bookingAmount - discountAmount,
+    };
+  }
+
+  async incrementUsage(promotionId: string) {
+    return this.prisma.promotion.update({
+      where: { id: promotionId },
+      data: {
+        usedCount: {
+          increment: 1,
+        },
       },
     });
   }

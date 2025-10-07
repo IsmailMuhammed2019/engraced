@@ -64,6 +64,19 @@ export class PromotionsController {
     return this.promotionsService.getPromotionStats();
   }
 
+  @Post('validate')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Validate promotion code' })
+  @ApiResponse({ status: 200, description: 'Promotion code validated successfully' })
+  @ApiResponse({ status: 404, description: 'Promotion code not found' })
+  async validatePromoCode(
+    @Body() body: { code: string; bookingAmount: number },
+    @Request() req,
+  ) {
+    return this.promotionsService.validatePromoCode(body.code, body.bookingAmount);
+  }
+
   @Get(':id')
   @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()
