@@ -94,6 +94,33 @@ export default function BookingModal({ isOpen, onClose, routeData }: BookingModa
         amount: parseInt(formData.totalAmount.replace(/[₦,]/g, '')) * 100, // Convert to kobo
         currency: 'NGN',
         ref: `ENG_${Date.now()}`,
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        metadata: {
+          custom_fields: [
+            {
+              display_name: "Passenger Name",
+              variable_name: "passenger_name",
+              value: `${formData.firstName} ${formData.lastName}`
+            },
+            {
+              display_name: "Phone Number",
+              variable_name: "phone_number",
+              value: formData.phone
+            },
+            {
+              display_name: "Route",
+              variable_name: "route",
+              value: `${formData.origin} → ${formData.destination}`
+            }
+          ],
+          passengerName: `${formData.firstName} ${formData.lastName}`,
+          phone: formData.phone,
+          from: formData.origin,
+          to: formData.destination,
+          date: formData.departureDate,
+          time: formData.departureTime
+        },
         callback: function(response: { reference: string; status: string }) {
           // Handle successful payment
           console.log('Payment successful:', response);

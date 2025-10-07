@@ -354,6 +354,8 @@ export default function BookingPageContent() {
         body: JSON.stringify({
           amount: totalAmount,
           email: passengerInfo.email,
+          firstName: passengerInfo.firstName,
+          lastName: passengerInfo.lastName,
           reference,
           callback_url: `${window.location.origin}/booking/success`,
           metadata: {

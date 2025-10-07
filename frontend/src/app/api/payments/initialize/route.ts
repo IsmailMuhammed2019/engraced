@@ -2,11 +2,15 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
   try {
-    const { amount, email, reference, callback_url, metadata } = await request.json();
+    const { amount, email, reference, callback_url, metadata, firstName, lastName } = await request.json();
     
     if (!amount || !email || !reference) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
+
+    // Extract customer name from metadata if not provided directly
+    const customerFirstName = firstName || metadata?.passengerName?.split(' ')[0] || 'Customer';
+    const customerLastName = lastName || metadata?.passengerName?.split(' ').slice(1).join(' ') || '';
 
     // Initialize payment with Paystack
     const response = await fetch('https://api.paystack.co/transaction/initialize', {
@@ -20,6 +24,8 @@ export async function POST(request: NextRequest) {
         email,
         reference,
         callback_url,
+        first_name: customerFirstName,
+        last_name: customerLastName,
         metadata
       }),
     });

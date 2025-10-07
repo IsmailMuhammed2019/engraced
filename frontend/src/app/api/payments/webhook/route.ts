@@ -28,11 +28,56 @@ export async function POST(request: NextRequest) {
         // Payment was successful
         console.log('Payment successful:', event.data);
         
-        // Here you would typically:
-        // 1. Update booking status in database
-        // 2. Send confirmation email
-        // 3. Update seat availability
-        // 4. Generate ticket/booking reference
+        const paymentData = event.data;
+        const metadata = paymentData.metadata || {};
+
+        try {
+          // Get trip and route information
+          const tripResponse = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3003'}/api/v1/trips/${metadata.tripId}`);
+          let routeId = '';
+          
+          if (tripResponse.ok) {
+            const tripData = await tripResponse.json();
+            routeId = tripData.routeId;
+          }
+
+          // Create booking in backend if not already created
+          const backendResponse = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3003'}/api/v1/bookings`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              tripId: metadata.tripId,
+              routeId: routeId,
+              passengerCount: metadata.seats?.length || 1,
+              contactInfo: {
+                phone: metadata.phone,
+                email: paymentData.customer?.email
+              },
+              passengerDetails: [
+                {
+                  name: metadata.passengerName,
+                  email: paymentData.customer?.email,
+                  phone: metadata.phone
+                }
+              ],
+              seatNumbers: metadata.seats || [],
+              promotionCode: metadata.promotionCode || null,
+              notes: `Payment Reference: ${paymentData.reference}`
+            }),
+          });
+
+          if (backendResponse.ok) {
+            const bookingData = await backendResponse.json();
+            console.log('Booking created successfully:', bookingData);
+          } else {
+            const errorText = await backendResponse.text();
+            console.error('Failed to create booking in backend:', errorText);
+          }
+        } catch (backendError) {
+          console.error('Error creating booking:', backendError);
+        }
         
         break;
         
