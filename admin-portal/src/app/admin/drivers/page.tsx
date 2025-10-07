@@ -524,11 +524,7 @@ export default function DriversPage() {
     <AdminLayout>
       <div className="space-y-6">
         {/* Page Header */}
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Drivers Management</h1>
-            <p className="text-gray-600 mt-1">Manage and monitor your driver team</p>
-        </div>
+        <div className="flex justify-end items-center">
           <Button 
             className="btn-golden"
             onClick={() => setShowAddDriverModal(true)}

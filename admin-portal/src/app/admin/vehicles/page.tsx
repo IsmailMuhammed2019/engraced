@@ -130,7 +130,7 @@ export default function VehiclesPage() {
   const handleAddVehicle = async () => {
     try {
       setIsUploadingImages(true);
-      
+
       const token = localStorage.getItem('adminToken');
       
       // First, create the vehicle without images
@@ -570,11 +570,7 @@ export default function VehiclesPage() {
     <AdminLayout>
       <div className="space-y-6">
         {/* Page Header */}
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Vehicles Management</h1>
-            <p className="text-gray-600 mt-1">Manage and monitor your vehicle fleet</p>
-        </div>
+        <div className="flex justify-end items-center">
           <Button 
             className="btn-golden"
             onClick={() => setShowAddVehicleModal(true)}

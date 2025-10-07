@@ -279,11 +279,7 @@ export default function PromotionsPage() {
     <AdminLayout>
       <div className="space-y-6">
         {/* Page Header */}
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Promotions & Discounts</h1>
-            <p className="text-gray-600 mt-1">Manage promotional offers and discount codes</p>
-          </div>
+        <div className="flex justify-end items-center">
           <Button 
             onClick={() => setShowAddModal(true)}
             className="bg-[#5d4a15] hover:bg-[#6b5618]"

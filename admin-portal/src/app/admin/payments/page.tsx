@@ -403,11 +403,7 @@ export default function PaymentsPage() {
     <AdminLayout>
       <div className="space-y-6">
         {/* Page Header */}
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Payments Analytics</h1>
-            <p className="text-gray-600 mt-1">Comprehensive payment insights and transaction management</p>
-          </div>
+        <div className="flex justify-end items-center">
           <div className="flex gap-3">
             <Button variant="outline" onClick={fetchPayments} disabled={loading}>
               <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />

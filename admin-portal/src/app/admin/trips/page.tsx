@@ -273,11 +273,7 @@ export default function TripsPage() {
     <AdminLayout>
       <div className="space-y-6">
         {/* Page Header */}
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">Trips Management</h1>
-            <p className="text-gray-600 mt-1">Schedule and manage all trips</p>
-          </div>
+        <div className="flex justify-end items-center">
           <Button 
             onClick={() => setShowCreateForm(true)}
             className="bg-[#5d4a15] hover:bg-[#6b5618]"
