@@ -38,10 +38,13 @@ interface Route {
   to: string;
   distance: string;
   duration: string;
-  price: string;
-  status: "active" | "inactive";
-  bookings: number;
-  lastTrip: string;
+  basePrice: number;
+  isActive: boolean;
+  _count?: {
+    trips: number;
+    bookings: number;
+  };
+  trips?: any[];
 }
 
 export default function RoutesPage() {

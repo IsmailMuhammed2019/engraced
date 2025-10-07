@@ -88,10 +88,15 @@ export class TripsService {
       },
     });
 
-    // Create seats for the trip (Sienna: 1 front + 6 back = 7 seats)
-    const seatNumbers = ['A1']; // Front seat
-    for (let i = 1; i <= 6; i++) {
-      seatNumbers.push(`B${i}`); // Back seats
+    // Create seats for the trip based on maxPassengers
+    const maxSeats = createTripDto.maxPassengers || 7;
+    const seatNumbers = [];
+    
+    // Generate seat numbers dynamically
+    // Format: A1 (driver/front), then B1-BN for passengers
+    seatNumbers.push('A1'); // Driver/front seat
+    for (let i = 1; i < maxSeats; i++) {
+      seatNumbers.push(`B${i}`); // Passenger seats
     }
 
     await this.prisma.seat.createMany({
@@ -134,11 +139,39 @@ export class TripsService {
             to: true,
             distance: true,
             duration: true,
+            basePrice: true,
+          },
+        },
+        driver: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            phone: true,
+            rating: true,
+          },
+        },
+        vehicle: {
+          select: {
+            id: true,
+            plateNumber: true,
+            make: true,
+            model: true,
+            capacity: true,
+            features: true,
           },
         },
         _count: {
           select: {
             bookings: true,
+            seats: true,
+          },
+        },
+        seats: {
+          select: {
+            id: true,
+            seatNumber: true,
+            isBooked: true,
           },
         },
       },

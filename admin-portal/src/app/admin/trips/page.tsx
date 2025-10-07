@@ -50,25 +50,36 @@ interface Trip {
     route: {
     from: string;
     to: string;
+    basePrice?: number;
   };
   driver?: {
     firstName: string;
     lastName: string;
     phone: string;
+    rating?: number;
   } | null;
   vehicle?: {
     plateNumber: string;
     make: string;
     model: string;
+    capacity?: number;
   } | null;
   departureTime: string;
   arrivalTime: string;
   price: number;
+  maxPassengers: number;
   status: string;
-  availableSeats: number;
-  totalSeats: number;
-  bookingsCount: number;
   features: string[];
+  amenities?: string[];
+  _count?: {
+    bookings: number;
+    seats: number;
+  };
+  seats?: {
+    id: string;
+    seatNumber: string;
+    isBooked: boolean;
+  }[];
 }
 
 export default function TripsPage() {
@@ -76,6 +87,8 @@ export default function TripsPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showSeatMap, setShowSeatMap] = useState(false);
+  const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
   const [alertModal, setAlertModal] = useState<{show: boolean; title: string; message: string; type: 'success' | 'error' | 'info'}>({
     show: false,
     title: '',
@@ -257,18 +270,29 @@ export default function TripsPage() {
     }
   };
 
+  // Helper function to get available seats
+  const getAvailableSeats = (trip: Trip) => {
+    if (!trip.seats) return trip.maxPassengers || 0;
+    return trip.seats.filter(s => !s.isBooked).length;
+  };
+
+  const getBookedSeats = (trip: Trip) => {
+    if (!trip.seats) return 0;
+    return trip.seats.filter(s => s.isBooked).length;
+  };
+
   // Calculate stats for cards
   const stats = {
     total: trips.length,
     active: trips.filter(t => t.status === 'ACTIVE').length,
     completed: trips.filter(t => t.status === 'COMPLETED').length,
-    totalRevenue: trips.reduce((sum, t) => sum + ((t.price || 0) * (t.bookingsCount || 0)), 0),
-    totalBookings: trips.reduce((sum, t) => sum + (t.bookingsCount || 0), 0),
+    totalRevenue: trips.reduce((sum, t) => sum + ((t.price || 0) * (t._count?.bookings || 0)), 0),
+    totalBookings: trips.reduce((sum, t) => sum + (t._count?.bookings || 0), 0),
     avgOccupancy: trips.length > 0 
       ? trips.reduce((sum, t) => {
-          const totalSeats = t.totalSeats || 1;
-          const availableSeats = t.availableSeats || 0;
-          return sum + ((totalSeats - availableSeats) / totalSeats * 100);
+          const totalSeats = t.maxPassengers || 1;
+          const bookedSeats = getBookedSeats(t);
+          return sum + ((bookedSeats / totalSeats) * 100);
         }, 0) / trips.length
       : 0
   };
@@ -279,9 +303,9 @@ export default function TripsPage() {
     const existing = acc.find(item => item.route === routeName);
     if (existing) {
       existing.count += 1;
-      existing.bookings += (trip.bookingsCount || 0);
+      existing.bookings += (trip._count?.bookings || 0);
     } else {
-      acc.push({ route: routeName, count: 1, bookings: (trip.bookingsCount || 0) });
+      acc.push({ route: routeName, count: 1, bookings: (trip._count?.bookings || 0) });
     }
     return acc;
   }, []).slice(0, 5); // Top 5 routes
@@ -306,7 +330,7 @@ export default function TripsPage() {
     return {
       date: new Date(date).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }),
       trips: dayTrips.length,
-      bookings: dayTrips.reduce((sum, t) => sum + (t.bookingsCount || 0), 0)
+      bookings: dayTrips.reduce((sum, t) => sum + (t._count?.bookings || 0), 0)
     };
   });
 
@@ -524,10 +548,11 @@ export default function TripsPage() {
                   <tbody className="divide-y divide-gray-200">
                     {filteredTrips.map((trip) => {
                       const departure = formatDateTime(trip.departureTime);
-                      const totalSeats = trip.totalSeats || 1;
-                      const availableSeats = trip.availableSeats || 0;
+                      const totalSeats = trip.maxPassengers || 0;
+                      const availableSeats = getAvailableSeats(trip);
+                      const bookedSeats = getBookedSeats(trip);
                       const occupancyRate = totalSeats > 0 
-                        ? (((totalSeats - availableSeats) / totalSeats * 100).toFixed(0))
+                        ? ((bookedSeats / totalSeats * 100).toFixed(0))
                         : '0';
                       
                       return (
@@ -584,7 +609,7 @@ export default function TripsPage() {
                             <p className="text-sm font-medium text-gray-900">₦{(trip.price || 0).toLocaleString()}</p>
                           </td>
                           <td className="px-4 py-4">
-                            <p className="text-sm font-medium text-gray-900">{trip.bookingsCount || 0}</p>
+                            <p className="text-sm font-medium text-gray-900">{trip._count?.bookings || 0}</p>
                           </td>
                           <td className="px-4 py-4 text-right">
                             <div className="flex justify-end space-x-2">
@@ -592,16 +617,12 @@ export default function TripsPage() {
                                 variant="ghost"
                         size="sm" 
                                 onClick={() => {
-                                  const driverName = trip.driver ? `${trip.driver.firstName} ${trip.driver.lastName}` : 'Not assigned';
-                                  const vehiclePlate = trip.vehicle ? trip.vehicle.plateNumber : 'Not assigned';
-                                  showAlert(
-                                    'Trip Details',
-                                    `Route: ${trip.route.from} → ${trip.route.to}\nDriver: ${driverName}\nVehicle: ${vehiclePlate}\nPrice: ₦${trip.price}\nBookings: ${trip.bookingsCount}`,
-                                    'info'
-                                  );
+                                  setSelectedTrip(trip);
+                                  setShowSeatMap(true);
                                 }}
+                                title="View Seat Map"
                               >
-                                <Eye className="h-4 w-4" />
+                                <Users className="h-4 w-4" />
                       </Button>
                       <Button 
                                 variant="ghost"
@@ -761,14 +782,14 @@ export default function TripsPage() {
               <div>
                 <Label htmlFor="promotionId">Apply Promotion (Optional)</Label>
                 <Select 
-                  value={newTrip.promotionId}
-                  onValueChange={(value) => setNewTrip(prev => ({ ...prev, promotionId: value }))}
+                  value={newTrip.promotionId || 'none'}
+                  onValueChange={(value) => setNewTrip(prev => ({ ...prev, promotionId: value === 'none' ? '' : value }))}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="No promotion" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">No promotion</SelectItem>
+                    <SelectItem value="none">No promotion</SelectItem>
                     {promotions.filter(p => p.isActive && new Date(p.endDate) >= new Date()).map((promo) => (
                       <SelectItem key={promo.id} value={promo.id}>
                         {promo.title} {promo.code ? `(${promo.code})` : ''} - {promo.type === 'PERCENTAGE' ? `${promo.value}%` : `₦${promo.value}`} off
@@ -806,6 +827,128 @@ export default function TripsPage() {
                     </Button>
                   </div>
           </div>
+        </Modal>
+
+        {/* Seat Map Modal */}
+        <Modal
+          isOpen={showSeatMap}
+          onClose={() => {
+            setShowSeatMap(false);
+            setSelectedTrip(null);
+          }}
+          title={selectedTrip ? `Seat Map - ${selectedTrip.route.from} → ${selectedTrip.route.to}` : "Seat Map"}
+          size="lg"
+        >
+          {selectedTrip && (
+            <div className="space-y-6">
+              {/* Trip Info */}
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <div className="grid grid-cols-2 gap-4 text-sm">
+                  <div>
+                    <p className="text-gray-600">Departure</p>
+                    <p className="font-medium">{formatDateTime(selectedTrip.departureTime).date} at {formatDateTime(selectedTrip.departureTime).time}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Driver</p>
+                    <p className="font-medium">
+                      {selectedTrip.driver ? `${selectedTrip.driver.firstName} ${selectedTrip.driver.lastName}` : 'Not assigned'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Vehicle</p>
+                    <p className="font-medium">
+                      {selectedTrip.vehicle ? `${selectedTrip.vehicle.plateNumber} - ${selectedTrip.vehicle.make} ${selectedTrip.vehicle.model}` : 'Not assigned'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-gray-600">Available Seats</p>
+                    <p className="font-medium text-green-600">{getAvailableSeats(selectedTrip)} of {selectedTrip.maxPassengers}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Seat Map Legend */}
+              <div className="flex items-center justify-center gap-6 text-sm">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 bg-green-100 border-2 border-green-500 rounded"></div>
+                  <span>Available</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 bg-red-100 border-2 border-red-500 rounded"></div>
+                  <span>Booked</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 bg-gray-200 border-2 border-gray-400 rounded"></div>
+                  <span>Driver</span>
+                </div>
+              </div>
+
+              {/* Seat Map */}
+              <div className="bg-white border-2 border-gray-300 rounded-lg p-6">
+                <div className="max-w-md mx-auto">
+                  {/* Front Section */}
+                  <div className="mb-8">
+                    <p className="text-center text-sm text-gray-500 mb-2">Front</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div></div>
+                      {selectedTrip.seats?.filter(s => s.seatNumber === 'A1').map((seat) => (
+                        <div
+                          key={seat.id}
+                          className={`
+                            w-12 h-12 rounded border-2 flex items-center justify-center font-medium text-xs
+                            bg-gray-200 border-gray-400 cursor-not-allowed
+                          `}
+                          title="Driver Seat"
+                        >
+                          {seat.seatNumber}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Passenger Section */}
+                  <div>
+                    <p className="text-center text-sm text-gray-500 mb-2">Passenger Seats</p>
+                    <div className="grid grid-cols-4 gap-2">
+                      {selectedTrip.seats
+                        ?.filter(s => s.seatNumber !== 'A1')
+                        .sort((a, b) => a.seatNumber.localeCompare(b.seatNumber))
+                        .map((seat) => (
+                          <div
+                            key={seat.id}
+                            className={`
+                              w-12 h-12 rounded border-2 flex items-center justify-center font-medium text-xs
+                              ${seat.isBooked 
+                                ? 'bg-red-100 border-red-500 cursor-not-allowed' 
+                                : 'bg-green-100 border-green-500 hover:bg-green-200 cursor-pointer'}
+                            `}
+                            title={seat.isBooked ? 'Booked' : 'Available'}
+                          >
+                            {seat.seatNumber}
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+
+                  {/* Summary */}
+                  <div className="mt-6 pt-4 border-t">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Total Seats:</span>
+                      <span className="font-medium">{selectedTrip.maxPassengers}</span>
+                    </div>
+                    <div className="flex justify-between text-sm mt-2">
+                      <span className="text-gray-600">Booked:</span>
+                      <span className="font-medium text-red-600">{getBookedSeats(selectedTrip)}</span>
+                    </div>
+                    <div className="flex justify-between text-sm mt-2">
+                      <span className="text-gray-600">Available:</span>
+                      <span className="font-medium text-green-600">{getAvailableSeats(selectedTrip)}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+          </div>
+        )}
         </Modal>
 
         {/* Alert Modal */}
