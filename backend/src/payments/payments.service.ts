@@ -187,73 +187,159 @@ export class PaymentsService {
   }
 
   async getAllPayments() {
-    return this.prisma.payment.findMany({
-      include: {
-        booking: {
-          include: {
-            user: {
-              select: {
-                firstName: true,
-                lastName: true,
-                email: true,
+    try {
+      // First, try to get payments from local database
+      const localPayments = await this.prisma.payment.findMany({
+        include: {
+          booking: {
+            include: {
+              user: {
+                select: {
+                  firstName: true,
+                  lastName: true,
+                  email: true,
+                },
               },
-            },
-            route: {
-              select: {
-                from: true,
-                to: true,
+              route: {
+                select: {
+                  from: true,
+                  to: true,
+                },
               },
             },
           },
         },
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+        orderBy: {
+          createdAt: 'desc',
+        },
+      });
+
+      // If we have local payments, return them
+      if (localPayments.length > 0) {
+        return localPayments;
+      }
+
+      // If no local payments, try to fetch from Paystack
+      console.log('No local payments found, fetching from Paystack...');
+      return await this.fetchPaymentsFromPaystack();
+    } catch (error) {
+      console.error('Error fetching payments:', error);
+      // Fallback to local database
+      return this.prisma.payment.findMany({
+        include: {
+          booking: {
+            include: {
+              user: {
+                select: {
+                  firstName: true,
+                  lastName: true,
+                  email: true,
+                },
+              },
+              route: {
+                select: {
+                  from: true,
+                  to: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      });
+    }
+  }
+
+  async fetchPaymentsFromPaystack() {
+    try {
+      const response = await axios.get(
+        `${this.paystackBaseUrl}/transaction`,
+        {
+          headers: {
+            Authorization: `Bearer ${this.paystackSecretKey}`,
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+
+      const paystackTransactions = response.data.data;
+      console.log(`Fetched ${paystackTransactions.length} transactions from Paystack`);
+
+      // Transform Paystack data to match our local schema
+      const transformedPayments = paystackTransactions.map((transaction: any) => ({
+        id: transaction.id,
+        amount: transaction.amount / 100, // Convert from kobo to naira
+        paymentStatus: this.mapPaystackStatus(transaction.status),
+        paymentMethod: transaction.channel || 'card',
+        paystackRef: transaction.reference,
+        createdAt: transaction.created_at,
+        booking: {
+          id: transaction.metadata?.bookingId || 'unknown',
+          user: {
+            firstName: transaction.customer?.first_name || 'Unknown',
+            lastName: transaction.customer?.last_name || 'Customer',
+            email: transaction.customer?.email || transaction.email || 'unknown@example.com',
+          },
+          route: {
+            from: transaction.metadata?.from || 'Unknown',
+            to: transaction.metadata?.to || 'Unknown',
+          },
+        },
+      }));
+
+      return transformedPayments;
+    } catch (error) {
+      console.error('Error fetching from Paystack:', error.response?.data || error.message);
+      throw new Error('Failed to fetch payments from Paystack');
+    }
+  }
+
+  private mapPaystackStatus(status: string): 'PAID' | 'PENDING' | 'FAILED' {
+    switch (status) {
+      case 'success':
+        return 'PAID';
+      case 'pending':
+        return 'PENDING';
+      case 'failed':
+      case 'reversed':
+        return 'FAILED';
+      default:
+        return 'PENDING';
+    }
   }
 
   async getPaymentStats() {
-    const [
-      totalPayments,
-      successfulPayments,
-      failedPayments,
-      totalRevenue,
-    ] = await Promise.all([
-      this.prisma.payment.count(),
-      this.prisma.payment.count({
-        where: { paymentStatus: 'PAID' },
-      }),
-      this.prisma.payment.count({
-        where: { paymentStatus: 'FAILED' },
-      }),
-      this.prisma.payment.aggregate({
-        where: { paymentStatus: 'PAID' },
-        _sum: { amount: true },
-      }),
-    ]);
+    try {
+      // Get payments data (either from local DB or Paystack)
+      const payments = await this.getAllPayments();
+      
+      // Calculate stats from the payments data
+      const totalPayments = payments.length;
+      const successfulPayments = payments.filter(p => p.paymentStatus === 'PAID').length;
+      const failedPayments = payments.filter(p => p.paymentStatus === 'FAILED').length;
+      const totalRevenue = payments
+        .filter(p => p.paymentStatus === 'PAID')
+        .reduce((sum, p) => sum + Number(p.amount), 0);
 
-    const monthlyRevenue = await this.prisma.payment.groupBy({
-      by: ['createdAt'],
-      where: {
-        paymentStatus: 'PAID',
-        createdAt: {
-          gte: new Date(new Date().setMonth(new Date().getMonth() - 12)),
-        },
-      },
-      _sum: {
-        amount: true,
-      },
-    });
-
-    return {
-      totalPayments,
-      successfulPayments,
-      failedPayments,
-      totalRevenue: totalRevenue._sum.amount || 0,
-      successRate: totalPayments > 0 ? (successfulPayments / totalPayments) * 100 : 0,
-      monthlyRevenue,
-    };
+      return {
+        totalPayments,
+        successfulPayments,
+        failedPayments,
+        totalRevenue,
+        successRate: totalPayments > 0 ? (successfulPayments / totalPayments) * 100 : 0,
+      };
+    } catch (error) {
+      console.error('Error calculating payment stats:', error);
+      return {
+        totalPayments: 0,
+        successfulPayments: 0,
+        failedPayments: 0,
+        totalRevenue: 0,
+        successRate: 0,
+      };
+    }
   }
 
   async handleWebhook(body: any) {

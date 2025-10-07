@@ -24,7 +24,9 @@ import {
   Calendar,
   Users,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 import { 
   LineChart, 
@@ -88,6 +90,10 @@ export default function PaymentsPage() {
   const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
   const [statusFilter, setStatusFilter] = useState("all");
   const [dateFilter, setDateFilter] = useState("all");
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(10);
 
   // Export functionality
   const exportToCSV = () => {
@@ -222,6 +228,9 @@ export default function PaymentsPage() {
     try {
       setLoading(true);
       const token = localStorage.getItem('adminToken');
+      console.log('Admin token:', token ? 'Present' : 'Missing');
+      console.log('Fetching payments from: http://localhost:3003/api/v1/payments');
+      
       const response = await fetch('http://localhost:3003/api/v1/payments', {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -229,12 +238,18 @@ export default function PaymentsPage() {
         }
       });
       
+      console.log('Response status:', response.status);
+      console.log('Response headers:', Object.fromEntries(response.headers.entries()));
+      
       if (response.ok) {
         const data = await response.json();
         console.log('Fetched payments:', data);
+        console.log('Number of payments:', data.length);
         setPayments(data);
       } else {
+        const errorText = await response.text();
         console.error('Failed to fetch payments:', response.status, response.statusText);
+        console.error('Error response:', errorText);
         setPayments([]);
       }
     } catch (error) {
@@ -248,12 +263,16 @@ export default function PaymentsPage() {
   const fetchStats = async () => {
     try {
       const token = localStorage.getItem('adminToken');
+      console.log('Fetching stats from: http://localhost:3003/api/v1/payments/stats');
+      
       const response = await fetch('http://localhost:3003/api/v1/payments/stats', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
+      
+      console.log('Stats response status:', response.status);
       
       if (response.ok) {
         const data = await response.json();
@@ -266,7 +285,9 @@ export default function PaymentsPage() {
           averageTransactionValue: data.successfulPayments > 0 ? Number(data.totalRevenue) / data.successfulPayments : 0
         });
       } else {
+        const errorText = await response.text();
         console.error('Failed to fetch stats:', response.status, response.statusText);
+        console.error('Stats error response:', errorText);
         setStats({
           totalPayments: 0,
           successfulPayments: 0,
@@ -349,6 +370,34 @@ export default function PaymentsPage() {
     
     return matchesSearch && matchesStatus;
   });
+
+  // Pagination logic
+  const totalPages = Math.ceil(filteredPayments.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedPayments = filteredPayments.slice(startIndex, endIndex);
+
+  // Reset to first page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter]);
+
+  // Pagination handlers
+  const goToPage = (page: number) => {
+    setCurrentPage(page);
+  };
+
+  const goToPreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
+
+  const goToNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
 
   return (
     <AdminLayout>
@@ -689,7 +738,7 @@ export default function PaymentsPage() {
               </div>
             ) : (
               <div className="space-y-4">
-                {filteredPayments.map((payment) => (
+                {paginatedPayments.map((payment) => (
                   <div key={payment.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-2">
@@ -724,6 +773,80 @@ export default function PaymentsPage() {
                     </div>
                   </div>
                 ))}
+                
+                {/* Pagination Controls */}
+                {filteredPayments.length > 0 && (
+                  <div className="flex items-center justify-between mt-6 pt-4 border-t">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm text-gray-700">
+                        Showing {startIndex + 1} to {Math.min(endIndex, filteredPayments.length)} of {filteredPayments.length} payments
+                      </span>
+                      <select
+                        value={itemsPerPage}
+                        onChange={(e) => {
+                          setItemsPerPage(Number(e.target.value));
+                          setCurrentPage(1);
+                        }}
+                        className="ml-4 px-2 py-1 border rounded text-sm"
+                      >
+                        <option value={5}>5 per page</option>
+                        <option value={10}>10 per page</option>
+                        <option value={20}>20 per page</option>
+                        <option value={50}>50 per page</option>
+                      </select>
+                    </div>
+                    
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={goToPreviousPage}
+                        disabled={currentPage === 1}
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                        Previous
+                      </Button>
+                      
+                      <div className="flex items-center space-x-1">
+                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
+                          let pageNum;
+                          if (totalPages <= 5) {
+                            pageNum = i + 1;
+                          } else if (currentPage <= 3) {
+                            pageNum = i + 1;
+                          } else if (currentPage >= totalPages - 2) {
+                            pageNum = totalPages - 4 + i;
+                          } else {
+                            pageNum = currentPage - 2 + i;
+                          }
+                          
+                          return (
+                            <Button
+                              key={pageNum}
+                              variant={currentPage === pageNum ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => goToPage(pageNum)}
+                              className="w-8 h-8 p-0"
+                            >
+                              {pageNum}
+                            </Button>
+                          );
+                        })}
+                      </div>
+                      
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={goToNextPage}
+                        disabled={currentPage === totalPages}
+                      >
+                        Next
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+                
                 {filteredPayments.length === 0 && (
                   <div className="text-center py-8 text-gray-500">
                     No payments found matching your criteria.
