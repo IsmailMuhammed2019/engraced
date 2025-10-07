@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Modal, AlertModal } from "@/components/ui/modal";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Plus,
   Search,
@@ -82,19 +83,57 @@ export default function TripsPage() {
     type: 'info'
   });
   
+  // Data for form dropdowns
+  const [routes, setRoutes] = useState<any[]>([]);
+  const [drivers, setDrivers] = useState<any[]>([]);
+  const [vehicles, setVehicles] = useState<any[]>([]);
+  const [promotions, setPromotions] = useState<any[]>([]);
+  
   const [newTrip, setNewTrip] = useState({
     routeId: '',
     driverId: '',
     vehicleId: '',
     departureTime: '',
     arrivalTime: '',
-    price: ''
+    price: '',
+    maxPassengers: '',
+    promotionId: ''
   });
 
   // Fetch trips data
   useEffect(() => {
     fetchTrips();
+    fetchFormData();
   }, []);
+
+  const fetchFormData = async () => {
+    try {
+      const token = localStorage.getItem('adminToken');
+      
+      // Fetch all data in parallel
+      const [routesRes, driversRes, vehiclesRes, promotionsRes] = await Promise.all([
+        fetch('http://localhost:3003/api/v1/routes', {
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+        }),
+        fetch('http://localhost:3003/api/v1/drivers', {
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+        }),
+        fetch('http://localhost:3003/api/v1/vehicles', {
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+        }),
+        fetch('http://localhost:3003/api/v1/promotions', {
+          headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
+        })
+      ]);
+
+      if (routesRes.ok) setRoutes(await routesRes.json());
+      if (driversRes.ok) setDrivers(await driversRes.json());
+      if (vehiclesRes.ok) setVehicles(await vehiclesRes.json());
+      if (promotionsRes.ok) setPromotions(await promotionsRes.json());
+    } catch (error) {
+      console.error('Error fetching form data:', error);
+    }
+  };
 
   const fetchTrips = async () => {
     try {
@@ -143,7 +182,9 @@ export default function TripsPage() {
           vehicleId: '',
           departureTime: '',
           arrivalTime: '',
-          price: ''
+          price: '',
+          maxPassengers: '',
+          promotionId: ''
         });
         showAlert('Success', 'Trip created successfully!', 'success');
       } else {
@@ -592,7 +633,9 @@ export default function TripsPage() {
               vehicleId: '',
               departureTime: '',
               arrivalTime: '',
-              price: ''
+              price: '',
+              maxPassengers: '',
+              promotionId: ''
             });
           }}
           title="Schedule New Trip"
@@ -601,13 +644,29 @@ export default function TripsPage() {
           <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                <Label htmlFor="routeId">Route ID *</Label>
-                <Input
-                  id="routeId"
+                <Label htmlFor="routeId">Select Route *</Label>
+                <Select 
                         value={newTrip.routeId}
-                  onChange={(e) => setNewTrip(prev => ({ ...prev, routeId: e.target.value }))}
-                  placeholder="Enter route ID"
-                />
+                  onValueChange={(value) => {
+                    setNewTrip(prev => ({ ...prev, routeId: value }));
+                    // Auto-fill price from route if available
+                    const selectedRoute = routes.find(r => r.id === value);
+                    if (selectedRoute && selectedRoute.basePrice) {
+                      setNewTrip(prev => ({ ...prev, price: selectedRoute.basePrice.toString() }));
+                    }
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a route" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {routes.filter(r => r.isActive).map((route) => (
+                      <SelectItem key={route.id} value={route.id}>
+                        {route.from} → {route.to} (₦{route.basePrice})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                     </div>
                     <div>
                 <Label htmlFor="price">Price (₦) *</Label>
@@ -623,22 +682,47 @@ export default function TripsPage() {
                   
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label htmlFor="driverId">Driver ID *</Label>
-                <Input
-                  id="driverId"
+                <Label htmlFor="driverId">Select Driver *</Label>
+                <Select 
                   value={newTrip.driverId}
-                  onChange={(e) => setNewTrip(prev => ({ ...prev, driverId: e.target.value }))}
-                  placeholder="Enter driver ID"
-                />
+                  onValueChange={(value) => setNewTrip(prev => ({ ...prev, driverId: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a driver" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {drivers.filter(d => d.isActive).map((driver) => (
+                      <SelectItem key={driver.id} value={driver.id}>
+                        {driver.firstName} {driver.lastName} - {driver.phone}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
                   <div>
-                <Label htmlFor="vehicleId">Vehicle ID *</Label>
-                <Input
-                  id="vehicleId"
+                <Label htmlFor="vehicleId">Select Vehicle *</Label>
+                <Select 
                       value={newTrip.vehicleId}
-                  onChange={(e) => setNewTrip(prev => ({ ...prev, vehicleId: e.target.value }))}
-                  placeholder="Enter vehicle ID"
-                />
+                  onValueChange={(value) => {
+                    setNewTrip(prev => ({ ...prev, vehicleId: value }));
+                    // Auto-fill max passengers from vehicle capacity
+                    const selectedVehicle = vehicles.find(v => v.id === value);
+                    if (selectedVehicle && selectedVehicle.capacity) {
+                      setNewTrip(prev => ({ ...prev, maxPassengers: selectedVehicle.capacity.toString() }));
+                    }
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a vehicle" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {vehicles.filter(v => v.isActive).map((vehicle) => (
+                      <SelectItem key={vehicle.id} value={vehicle.id}>
+                        {vehicle.plateNumber} - {vehicle.make} {vehicle.model} ({vehicle.capacity} seats)
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
                   </div>
                   
@@ -663,6 +747,38 @@ export default function TripsPage() {
                     </div>
                   </div>
                   
+            <div className="grid grid-cols-2 gap-4">
+                  <div>
+                <Label htmlFor="maxPassengers">Max Passengers</Label>
+                    <Input 
+                  id="maxPassengers"
+                      type="number" 
+                  value={newTrip.maxPassengers}
+                  onChange={(e) => setNewTrip(prev => ({ ...prev, maxPassengers: e.target.value }))}
+                  placeholder="Auto-filled from vehicle"
+                />
+              </div>
+              <div>
+                <Label htmlFor="promotionId">Apply Promotion (Optional)</Label>
+                <Select 
+                  value={newTrip.promotionId}
+                  onValueChange={(value) => setNewTrip(prev => ({ ...prev, promotionId: value }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="No promotion" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">No promotion</SelectItem>
+                    {promotions.filter(p => p.isActive && new Date(p.endDate) >= new Date()).map((promo) => (
+                      <SelectItem key={promo.id} value={promo.id}>
+                        {promo.title} {promo.code ? `(${promo.code})` : ''} - {promo.type === 'PERCENTAGE' ? `${promo.value}%` : `₦${promo.value}`} off
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+                  </div>
+                  
             <div className="flex justify-end space-x-2 pt-4">
                     <Button
                       variant="outline"
@@ -674,7 +790,9 @@ export default function TripsPage() {
                     vehicleId: '',
                     departureTime: '',
                     arrivalTime: '',
-                    price: ''
+                    price: '',
+                    maxPassengers: '',
+                    promotionId: ''
                   });
                 }}
                     >
