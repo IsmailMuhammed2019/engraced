@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Modal, AlertModal } from "@/components/ui/modal";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import Image from "next/image";
 import {
   Plus,
   Search,
@@ -28,6 +29,9 @@ import {
   MoreHorizontal,
   BarChart3,
   PieChart as PieChartIcon,
+  Star,
+  Award,
+  Image as ImageIcon,
 } from "lucide-react";
 import {
   BarChart,
@@ -57,12 +61,19 @@ interface Trip {
     lastName: string;
     phone: string;
     rating?: number;
+    profileImage?: string;
+    experience?: number;
+    licenseNumber?: string;
   } | null;
   vehicle?: {
     plateNumber: string;
     make: string;
     model: string;
     capacity?: number;
+    images?: string[];
+    features?: string[];
+    year?: number;
+    mileage?: number;
   } | null;
   departureTime: string;
   arrivalTime: string;
@@ -88,6 +99,7 @@ export default function TripsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [showSeatMap, setShowSeatMap] = useState(false);
+  const [showTripDetails, setShowTripDetails] = useState(false);
   const [selectedTrip, setSelectedTrip] = useState<Trip | null>(null);
   const [alertModal, setAlertModal] = useState<{show: boolean; title: string; message: string; type: 'success' | 'error' | 'info'}>({
     show: false,
@@ -343,10 +355,10 @@ export default function TripsPage() {
             onClick={() => setShowCreateForm(true)}
             className="bg-[#5d4a15] hover:bg-[#6b5618]"
           >
-            <Plus className="h-4 w-4 mr-2" />
+          <Plus className="h-4 w-4 mr-2" />
             Schedule New Trip
-          </Button>
-        </div>
+        </Button>
+      </div>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-6 gap-6">
@@ -364,37 +376,37 @@ export default function TripsPage() {
 
           <Card>
             <CardContent className="p-6">
-              <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Active</p>
                   <p className="text-2xl font-bold text-green-600">{stats.active}</p>
-                </div>
+                    </div>
                 <CheckCircle className="h-8 w-8 text-green-600" />
-              </div>
+                  </div>
             </CardContent>
           </Card>
 
           <Card>
             <CardContent className="p-6">
-              <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Completed</p>
                   <p className="text-2xl font-bold text-blue-600">{stats.completed}</p>
-                </div>
+                        </div>
                 <CheckCircle className="h-8 w-8 text-blue-600" />
-              </div>
+                      </div>
             </CardContent>
           </Card>
 
           <Card>
             <CardContent className="p-6">
-              <div className="flex items-center justify-between">
+                      <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm text-gray-600">Total Bookings</p>
                   <p className="text-2xl font-bold text-purple-600">{stats.totalBookings}</p>
-                </div>
+                        </div>
                 <Users className="h-8 w-8 text-purple-600" />
-              </div>
+                      </div>
             </CardContent>
           </Card>
 
@@ -404,7 +416,7 @@ export default function TripsPage() {
                 <div>
                   <p className="text-sm text-gray-600">Revenue</p>
                   <p className="text-2xl font-bold text-[#5d4a15]">₦{stats.totalRevenue.toLocaleString()}</p>
-                </div>
+                    </div>
                 <DollarSign className="h-8 w-8 text-[#5d4a15]" />
               </div>
             </CardContent>
@@ -416,13 +428,13 @@ export default function TripsPage() {
                 <div>
                   <p className="text-sm text-gray-600">Avg Occupancy</p>
                   <p className="text-2xl font-bold text-orange-600">{stats.avgOccupancy.toFixed(1)}%</p>
-                </div>
+                      </div>
                 <TrendingUp className="h-8 w-8 text-orange-600" />
-              </div>
+                      </div>
             </CardContent>
           </Card>
-        </div>
-
+                    </div>
+                    
         {/* Charts Row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Daily Trips Chart */}
@@ -507,7 +519,7 @@ export default function TripsPage() {
         {/* Trips Table */}
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between">
               <CardTitle>All Trips</CardTitle>
               <div className="flex items-center space-x-2">
         <div className="relative">
@@ -518,9 +530,9 @@ export default function TripsPage() {
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
           />
-        </div>
+                      </div>
+                      </div>
                     </div>
-                  </div>
                 </CardHeader>
                 <CardContent>
             {loading ? (
@@ -560,7 +572,7 @@ export default function TripsPage() {
                           <td className="px-4 py-4">
                       <div className="flex items-center space-x-2">
                               <MapPin className="h-4 w-4 text-gray-400" />
-                              <div>
+                    <div>
                                 <p className="font-medium text-gray-900">{trip.route.from}</p>
                                 <p className="text-sm text-gray-500">→ {trip.route.to}</p>
                       </div>
@@ -618,6 +630,17 @@ export default function TripsPage() {
                         size="sm" 
                                 onClick={() => {
                                   setSelectedTrip(trip);
+                                  setShowTripDetails(true);
+                                }}
+                                title="View Trip Details"
+                              >
+                                <Eye className="h-4 w-4" />
+                      </Button>
+                      <Button 
+                                variant="ghost"
+                        size="sm" 
+                                onClick={() => {
+                                  setSelectedTrip(trip);
                                   setShowSeatMap(true);
                                 }}
                                 title="View Seat Map"
@@ -634,11 +657,11 @@ export default function TripsPage() {
                     </div>
                           </td>
                         </tr>
-                      );
-                    })}
+            );
+          })}
                   </tbody>
                 </table>
-                  </div>
+        </div>
             )}
                 </CardContent>
               </Card>
@@ -702,7 +725,7 @@ export default function TripsPage() {
                   </div>
                   
             <div className="grid grid-cols-2 gap-4">
-              <div>
+                  <div>
                 <Label htmlFor="driverId">Select Driver *</Label>
                 <Select 
                   value={newTrip.driverId}
@@ -827,6 +850,255 @@ export default function TripsPage() {
                     </Button>
                   </div>
           </div>
+        </Modal>
+
+        {/* Trip Details Modal */}
+        <Modal
+          isOpen={showTripDetails}
+          onClose={() => {
+            setShowTripDetails(false);
+            setSelectedTrip(null);
+          }}
+          title={selectedTrip ? `Trip Details - ${selectedTrip.route.from} → ${selectedTrip.route.to}` : "Trip Details"}
+          size="xl"
+        >
+          {selectedTrip && (
+            <div className="space-y-6">
+              {/* Route & Schedule Info */}
+              <div className="grid grid-cols-2 gap-6">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-sm">Route Information</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">From:</span>
+                      <span className="font-medium">{selectedTrip.route.from}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">To:</span>
+                      <span className="font-medium">{selectedTrip.route.to}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Price:</span>
+                      <span className="font-medium">₦{(selectedTrip.price || 0).toLocaleString()}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Status:</span>
+                      {getStatusBadge(selectedTrip.status)}
+                    </div>
+              </CardContent>
+            </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-sm">Schedule</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Departure:</span>
+                      <span className="font-medium">{formatDateTime(selectedTrip.departureTime).date}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Time:</span>
+                      <span className="font-medium">{formatDateTime(selectedTrip.departureTime).time}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Arrival:</span>
+                      <span className="font-medium">{formatDateTime(selectedTrip.arrivalTime).time}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Bookings:</span>
+                      <span className="font-medium">{selectedTrip._count?.bookings || 0}</span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Driver Information */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <User className="h-5 w-5" />
+                    Driver Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {selectedTrip.driver ? (
+                    <div className="flex gap-6">
+                      {/* Driver Image */}
+                      <div className="flex-shrink-0">
+                        {selectedTrip.driver.profileImage ? (
+                          <div className="relative w-32 h-32 rounded-lg overflow-hidden border-2 border-gray-200">
+                            <Image
+                              src={selectedTrip.driver.profileImage}
+                              alt={`${selectedTrip.driver.firstName} ${selectedTrip.driver.lastName}`}
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
+                        ) : (
+                          <div className="w-32 h-32 bg-[#5d4a15] rounded-lg flex items-center justify-center">
+                            <span className="text-4xl font-bold text-white">
+                              {selectedTrip.driver.firstName.charAt(0)}{selectedTrip.driver.lastName.charAt(0)}
+                            </span>
+          </div>
+        )}
+                      </div>
+
+                      {/* Driver Details */}
+                      <div className="flex-1 space-y-3">
+                        <div>
+                          <h3 className="text-lg font-semibold">
+                            {selectedTrip.driver.firstName} {selectedTrip.driver.lastName}
+                          </h3>
+                          {selectedTrip.driver.rating && (
+                            <div className="flex items-center gap-1 mt-1">
+                              <Star className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                              <span className="text-sm font-medium">{selectedTrip.driver.rating.toFixed(1)}</span>
+                            </div>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-2 gap-4 text-sm">
+                          <div>
+                            <p className="text-gray-600">Phone:</p>
+                            <p className="font-medium">{selectedTrip.driver.phone}</p>
+                          </div>
+                          {selectedTrip.driver.licenseNumber && (
+                            <div>
+                              <p className="text-gray-600">License:</p>
+                              <p className="font-medium">{selectedTrip.driver.licenseNumber}</p>
+                            </div>
+                          )}
+                          {selectedTrip.driver.experience && (
+                            <div>
+                              <p className="text-gray-600">Experience:</p>
+                              <p className="font-medium">{selectedTrip.driver.experience} years</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-gray-500 text-center py-4">No driver assigned</p>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Vehicle Information */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Car className="h-5 w-5" />
+                    Vehicle Information
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {selectedTrip.vehicle ? (
+                    <div className="space-y-4">
+                      {/* Vehicle Images */}
+                      {selectedTrip.vehicle.images && selectedTrip.vehicle.images.length > 0 ? (
+                        <div className="grid grid-cols-4 gap-2">
+                          {selectedTrip.vehicle.images.slice(0, 4).map((image, index) => (
+                            <div key={index} className="relative h-24 rounded-lg overflow-hidden border-2 border-gray-200">
+                              <Image
+                                src={image}
+                                alt={`${selectedTrip.vehicle?.make} ${selectedTrip.vehicle?.model} - Image ${index + 1}`}
+                                fill
+                                className="object-cover"
+                              />
+                            </div>
+                          ))}
+                          {selectedTrip.vehicle.images.length > 4 && (
+                            <div className="relative h-24 rounded-lg overflow-hidden border-2 border-gray-200 bg-gray-100 flex items-center justify-center">
+                              <span className="text-sm font-medium text-gray-600">
+                                +{selectedTrip.vehicle.images.length - 4} more
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <div className="h-32 bg-gray-100 rounded-lg flex items-center justify-center">
+                          <div className="text-center text-gray-400">
+                            <ImageIcon className="h-12 w-12 mx-auto mb-2" />
+                            <p className="text-sm">No vehicle images</p>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Vehicle Details */}
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <p className="text-gray-600">Plate Number:</p>
+                          <p className="font-medium text-lg">{selectedTrip.vehicle.plateNumber}</p>
+                        </div>
+                        <div>
+                          <p className="text-gray-600">Vehicle:</p>
+                          <p className="font-medium">{selectedTrip.vehicle.make} {selectedTrip.vehicle.model}</p>
+                        </div>
+                        {selectedTrip.vehicle.year && (
+                          <div>
+                            <p className="text-gray-600">Year:</p>
+                            <p className="font-medium">{selectedTrip.vehicle.year}</p>
+                          </div>
+                        )}
+                        <div>
+                          <p className="text-gray-600">Capacity:</p>
+                          <p className="font-medium">{selectedTrip.vehicle.capacity} seats</p>
+                        </div>
+                        {selectedTrip.vehicle.mileage && (
+                          <div>
+                            <p className="text-gray-600">Mileage:</p>
+                            <p className="font-medium">{selectedTrip.vehicle.mileage.toLocaleString()} km</p>
+                          </div>
+                        )}
+                        <div>
+                          <p className="text-gray-600">Available Seats:</p>
+                          <p className="font-medium text-green-600">{getAvailableSeats(selectedTrip)} of {selectedTrip.maxPassengers}</p>
+                        </div>
+                      </div>
+
+                      {/* Vehicle Features */}
+                      {selectedTrip.vehicle.features && selectedTrip.vehicle.features.length > 0 && (
+                        <div>
+                          <p className="text-sm text-gray-600 mb-2">Features:</p>
+                          <div className="flex flex-wrap gap-2">
+                            {selectedTrip.vehicle.features.map((feature, index) => (
+                              <Badge key={index} variant="outline" className="text-xs">
+                                {feature}
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <p className="text-gray-500 text-center py-4">No vehicle assigned</p>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Quick Actions */}
+              <div className="flex justify-center gap-3">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowTripDetails(false);
+                    setShowSeatMap(true);
+                  }}
+                >
+                  <Users className="h-4 w-4 mr-2" />
+                  View Seat Map
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setShowTripDetails(false)}
+                >
+                  Close
+                </Button>
+              </div>
+            </div>
+          )}
         </Modal>
 
         {/* Seat Map Modal */}

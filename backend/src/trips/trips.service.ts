@@ -149,6 +149,9 @@ export class TripsService {
             lastName: true,
             phone: true,
             rating: true,
+            profileImage: true,
+            experience: true,
+            licenseNumber: true,
           },
         },
         vehicle: {
@@ -159,6 +162,9 @@ export class TripsService {
             model: true,
             capacity: true,
             features: true,
+            images: true,
+            year: true,
+            mileage: true,
           },
         },
         _count: {
