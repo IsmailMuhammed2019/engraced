@@ -52,7 +52,7 @@ export default function RoutesPage() {
   const [loading, setLoading] = useState(true);
   const [showAddRouteModal, setShowAddRouteModal] = useState(false);
   const [showRouteDetailsModal, setShowRouteDetailsModal] = useState(false);
-  const [selectedRoute, setSelectedRoute] = useState<Route | null>(null);
+  const [selectedRoute, setSelectedRoute] = useState<any>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editingRouteId, setEditingRouteId] = useState<string | null>(null);
   const [newRoute, setNewRoute] = useState({
@@ -191,10 +191,10 @@ export default function RoutesPage() {
             to: routeResponse.to,
             distance: `${routeResponse.distance} km`,
             duration: formatMinutesToDuration(routeResponse.duration),
-            price: `₦${routeResponse.basePrice.toLocaleString()}`,
-            status: routeResponse.isActive ? 'active' : 'inactive',
-            bookings: 0,
-            lastTrip: new Date().toISOString().split('T')[0]
+            basePrice: routeResponse.basePrice,
+            isActive: routeResponse.isActive,
+            _count: routeResponse._count || { trips: 0, bookings: 0 },
+            trips: routeResponse.trips || []
           };
           
           if (isEditing) {
@@ -266,7 +266,21 @@ export default function RoutesPage() {
   const handleViewRoute = (routeId: string) => {
     const route = routes.find(r => r.id === routeId);
     if (route) {
-      setSelectedRoute(route);
+      // Transform route data to match RouteDetailsModal interface
+      const transformedRoute: any = {
+        id: route.id,
+        from: route.from,
+        to: route.to,
+        distance: route.distance,
+        duration: route.duration,
+        price: `₦${route.basePrice.toLocaleString()}`,
+        status: route.isActive ? 'active' as const : 'inactive' as const,
+        bookings: route._count?.bookings || 0,
+        lastTrip: route.trips && route.trips.length > 0 
+          ? new Date(route.trips[0].createdAt || Date.now()).toISOString().split('T')[0]
+          : new Date().toISOString().split('T')[0]
+      };
+      setSelectedRoute(transformedRoute);
       setShowRouteDetailsModal(true);
     }
   };
@@ -279,8 +293,8 @@ export default function RoutesPage() {
         to: route.to,
         distance: route.distance.replace(' km', ''), // Remove km suffix for editing
         duration: route.duration,
-        price: route.price.replace('₦', '').replace(/,/g, ''), // Remove currency formatting
-        status: route.status
+        price: route.basePrice.toString(), // Use basePrice
+        status: route.isActive ? 'active' : 'inactive'
       });
       setIsEditing(true);
       setEditingRouteId(routeId);
@@ -526,10 +540,10 @@ export default function RoutesPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {routes.filter(route => route.status === "active").length}
+                {routes.filter(route => route.isActive).length}
               </div>
               <p className="text-xs text-muted-foreground">
-                {routes.length > 0 ? Math.round((routes.filter(route => route.status === "active").length / routes.length) * 100) : 0}% active rate
+                {routes.length > 0 ? Math.round((routes.filter(route => route.isActive).length / routes.length) * 100) : 0}% active rate
               </p>
             </CardContent>
           </Card>
@@ -552,7 +566,7 @@ export default function RoutesPage() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">
-                {routes.reduce((sum, route) => sum + route.bookings, 0)}
+                {routes.reduce((sum, route) => sum + (route._count?.bookings || 0), 0)}
               </div>
               <p className="text-xs text-muted-foreground">This month</p>
             </CardContent>
