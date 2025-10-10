@@ -16,9 +16,15 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 const cities = [
+  // Major Cities
   "Lagos", "Abuja", "Port Harcourt", "Kano", "Ibadan", "Kaduna", "Enugu", 
-  "Aba", "Jos", "Ilorin", "Oyo", "Abakaliki", "Abeokuta", "Sokoto", "Onitsha"
-];
+  "Aba", "Jos", "Ilorin", "Oyo", "Abakaliki", "Abeokuta", "Sokoto", "Onitsha",
+  // State Capitals
+  "Uyo", "Yenagoa", "Maiduguri", "Calabar", "Asaba", "Benin City", "Abakaliki",
+  "Bauchi", "Yola", "Gombe", "Owerri", "Dutse", "Lokoja", "Lafia", "Minna",
+  "Akure", "Osogbo", "Ikeja", "Ado Ekiti", "Gusau", "Jalingo", "Damaturu",
+  "Birnin Kebbi", "Katsina", "Keffi", "Markurdi", "Ekiti", "Umuahia"
+].sort();
 
 export default function BookingForm() {
   const [isRoundTrip, setIsRoundTrip] = useState(false);

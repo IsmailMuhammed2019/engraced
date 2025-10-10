@@ -50,6 +50,12 @@ export default function RootLayout({
         <meta name="application-name" content="Engracedsmile" />
         <meta name="msapplication-TileColor" content="#5d4a15" />
         <meta name="msapplication-tap-highlight" content="no" />
+        
+        {/* iOS Splash Screens */}
+        <link rel="apple-touch-startup-image" media="screen and (device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/splash-1290x2796.png" />
+        <link rel="apple-touch-startup-image" media="screen and (device-width: 393px) and (device-height: 852px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="/splash-1170x2532.png" />
+        <link rel="apple-touch-startup-image" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="/splash-828x1792.png" />
+        <link rel="apple-touch-startup-image" media="screen and (device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)" href="/splash-2048x2732.png" />
         <script src="https://js.paystack.co/v1/inline.js" async></script>
         {/* Tawk.to Chat Widget */}
         <script

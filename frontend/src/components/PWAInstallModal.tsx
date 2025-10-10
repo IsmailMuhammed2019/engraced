@@ -116,26 +116,16 @@ export default function PWAInstallModal() {
     <Dialog open={showModal} onOpenChange={setShowModal}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <div className="w-10 h-10 bg-[#5d4a15] rounded-lg flex items-center justify-center">
-                <Smartphone className="h-6 w-6 text-white" />
-              </div>
-              <div>
-                <DialogTitle className="text-lg">Install Engracedsmile App</DialogTitle>
-                <DialogDescription className="text-sm">
-                  Get the full mobile experience
-                </DialogDescription>
-              </div>
+          <div className="flex items-center gap-2">
+            <div className="w-10 h-10 bg-[#5d4a15] rounded-lg flex items-center justify-center">
+              <Smartphone className="h-6 w-6 text-white" />
             </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setShowModal(false)}
-              className="h-8 w-8 p-0"
-            >
-              <X className="h-4 w-4" />
-            </Button>
+            <div>
+              <DialogTitle className="text-lg">Install Engracedsmile App</DialogTitle>
+              <DialogDescription className="text-sm">
+                Get the full mobile experience
+              </DialogDescription>
+            </div>
           </div>
         </DialogHeader>
 

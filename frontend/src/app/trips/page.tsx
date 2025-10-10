@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { 
   Clock, 
@@ -72,7 +73,7 @@ interface Trip {
     rating: number;
     experience: number;
   };
-  amenities: string[];
+  features: string[];
   status: "scheduled" | "boarding" | "departed" | "completed" | "cancelled";
   rating: number;
   reviews: number;
@@ -87,23 +88,24 @@ interface SearchFilters {
   date: string;
   time: string;
   priceRange: string;
-  amenities: string[];
+  features: string[];
   vehicleType: string;
   sortBy: string;
   sortOrder: "asc" | "desc";
 }
 
 export default function TripsPage() {
+  const searchParams = useSearchParams();
   const [trips, setTrips] = useState<Trip[]>([]);
   const [filteredTrips, setFilteredTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchFilters, setSearchFilters] = useState<SearchFilters>({
-    from: "",
-    to: "",
-    date: "",
+    from: searchParams.get('from') || "",
+    to: searchParams.get('to') || "",
+    date: searchParams.get('date') || "",
     time: "",
     priceRange: "",
-    amenities: [],
+    features: [],
     vehicleType: "",
     sortBy: "departureTime",
     sortOrder: "asc"
@@ -198,7 +200,6 @@ export default function TripsPage() {
             },
             status: trip.status?.toLowerCase() || "scheduled",
             features: trip.features || [],
-            amenities: trip.amenities || [],
             rating: rating,
             reviews: bookingsCount,
             vehicleType: trip.vehicle?.model || "Standard",
@@ -259,14 +260,14 @@ export default function TripsPage() {
         }
       }
       
-      // Filter by amenities
-      if (searchFilters.amenities.length > 0) {
-        const hasAllAmenities = searchFilters.amenities.every(amenity =>
-          trip.amenities.some(tripAmenity => 
-            tripAmenity.toLowerCase().includes(amenity.toLowerCase())
+      // Filter by features
+      if (searchFilters.features.length > 0) {
+        const hasAllFeatures = searchFilters.features.every(feature =>
+          trip.features.some(tripFeature => 
+            tripFeature.toLowerCase().includes(feature.toLowerCase())
           )
         );
-        if (!hasAllAmenities) return false;
+        if (!hasAllFeatures) return false;
       }
       
       // Filter by vehicle type
@@ -316,8 +317,8 @@ export default function TripsPage() {
   };
 
   const handleBookNow = (trip: Trip) => {
-    setSelectedTrip(trip);
-    setIsBookingModalOpen(true);
+    // Redirect directly to booking page with tripId
+    window.location.href = `/booking?tripId=${trip.id}`;
   };
 
   const handleViewDetails = (trip: Trip) => {
@@ -326,8 +327,8 @@ export default function TripsPage() {
   };
 
   const handleSelectSeats = (trip: Trip) => {
-    setSelectedTrip(trip);
-    setIsSeatSelectionOpen(true);
+    // Redirect directly to booking page with tripId for seat selection
+    window.location.href = `/booking?tripId=${trip.id}`;
   };
 
   const handleSeatsSelected = (seats: { id: string; number: string; price: number }[]) => {
@@ -352,7 +353,7 @@ export default function TripsPage() {
       date: "",
       time: "",
       priceRange: "",
-      amenities: [],
+      features: [],
       vehicleType: "",
       sortBy: "departureTime",
       sortOrder: "asc"
@@ -698,13 +699,13 @@ export default function TripsPage() {
                         </Button>
                       </div>
 
-                      {/* Amenities */}
+                      {/* Features */}
                       <div>
-                        <p className="text-sm text-gray-500 mb-2">Amenities:</p>
+                        <p className="text-sm text-gray-500 mb-2">Features:</p>
                         <div className="flex flex-wrap gap-1">
-                          {trip.amenities.map((amenity, index) => (
+                          {trip.features.map((feature, index) => (
                             <span key={index} className="text-xs bg-gray-100 px-2 py-1 rounded">
-                              {amenity}
+                              {feature}
                             </span>
                           ))}
                         </div>

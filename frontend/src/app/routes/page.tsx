@@ -37,10 +37,11 @@ interface Route {
     time: string;
     type: string;
     available: boolean;
+    tripId?: string;
+    availableSeats?: number;
   }>;
   image: string;
   description: string;
-  amenities: string[];
   isActive: boolean;
   createdAt: string;
 }
@@ -71,7 +72,6 @@ export default function RoutesPage() {
     rating: number;
     reviews: number;
     features: string[];
-    amenities: string[];
     description: string;
     image: string;
     departures: Array<{
@@ -149,11 +149,11 @@ export default function RoutesPage() {
               }),
               type: "Standard",
               available: trip.status === 'ACTIVE',
+              tripId: trip.id,
               availableSeats: trip.seats?.filter((s: any) => !s.isBooked).length || 0
             })),
             image: activeTrips[0]?.vehicle?.images?.[0] || "/cars.jpg",
             description: route.description || `Travel from ${route.from} to ${route.to}`,
-            amenities: activeTrips[0]?.amenities || [],
             isActive: route.isActive,
             createdAt: route.createdAt
           };
@@ -186,22 +186,18 @@ export default function RoutesPage() {
     setFilteredRoutes(filtered);
   };
 
-  const handleBookNow = (route: {
-    from: string;
-    to: string;
-    price: string;
-    duration: string;
-    departures: Array<{ time: string; type: string; available: boolean }>;
-  }) => {
-    setSelectedRoute({
-      from: route.from,
-      to: route.to,
-      price: route.price,
-      duration: route.duration,
-      departureTime: route.departures[0]?.time || "06:00",
-      date: new Date().toISOString().split('T')[0]
-    });
-    setIsBookingModalOpen(true);
+  const handleBookNow = (route: Route) => {
+    // Get the first available trip/departure
+    const firstAvailableDeparture = route.departures?.find(dep => dep.available);
+    
+    if (firstAvailableDeparture && firstAvailableDeparture.tripId) {
+      // Redirect to booking page with tripId
+      window.location.href = `/booking?tripId=${firstAvailableDeparture.tripId}`;
+    } else if (route.id) {
+      // Fallback: if no tripId, show alert to select a specific departure
+      alert('Please view route details to select a specific departure time');
+      handleViewDetails(route);
+    }
   };
 
   const handleViewDetails = (route: Route) => {
@@ -217,7 +213,6 @@ export default function RoutesPage() {
       rating: route.rating,
       reviews: route.reviews,
       features: route.features,
-      amenities: route.amenities,
       description: route.description,
       image: route.image,
       departures: route.departures?.map(dep => ({
@@ -408,18 +403,18 @@ export default function RoutesPage() {
                     </div>
                   </div>
 
-                  {/* Amenities */}
+                  {/* Features */}
                   <div className="mb-4">
-                    <p className="text-xs text-gray-500 mb-2">Amenities:</p>
+                    <p className="text-xs text-gray-500 mb-2">Features:</p>
                     <div className="flex flex-wrap gap-1">
-                      {route.amenities.slice(0, 4).map((amenity, idx) => (
+                      {route.features.slice(0, 4).map((feature, idx) => (
                         <span key={idx} className="text-xs bg-gray-100 px-2 py-1 rounded">
-                          {amenity}
+                          {feature}
                         </span>
                       ))}
-                      {route.amenities.length > 4 && (
+                      {route.features.length > 4 && (
                         <span className="text-xs text-gray-500">
-                          +{route.amenities.length - 4} more
+                          +{route.features.length - 4} more
                         </span>
                       )}
                     </div>

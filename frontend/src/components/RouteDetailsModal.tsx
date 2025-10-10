@@ -16,13 +16,14 @@ interface Route {
   originalPrice?: string;
   rating: number;
   reviews: number;
-  features: string[];
+  features?: string[];
   departures: string[];
+  tripIds?: string[];
   image: string;
   description?: string;
   distance?: string;
-  amenities?: string[];
   isActive?: boolean;
+  createdAt?: string;
 }
 
 interface Trip {
@@ -36,7 +37,7 @@ interface Trip {
     make: string;
     model: string;
     plateNumber: string;
-    features: string[];
+    features?: string[];
     capacity: number;
     year: number;
     color: string;
@@ -255,24 +256,13 @@ export default function RouteDetailsModal({ route, isOpen, onClose, onBookNow }:
             <div>
               <h3 className="text-lg font-semibold mb-3">Features</h3>
               <div className="flex flex-wrap gap-2">
-                {route.features.map((feature, index) => (
+                {route.features?.map((feature, index) => (
                   <Badge key={index} variant="outline" className="text-sm">
                     {feature}
                   </Badge>
                 ))}
               </div>
             </div>
-            {route.amenities && (
-              <div>
-                <h3 className="text-lg font-semibold mb-3">Amenities</h3>
-                <div className="flex flex-wrap gap-2">
-                  {route.amenities.map((amenity, index) => (
-                    <Badge key={index} variant="outline" className="text-sm">
-                      {amenity}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
             )}
           </div>
 
@@ -369,7 +359,7 @@ export default function RouteDetailsModal({ route, isOpen, onClose, onBookNow }:
                             
                             <Button
                               className="w-full bg-[#5d4a15] hover:bg-[#6b5618] text-white"
-                              onClick={() => onBookNow(route)}
+                              onClick={() => window.location.href = `/booking?tripId=${trip.id}`}
                               disabled={trip.availableSeats === 0}
                             >
                               {trip.availableSeats === 0 ? 'Fully Booked' : 'Book This Trip'}

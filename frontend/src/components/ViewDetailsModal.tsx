@@ -46,7 +46,6 @@ interface RouteDetails {
   rating: number;
   reviews: number;
   features: string[];
-  amenities: string[];
   description: string;
   image: string;
   departures: Array<{
@@ -89,7 +88,7 @@ interface TripDetails {
     licenseNumber: string;
     profileImage?: string;
   };
-  amenities: string[];
+  features: string[];
   status: string;
   rating: number;
   reviews: number;
@@ -280,7 +279,7 @@ export default function ViewDetailsModal({ isOpen, onClose, type, data }: ViewDe
               {/* Tabs */}
               <div className="border-b mb-6">
                 <nav className="flex space-x-8">
-                  {["overview", "amenities", "schedule", "reviews"].map((tab) => (
+                  {["overview", "features", "schedule", "reviews"].map((tab) => (
                     <button
                       key={tab}
                       onClick={() => setActiveTab(tab)}
@@ -424,20 +423,20 @@ export default function ViewDetailsModal({ isOpen, onClose, type, data }: ViewDe
                   </div>
                 )}
 
-                {activeTab === "amenities" && (
+                {activeTab === "features" && (
                   <Card>
                     <CardHeader>
-                      <CardTitle>Amenities & Features</CardTitle>
+                      <CardTitle>Features & Amenities</CardTitle>
                       <CardDescription>What&apos;s included in your journey</CardDescription>
                     </CardHeader>
                     <CardContent>
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {data.amenities.map((amenity, index) => (
+                        {data.features.map((feature, index) => (
                           <div key={index} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
                             <div className="text-[#5d4a15]">
-                              {getAmenityIcon(amenity)}
+                              {getAmenityIcon(feature)}
                             </div>
-                            <span className="font-medium">{amenity}</span>
+                            <span className="font-medium">{feature}</span>
                           </div>
                         ))}
                       </div>

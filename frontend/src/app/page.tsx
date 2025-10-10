@@ -32,19 +32,22 @@ export default function Home() {
     originalPrice?: string;
     rating: number;
     reviews: number;
-    features: string[];
+    features?: string[];
     departures: string[];
+    tripIds?: string[];
     image: string;
   }) => {
-    setSelectedRoute({
-      from: route.from,
-      to: route.to,
-      price: route.price,
-      duration: route.duration,
-      departureTime: route.departures[0] || "06:00",
-      date: new Date().toISOString().split('T')[0]
-    });
-    setIsBookingModalOpen(true);
+    // Get the first available trip ID
+    const firstTripId = route.tripIds?.[0];
+    
+    if (firstTripId) {
+      // Redirect directly to booking page with tripId
+      window.location.href = `/booking?tripId=${firstTripId}`;
+    } else {
+      // Fallback: go to trips page to select a specific trip
+      alert('Please select a specific departure time from the trips page');
+      window.location.href = `/trips?from=${encodeURIComponent(route.from)}&to=${encodeURIComponent(route.to)}`;
+    }
   };
 
   return (

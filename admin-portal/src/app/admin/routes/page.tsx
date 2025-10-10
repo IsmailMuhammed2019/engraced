@@ -39,6 +39,7 @@ interface Route {
   distance: string;
   duration: string;
   basePrice: number;
+  description?: string;
   isActive: boolean;
   _count?: {
     trips: number;
@@ -61,6 +62,7 @@ export default function RoutesPage() {
     distance: '',
     duration: '',
     price: '',
+    description: '',
     status: 'active' as 'active' | 'inactive'
   });
   
@@ -98,10 +100,11 @@ export default function RoutesPage() {
           to: route.to,
           distance: `${route.distance} km`,
           duration: formatMinutesToDuration(route.duration),
-          price: `₦${route.basePrice.toLocaleString()}`,
-          status: route.isActive ? 'active' : 'inactive',
-          bookings: route._count?.bookings || 0, // Use actual booking count from backend
-          lastTrip: route.trips?.[0]?.departureTime ? new Date(route.trips[0].departureTime).toISOString().split('T')[0] : 'No trips yet'
+          basePrice: route.basePrice,
+          description: route.description,
+          isActive: route.isActive,
+          _count: route._count,
+          trips: route.trips
         }));
         setRoutes(formattedRoutes);
       } else if (response.status === 401) {
@@ -161,7 +164,7 @@ export default function RoutesPage() {
         distance: parseInt(newRoute.distance),
         duration: parseDurationToMinutes(newRoute.duration),
         basePrice: parseFloat(newRoute.price.replace(/[₦,]/g, '')),
-        description: `Travel from ${newRoute.from} to ${newRoute.to}`,
+        description: newRoute.description || `Travel from ${newRoute.from} to ${newRoute.to}`,
         isActive: newRoute.status === 'active'
       };
 
@@ -219,6 +222,7 @@ export default function RoutesPage() {
             distance: '',
             duration: '',
             price: '',
+            description: '',
             status: 'active'
           });
           return;
@@ -294,6 +298,7 @@ export default function RoutesPage() {
         distance: route.distance.replace(' km', ''), // Remove km suffix for editing
         duration: route.duration,
         price: route.basePrice.toString(), // Use basePrice
+        description: route.description || '',
         status: route.isActive ? 'active' : 'inactive'
       });
       setIsEditing(true);
@@ -686,6 +691,16 @@ export default function RoutesPage() {
                     <option value="inactive">Inactive</option>
                   </select>
                 </div>
+              </div>
+              
+              <div>
+                <label className="text-sm font-medium">Description</label>
+                <textarea
+                  className="w-full p-2 border rounded-md min-h-[80px]"
+                  placeholder="Brief description of this route (e.g., Comfortable journey through scenic highways)"
+                  value={newRoute.description}
+                  onChange={(e) => setNewRoute({...newRoute, description: e.target.value})}
+                />
               </div>
               
               <div className="flex space-x-2 pt-4">

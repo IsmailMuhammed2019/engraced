@@ -17,12 +17,12 @@ interface Route {
   originalPrice?: string;
   rating: number;
   reviews: number;
-  features: string[];
+  features?: string[];
   departures: string[];
+  tripIds?: string[]; // Store trip IDs for booking
   image: string;
   description?: string;
   distance?: string;
-  amenities?: string[];
   isActive?: boolean;
 }
 
@@ -81,9 +81,8 @@ export default function PopularRoutes({ onBookNow }: PopularRoutesProps) {
             const totalBookings = route._count?.bookings || 0;
             const rating = totalBookings > 0 ? parseFloat((4.0 + Math.min(0.9, totalBookings / 1000)).toFixed(1)) : 0;
             
-            // Get features and amenities from actual trips
+            // Get features from actual trips
             const features = routeTrips[0]?.features || [];
-            const amenities = routeTrips[0]?.amenities || [];
             
             return {
               id: route.id,
@@ -103,9 +102,9 @@ export default function PopularRoutes({ onBookNow }: PopularRoutesProps) {
                   hour12: false 
                 })
               ),
+              tripIds: routeTrips.map((trip: any) => trip.id), // Store trip IDs
               image: routeTrips[0]?.vehicle?.images?.[0] || "/sienna.jpeg",
               description: route.description || `Travel from ${route.from} to ${route.to}`,
-              amenities: amenities,
               isActive: route.isActive
             };
           })
@@ -235,7 +234,7 @@ export default function PopularRoutes({ onBookNow }: PopularRoutesProps) {
 
                   {/* Features */}
                   <div className="flex flex-wrap gap-1 mb-4">
-                    {route.features.map((feature, idx) => (
+                    {route.features?.map((feature, idx) => (
                       <Badge key={idx} variant="outline" className="text-xs">
                         {feature}
                       </Badge>
