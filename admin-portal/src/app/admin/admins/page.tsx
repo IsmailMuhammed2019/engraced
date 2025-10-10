@@ -115,7 +115,7 @@ export default function AdminsManagementPage() {
     try {
       setLoading(true);
       const token = localStorage.getItem('adminToken');
-      const response = await fetch('http://localhost:3003/api/v1/admins', {
+      const response = await fetch('https://engracedsmile.com/api/v1/admins', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -139,7 +139,7 @@ export default function AdminsManagementPage() {
   const fetchStats = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch('http://localhost:3003/api/v1/admins/stats', {
+      const response = await fetch('https://engracedsmile.com/api/v1/admins/stats', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -168,7 +168,7 @@ export default function AdminsManagementPage() {
 
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch('http://localhost:3003/api/v1/admins', {
+      const response = await fetch('https://engracedsmile.com/api/v1/admins', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -205,7 +205,7 @@ export default function AdminsManagementPage() {
 
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`http://localhost:3003/api/v1/admins/${editingAdmin.id}`, {
+      const response = await fetch(`https://engracedsmile.com/api/v1/admins/${editingAdmin.id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -248,7 +248,7 @@ export default function AdminsManagementPage() {
 
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`http://localhost:3003/api/v1/admins/${editingAdmin.id}`, {
+      const response = await fetch(`https://engracedsmile.com/api/v1/admins/${editingAdmin.id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -275,7 +275,7 @@ export default function AdminsManagementPage() {
   const handleDeactivateAdmin = async (adminId: string) => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`http://localhost:3003/api/v1/admins/${adminId}`, {
+      const response = await fetch(`https://engracedsmile.com/api/v1/admins/${adminId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

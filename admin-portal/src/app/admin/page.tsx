@@ -94,31 +94,31 @@ export default function AdminDashboard() {
         vehicles,
         payments
       ] = await Promise.all([
-        fetch('http://localhost:3003/api/v1/system/stats', {
+        fetch('https://engracedsmile.com/api/v1/system/stats', {
           headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
         }).then(r => r.ok ? r.json() : { totalUsers: 0, totalRoutes: 0, totalBookings: 0, totalRevenue: 0 }),
         
-        fetch('http://localhost:3003/api/v1/bookings', {
+        fetch('https://engracedsmile.com/api/v1/bookings', {
           headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
         }).then(r => r.ok ? r.json() : []),
         
-        fetch('http://localhost:3003/api/v1/routes', {
+        fetch('https://engracedsmile.com/api/v1/routes', {
           headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
         }).then(r => r.ok ? r.json() : []),
         
-        fetch('http://localhost:3003/api/v1/trips', {
+        fetch('https://engracedsmile.com/api/v1/trips', {
           headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
         }).then(r => r.ok ? r.json() : []),
         
-        fetch('http://localhost:3003/api/v1/drivers', {
+        fetch('https://engracedsmile.com/api/v1/drivers', {
           headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
         }).then(r => r.ok ? r.json() : []),
         
-        fetch('http://localhost:3003/api/v1/vehicles', {
+        fetch('https://engracedsmile.com/api/v1/vehicles', {
           headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
         }).then(r => r.ok ? r.json() : []),
         
-        fetch('http://localhost:3003/api/v1/payments', {
+        fetch('https://engracedsmile.com/api/v1/payments', {
           headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
         }).then(r => r.ok ? r.json() : [])
       ]);

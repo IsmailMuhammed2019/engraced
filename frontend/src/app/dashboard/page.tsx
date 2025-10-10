@@ -111,7 +111,7 @@ export default function DashboardPage() {
       const token = localStorage.getItem('token');
       
       // Fetch bookings
-      const bookingsResponse = await fetch('http://localhost:3003/api/v1/bookings/user', {
+      const bookingsResponse = await fetch('https://engracedsmile.com/api/v1/bookings/user', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -127,7 +127,7 @@ export default function DashboardPage() {
       }
 
       // Fetch shipments
-      const shipmentsResponse = await fetch('http://localhost:3003/api/v1/shipments/user', {
+      const shipmentsResponse = await fetch('https://engracedsmile.com/api/v1/shipments/user', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

@@ -122,7 +122,7 @@ export default function TrackingPage() {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:3003/api/v1/trips/track/${trackingNum}`, {
+      const response = await fetch(`https://engracedsmile.com/api/v1/trips/track/${trackingNum}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

@@ -47,8 +47,8 @@ export default function AdminLogin() {
     if (!isClient) return; // Don't run on server side
     
     try {
-        // Try real admin authentication
-        const response = await fetch('/api/v1/simple-admin/login', {
+        // Try admin authentication using simple-auth endpoint (works for both users and admins)
+        const response = await fetch('https://engracedsmile.com/api/v1/simple-auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -58,15 +58,28 @@ export default function AdminLogin() {
 
       if (response.ok) {
         const data = await response.json();
-        // Store the real JWT token
-        localStorage.setItem('adminToken', data.data.accessToken);
-        localStorage.setItem('adminUser', JSON.stringify(data.data.user));
-        setIsLoggedIn(true);
-        showAlert('Success', 'Login successful! Redirecting...', 'success');
-        setTimeout(() => {
-          window.location.href = "/admin";
-        }, 1000);
-        return;
+        // Store the real JWT token - handle both response formats
+        const accessToken = data.accessToken || data.data?.accessToken;
+        const user = data.user || data.data?.user;
+        
+        if (accessToken && user) {
+          // Only allow admin users to login to admin portal
+          if (user.type !== 'admin' && user.role !== 'ADMIN' && user.role !== 'SUPER_ADMIN') {
+            showAlert('Access Denied', 'This portal is only for administrators', 'error');
+            return;
+          }
+          
+          localStorage.setItem('adminToken', accessToken);
+          localStorage.setItem('adminUser', JSON.stringify(user));
+          setIsLoggedIn(true);
+          showAlert('Success', 'Login successful! Redirecting...', 'success');
+          setTimeout(() => {
+            window.location.href = "/admin";
+          }, 1000);
+          return;
+        } else {
+          showAlert('Login Failed', 'Invalid response from server', 'error');
+        }
       } else {
         const errorData = await response.json();
         console.error('Admin login failed:', errorData);

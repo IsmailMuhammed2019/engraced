@@ -16,17 +16,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   async validate(payload: any) {
     // Check if this is an admin token
     if (payload.type === 'admin') {
-      // Handle real admin for simple login
-      if (payload.sub === 'cmgf1bllh0000vnc6r47hnz8v') {
-        return {
-          id: 'cmgf1bllh0000vnc6r47hnz8v',
-          email: 'admin@engracedsmile.com',
-          type: 'admin',
-          role: 'ADMIN'
-        };
-      }
-      
-      // Regular admin validation from database
+      // Validate admin from database
       const admin = await this.authService.validateAdmin(payload.sub);
       if (!admin) {
         throw new UnauthorizedException('Invalid admin token');

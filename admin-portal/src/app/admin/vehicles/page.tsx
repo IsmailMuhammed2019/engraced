@@ -105,7 +105,7 @@ export default function VehiclesPage() {
     try {
       setLoading(true);
       const token = localStorage.getItem('adminToken');
-      const response = await fetch('http://localhost:3003/api/v1/vehicles', {
+      const response = await fetch('https://engracedsmile.com/api/v1/vehicles', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -148,7 +148,7 @@ export default function VehiclesPage() {
       console.log('Creating vehicle with data:', vehicleData);
       console.log('Auth token:', token ? 'Present' : 'Missing');
       
-      const response = await fetch('http://localhost:3003/api/v1/vehicles', {
+      const response = await fetch('https://engracedsmile.com/api/v1/vehicles', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -181,9 +181,9 @@ export default function VehiclesPage() {
           });
           
           console.log('FormData entries:', Array.from(formData.entries()));
-          console.log('Upload URL:', `http://localhost:3003/api/v1/upload/vehicles/${data.id}/images`);
+          console.log('Upload URL:', `https://engracedsmile.com/api/v1/upload/vehicles/${data.id}/images`);
           
-          const uploadResponse = await fetch(`http://localhost:3003/api/v1/upload/vehicles/${data.id}/images`, {
+          const uploadResponse = await fetch(`https://engracedsmile.com/api/v1/upload/vehicles/${data.id}/images`, {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`
@@ -309,7 +309,7 @@ export default function VehiclesPage() {
     if (selectedVehicle) {
       try {
         const token = localStorage.getItem('adminToken');
-        const response = await fetch(`http://localhost:3003/api/v1/vehicles/${selectedVehicle.id}/delete`, {
+        const response = await fetch(`https://engracedsmile.com/api/v1/vehicles/${selectedVehicle.id}/delete`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -1129,7 +1129,7 @@ export default function VehiclesPage() {
                               if (selectedVehicle) {
                                 try {
                                   const token = localStorage.getItem('adminToken');
-                                  const response = await fetch(`http://localhost:3003/api/v1/upload/vehicles/${selectedVehicle.id}/images/${index}`, {
+                                  const response = await fetch(`https://engracedsmile.com/api/v1/upload/vehicles/${selectedVehicle.id}/images/${index}`, {
                                     method: 'DELETE',
                                     headers: {
                                       'Authorization': `Bearer ${token}`,
@@ -1192,7 +1192,7 @@ export default function VehiclesPage() {
                               formData.append('images', file);
                           });
                             
-                            const uploadResponse = await fetch(`http://localhost:3003/api/v1/upload/vehicles/${selectedVehicle.id}/images`, {
+                            const uploadResponse = await fetch(`https://engracedsmile.com/api/v1/upload/vehicles/${selectedVehicle.id}/images`, {
                               method: 'POST',
                               headers: {
                                 'Authorization': `Bearer ${token}`

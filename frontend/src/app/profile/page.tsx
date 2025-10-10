@@ -119,7 +119,7 @@ export default function ProfilePage() {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:3003/api/v1/users/profile', {
+      const response = await fetch('https://engracedsmile.com/api/v1/users/profile', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -233,7 +233,7 @@ export default function ProfilePage() {
   const handleSave = async () => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:3003/api/v1/users/profile', {
+      const response = await fetch('https://engracedsmile.com/api/v1/users/profile', {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,

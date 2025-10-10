@@ -51,7 +51,7 @@ export default function Promotions() {
   useEffect(() => {
     const fetchPromotions = async () => {
       try {
-        const response = await fetch('http://localhost:3003/api/v1/promotions/active');
+        const response = await fetch('https://engracedsmile.com/api/v1/promotions/active');
         if (response.ok) {
           const data = await response.json();
           setPromotions(data);

@@ -229,9 +229,9 @@ export default function PaymentsPage() {
       setLoading(true);
       const token = localStorage.getItem('adminToken');
       console.log('Admin token:', token ? 'Present' : 'Missing');
-      console.log('Fetching payments from: http://localhost:3003/api/v1/payments');
+      console.log('Fetching payments from: https://engracedsmile.com/api/v1/payments');
       
-      const response = await fetch('http://localhost:3003/api/v1/payments', {
+      const response = await fetch('https://engracedsmile.com/api/v1/payments', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -263,9 +263,9 @@ export default function PaymentsPage() {
   const fetchStats = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      console.log('Fetching stats from: http://localhost:3003/api/v1/payments/stats');
+      console.log('Fetching stats from: https://engracedsmile.com/api/v1/payments/stats');
       
-      const response = await fetch('http://localhost:3003/api/v1/payments/stats', {
+      const response = await fetch('https://engracedsmile.com/api/v1/payments/stats', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

@@ -92,7 +92,7 @@ export default function LoyaltyProgram({ userId }: LoyaltyProgramProps) {
       const token = localStorage.getItem('token');
       
       // Fetch user loyalty data
-      const loyaltyResponse = await fetch(`http://localhost:3003/api/v1/loyalty/${userId}`, {
+      const loyaltyResponse = await fetch(`https://engracedsmile.com/api/v1/loyalty/${userId}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -107,7 +107,7 @@ export default function LoyaltyProgram({ userId }: LoyaltyProgramProps) {
       }
 
       // Fetch activities
-      const activitiesResponse = await fetch(`http://localhost:3003/api/v1/loyalty/${userId}/activities`, {
+      const activitiesResponse = await fetch(`https://engracedsmile.com/api/v1/loyalty/${userId}/activities`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -122,7 +122,7 @@ export default function LoyaltyProgram({ userId }: LoyaltyProgramProps) {
       }
 
       // Fetch tiers
-      const tiersResponse = await fetch('http://localhost:3003/api/v1/loyalty/tiers', {
+      const tiersResponse = await fetch('https://engracedsmile.com/api/v1/loyalty/tiers', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

@@ -15,21 +15,37 @@ async function bootstrap() {
   app.use(helmet());
   app.use(compression());
 
-  // CORS
+  // CORS - Enhanced configuration for production
   app.enableCors({
-    origin: [
-      'http://localhost:3000',
-      'http://localhost:3001',
-      'http://localhost:3002',
-      'https://admin.engracedsmile.com',
-      'https://engracedsmile.com',
-      'https://www.engracedsmile.com',
-      configService.get('FRONTEND_URL'),
-      configService.get('ADMIN_URL'),
-    ],
+    origin: function (origin, callback) {
+      // Allow requests with no origin (like mobile apps, curl, Postman)
+      if (!origin) return callback(null, true);
+      
+      const allowedOrigins = [
+        'http://localhost:3000',
+        'http://localhost:3001',
+        'http://localhost:3002',
+        'https://admin.engracedsmile.com',
+        'https://engracedsmile.com',
+        'https://www.engracedsmile.com',
+        configService.get('FRONTEND_URL'),
+        configService.get('ADMIN_URL'),
+      ].filter(Boolean); // Remove undefined values
+      
+      if (allowedOrigins.indexOf(origin) !== -1 || origin.endsWith('.engracedsmile.com')) {
+        callback(null, true);
+      } else {
+        console.log('CORS blocked origin:', origin);
+        callback(null, true); // Allow all in production for now
+      }
+    },
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS', 'HEAD'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept', 'Origin', 'X-Requested-With', 'X-CSRF-Token'],
+    exposedHeaders: ['Content-Range', 'X-Content-Range'],
+    maxAge: 86400, // 24 hours
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
   });
 
   // Global validation pipe

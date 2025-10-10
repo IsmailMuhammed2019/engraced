@@ -74,7 +74,7 @@ export default function SettingsPage() {
     try {
       setIsLoading(true);
       const token = localStorage.getItem('adminToken');
-      const response = await fetch('http://localhost:3003/api/v1/system/settings', {
+      const response = await fetch('https://engracedsmile.com/api/v1/system/settings', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -106,7 +106,7 @@ export default function SettingsPage() {
               typeof value === 'number' ? 'number' : 'string'
       }));
 
-      const response = await fetch('http://localhost:3003/api/v1/system/settings', {
+      const response = await fetch('https://engracedsmile.com/api/v1/system/settings', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

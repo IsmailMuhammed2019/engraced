@@ -174,7 +174,7 @@ export default function BookingPageContent() {
 
   const fetchTripDetails = async (tripId: string) => {
     try {
-      const response = await fetch(`http://localhost:3003/api/v1/trips/${tripId}`);
+      const response = await fetch(`https://engracedsmile.com/api/v1/trips/${tripId}`);
       if (response.ok) {
         const trip = await response.json();
         
@@ -227,7 +227,7 @@ export default function BookingPageContent() {
 
   const fetchSeatDetails = async (tripId: string, seatIds: string[]) => {
     try {
-      const response = await fetch(`http://localhost:3003/api/v1/trips/${tripId}/seats`);
+      const response = await fetch(`https://engracedsmile.com/api/v1/trips/${tripId}/seats`);
       if (response.ok) {
         const allSeats = await response.json();
         const selected = allSeats.filter((seat: any) => seatIds.includes(seat.id));
@@ -245,7 +245,7 @@ export default function BookingPageContent() {
 
   const fetchPromotions = async () => {
     try {
-      const response = await fetch('http://localhost:3003/api/v1/promotions/active');
+      const response = await fetch('https://engracedsmile.com/api/v1/promotions/active');
       if (response.ok) {
         const data = await response.json();
         setPromotions(data);

@@ -154,7 +154,7 @@ export default function DriversPage() {
         formData.append('image', driverImage);
         formData.append('type', 'driver');
         
-        const uploadResponse = await fetch('http://localhost:3003/api/v1/upload/driver', {
+        const uploadResponse = await fetch('https://engracedsmile.com/api/v1/upload/driver', {
           method: 'POST',
           headers: {
               'Authorization': `Bearer ${token}`

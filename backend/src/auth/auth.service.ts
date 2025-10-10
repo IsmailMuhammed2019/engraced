@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 import { RegisterDto, LoginDto } from './dto/auth.dto';
 import { User } from '@prisma/client';
 
@@ -386,8 +386,14 @@ export class AuthService {
 
       // Verify password
       console.log('Verifying password...');
-      const isPasswordValid = await bcrypt.compare(password, admin.password);
-      console.log('Password valid:', isPasswordValid);
+      let isPasswordValid = false;
+      try {
+        isPasswordValid = await bcrypt.compare(password, admin.password);
+        console.log('Password valid:', isPasswordValid);
+      } catch (bcryptError) {
+        console.error('Bcrypt comparison error:', bcryptError);
+        throw new UnauthorizedException('Authentication error');
+      }
       
       if (!isPasswordValid) {
         console.log('Invalid password for admin:', email);
@@ -400,11 +406,12 @@ export class AuthService {
       data: { updatedAt: new Date() },
     });
 
-    // Generate JWT tokens
+    // Generate JWT tokens with role
     const payload = { 
       sub: admin.id, 
       email: admin.email,
-      type: 'admin'
+      type: 'admin',
+      role: admin.role
     };
     
     const accessToken = this.jwtService.sign(payload, { 
@@ -413,7 +420,7 @@ export class AuthService {
     });
     
     const refreshToken = this.jwtService.sign(
-      { sub: admin.id, type: 'refresh' }, 
+      { sub: admin.id, type: 'refresh', role: admin.role }, 
       { 
         expiresIn: '7d',
         secret: process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET 

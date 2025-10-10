@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
 
         try {
           // Get trip and route information
-          const tripResponse = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3003'}/api/v1/trips/${metadata.tripId}`);
+          const tripResponse = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'https://engracedsmile.com'}/api/v1/trips/${metadata.tripId}`);
           let routeId = '';
           
           if (tripResponse.ok) {
@@ -42,7 +42,7 @@ export async function POST(request: NextRequest) {
           }
 
           // Create booking in backend if not already created
-          const backendResponse = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3003'}/api/v1/bookings`, {
+          const backendResponse = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'https://engracedsmile.com'}/api/v1/bookings`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',

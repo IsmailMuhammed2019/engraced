@@ -69,7 +69,7 @@ export default function NotificationCenter({ isOpen, onClose }: NotificationCent
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:3003/api/v1/notifications', {
+      const response = await fetch('https://engracedsmile.com/api/v1/notifications', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -221,7 +221,7 @@ export default function NotificationCenter({ isOpen, onClose }: NotificationCent
   const markAsRead = async (notificationId: string) => {
     try {
       const token = localStorage.getItem('token');
-      await fetch(`http://localhost:3003/api/v1/notifications/${notificationId}/read`, {
+      await fetch(`https://engracedsmile.com/api/v1/notifications/${notificationId}/read`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -252,7 +252,7 @@ export default function NotificationCenter({ isOpen, onClose }: NotificationCent
   const markAllAsRead = async () => {
     try {
       const token = localStorage.getItem('token');
-      await fetch('http://localhost:3003/api/v1/notifications/read-all', {
+      await fetch('https://engracedsmile.com/api/v1/notifications/read-all', {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -275,7 +275,7 @@ export default function NotificationCenter({ isOpen, onClose }: NotificationCent
   const deleteNotification = async (notificationId: string) => {
     try {
       const token = localStorage.getItem('token');
-      await fetch(`http://localhost:3003/api/v1/notifications/${notificationId}`, {
+      await fetch(`https://engracedsmile.com/api/v1/notifications/${notificationId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`,

@@ -44,7 +44,7 @@ export default function PopularRoutes({ onBookNow }: PopularRoutesProps) {
   const fetchRoutes = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:3003/api/v1/routes');
+      const response = await fetch('https://engracedsmile.com/api/v1/routes');
       
       if (response.ok) {
         const data = await response.json();

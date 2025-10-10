@@ -75,7 +75,7 @@ export default function NotificationBell({ userId, userType, className = "" }: N
     try {
       setLoading(true);
       const token = localStorage.getItem(userType === 'admin' ? 'adminToken' : 'token');
-      const response = await fetch(`http://localhost:3003/api/v1/notifications/${userType}/${userId}`, {
+      const response = await fetch(`https://engracedsmile.com/api/v1/notifications/${userType}/${userId}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -216,7 +216,7 @@ export default function NotificationBell({ userId, userType, className = "" }: N
   const markAsRead = async (notificationId: string) => {
     try {
       const token = localStorage.getItem(userType === 'admin' ? 'adminToken' : 'token');
-      await fetch(`http://localhost:3003/api/v1/notifications/${notificationId}/read`, {
+      await fetch(`https://engracedsmile.com/api/v1/notifications/${notificationId}/read`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -249,7 +249,7 @@ export default function NotificationBell({ userId, userType, className = "" }: N
   const markAllAsRead = async () => {
     try {
       const token = localStorage.getItem(userType === 'admin' ? 'adminToken' : 'token');
-      await fetch(`http://localhost:3003/api/v1/notifications/${userType}/${userId}/read-all`, {
+      await fetch(`https://engracedsmile.com/api/v1/notifications/${userType}/${userId}/read-all`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,

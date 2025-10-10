@@ -105,7 +105,7 @@ export default function BookingsPage() {
     try {
       setLoading(true);
       const token = localStorage.getItem('adminToken');
-      const response = await fetch('http://localhost:3003/api/v1/bookings', {
+      const response = await fetch('https://engracedsmile.com/api/v1/bookings', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -158,7 +158,7 @@ export default function BookingsPage() {
 
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`http://localhost:3003/api/v1/bookings/${selectedBooking.id}/status`, {
+      const response = await fetch(`https://engracedsmile.com/api/v1/bookings/${selectedBooking.id}/status`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -200,7 +200,7 @@ export default function BookingsPage() {
 
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`http://localhost:3003/api/v1/bookings/${selectedBooking.id}/confirm`, {
+      const response = await fetch(`https://engracedsmile.com/api/v1/bookings/${selectedBooking.id}/confirm`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,

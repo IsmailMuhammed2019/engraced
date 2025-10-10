@@ -1,7 +1,7 @@
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
-import * as bcrypt from 'bcrypt';
+import * as bcrypt from 'bcryptjs';
 
 @Injectable()
 export class SimpleAuthService {
@@ -14,7 +14,63 @@ export class SimpleAuthService {
     try {
       console.log('Simple login attempt for:', loginDto.email);
       
-      // Find user by email
+      // Try to find admin first
+      const admin = await this.prisma.admin.findUnique({
+        where: { email: loginDto.email },
+      });
+
+      if (admin) {
+        console.log('Admin found, authenticating...');
+        
+        if (!admin.isActive) {
+          console.log('Admin inactive');
+          throw new UnauthorizedException('Account is deactivated');
+        }
+
+        // Verify password
+        const isPasswordValid = await bcrypt.compare(loginDto.password, admin.password);
+        if (!isPasswordValid) {
+          console.log('Invalid admin password');
+          throw new UnauthorizedException('Invalid credentials');
+        }
+
+        console.log('Admin password valid, generating tokens');
+
+        // Generate access token for admin
+        const accessToken = this.jwtService.sign(
+          { sub: admin.id, email: admin.email, type: 'admin', role: admin.role },
+          { 
+            expiresIn: '15m',
+            secret: process.env.JWT_SECRET 
+          }
+        );
+
+        // Generate refresh token
+        const refreshToken = this.jwtService.sign(
+          { sub: admin.id, email: admin.email, type: 'refresh', role: admin.role },
+          { 
+            expiresIn: '7d',
+            secret: process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET 
+          }
+        );
+
+        console.log('Admin tokens generated successfully');
+
+        return {
+          user: {
+            id: admin.id,
+            email: admin.email,
+            firstName: admin.firstName,
+            lastName: admin.lastName,
+            role: admin.role,
+            type: 'admin'
+          },
+          accessToken,
+          refreshToken,
+        };
+      }
+      
+      // If not admin, try regular user
       const user = await this.prisma.user.findUnique({
         where: { email: loginDto.email },
       });
@@ -40,7 +96,7 @@ export class SimpleAuthService {
 
       // Generate access token
       const accessToken = this.jwtService.sign(
-        { sub: user.id, email: user.email, type: 'access' },
+        { sub: user.id, email: user.email, type: 'user' },
         { 
           expiresIn: '15m',
           secret: process.env.JWT_SECRET 

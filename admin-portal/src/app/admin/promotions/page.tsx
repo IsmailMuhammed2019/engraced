@@ -79,7 +79,7 @@ export default function PromotionsPage() {
     try {
       setLoading(true);
       const token = localStorage.getItem('adminToken');
-      const response = await fetch('http://localhost:3003/api/v1/promotions', {
+      const response = await fetch('https://engracedsmile.com/api/v1/promotions', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -103,7 +103,7 @@ export default function PromotionsPage() {
   const handleAddPromotion = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch('http://localhost:3003/api/v1/promotions', {
+      const response = await fetch('https://engracedsmile.com/api/v1/promotions', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -133,7 +133,7 @@ export default function PromotionsPage() {
 
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch(`http://localhost:3003/api/v1/promotions/${selectedPromotion.id}`, {
+      const response = await fetch(`https://engracedsmile.com/api/v1/promotions/${selectedPromotion.id}`, {
         method: 'PATCH',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -163,7 +163,7 @@ export default function PromotionsPage() {
     if (confirm(`Are you sure you want to delete "${promotion.title}"?`)) {
       try {
         const token = localStorage.getItem('adminToken');
-        const response = await fetch(`http://localhost:3003/api/v1/promotions/${promotion.id}`, {
+        const response = await fetch(`https://engracedsmile.com/api/v1/promotions/${promotion.id}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${token}`,

@@ -79,7 +79,7 @@ class RatingService {
   // Submit a new rating
   async submitRating(ratingData: Omit<Rating, 'id' | 'timestamp' | 'helpful' | 'verified'>): Promise<Rating> {
     try {
-      const response = await fetch('http://localhost:3003/api/v1/ratings', {
+      const response = await fetch('https://engracedsmile.com/api/v1/ratings', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -115,7 +115,7 @@ class RatingService {
     const cacheKey = `ratings-${targetType}-${targetId}`;
     
     try {
-      const response = await fetch(`http://localhost:3003/api/v1/ratings/${targetType}/${targetId}`);
+      const response = await fetch(`https://engracedsmile.com/api/v1/ratings/${targetType}/${targetId}`);
       
       if (response.ok) {
         const ratings = await response.json();
@@ -138,7 +138,7 @@ class RatingService {
     const cacheKey = `stats-${targetType}-${targetId}`;
     
     try {
-      const response = await fetch(`http://localhost:3003/api/v1/ratings/${targetType}/${targetId}/stats`);
+      const response = await fetch(`https://engracedsmile.com/api/v1/ratings/${targetType}/${targetId}/stats`);
       
       if (response.ok) {
         const stats = await response.json();
@@ -159,7 +159,7 @@ class RatingService {
   // Mark rating as helpful
   async markHelpful(ratingId: string): Promise<void> {
     try {
-      await fetch(`http://localhost:3003/api/v1/ratings/${ratingId}/helpful`, {
+      await fetch(`https://engracedsmile.com/api/v1/ratings/${ratingId}/helpful`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`

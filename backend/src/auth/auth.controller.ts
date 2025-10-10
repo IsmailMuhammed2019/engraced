@@ -50,29 +50,16 @@ export class AuthController {
   @Post('admin/login')
   @HttpCode(HttpStatus.OK)
   async adminLogin(@Body() loginDto: LoginDto) {
-    console.log('Admin login attempt:', loginDto.email);
-    
-    // Simple hardcoded admin check - bypass all complex logic
-    if (loginDto.email === 'admin@engracedsmile.com' && loginDto.password === 'admin123') {
-      console.log('Admin login successful');
-      return {
-        message: 'Admin login successful',
-        data: {
-          user: {
-            id: 'admin-123',
-            email: 'admin@engracedsmile.com',
-            firstName: 'Admin',
-            lastName: 'User',
-            role: 'SUPER_ADMIN',
-            type: 'admin'
-          },
-          accessToken: 'admin-token-123',
-          refreshToken: 'admin-refresh-token-123',
-        },
-      };
-    } else {
-      console.log('Invalid admin credentials');
-      throw new Error('Invalid credentials');
+    try {
+      console.log('Admin login attempt:', loginDto.email);
+      
+      // Use the real admin login service for proper JWT tokens
+      const result = await this.authService.adminLogin(loginDto);
+      console.log('Admin login successful, returning response');
+      return result;
+    } catch (error) {
+      console.error('Admin login controller error:', error);
+      throw error;
     }
   }
 

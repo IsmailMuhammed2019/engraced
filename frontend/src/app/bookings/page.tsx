@@ -102,7 +102,7 @@ export default function BookingsPage() {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:3003/api/v1/bookings/user', {
+      const response = await fetch('https://engracedsmile.com/api/v1/bookings/user', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

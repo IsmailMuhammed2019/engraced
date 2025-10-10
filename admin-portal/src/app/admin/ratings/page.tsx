@@ -77,7 +77,7 @@ export default function RatingsPage() {
     try {
       setLoading(true);
       const token = localStorage.getItem('adminToken');
-      const response = await fetch('http://localhost:3003/api/v1/reviews', {
+      const response = await fetch('https://engracedsmile.com/api/v1/reviews', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -101,7 +101,7 @@ export default function RatingsPage() {
   const fetchStats = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch('http://localhost:3003/api/v1/reviews/stats', {
+      const response = await fetch('https://engracedsmile.com/api/v1/reviews/stats', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'

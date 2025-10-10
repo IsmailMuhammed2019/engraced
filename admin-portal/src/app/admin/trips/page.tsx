@@ -137,16 +137,16 @@ export default function TripsPage() {
       
       // Fetch all data in parallel
       const [routesRes, driversRes, vehiclesRes, promotionsRes] = await Promise.all([
-        fetch('http://localhost:3003/api/v1/routes', {
+        fetch('https://engracedsmile.com/api/v1/routes', {
           headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
         }),
-        fetch('http://localhost:3003/api/v1/drivers', {
+        fetch('https://engracedsmile.com/api/v1/drivers', {
           headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
         }),
-        fetch('http://localhost:3003/api/v1/vehicles', {
+        fetch('https://engracedsmile.com/api/v1/vehicles', {
           headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
         }),
-        fetch('http://localhost:3003/api/v1/promotions', {
+        fetch('https://engracedsmile.com/api/v1/promotions', {
           headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' }
         })
       ]);
@@ -164,7 +164,7 @@ export default function TripsPage() {
     try {
       setLoading(true);
       const token = localStorage.getItem('adminToken');
-      const response = await fetch('http://localhost:3003/api/v1/trips', {
+      const response = await fetch('https://engracedsmile.com/api/v1/trips', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -193,7 +193,7 @@ export default function TripsPage() {
         ...newTrip,
         maxPassengers: 7
       };
-      const response = await fetch('http://localhost:3003/api/v1/trips', {
+      const response = await fetch('https://engracedsmile.com/api/v1/trips', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -231,7 +231,7 @@ export default function TripsPage() {
     if (confirm('Are you sure you want to delete this trip?')) {
       try {
         const token = localStorage.getItem('adminToken');
-        const response = await fetch(`http://localhost:3003/api/v1/trips/${tripId}`, {
+        const response = await fetch(`https://engracedsmile.com/api/v1/trips/${tripId}`, {
           method: 'DELETE',
           headers: {
             'Authorization': `Bearer ${token}`,

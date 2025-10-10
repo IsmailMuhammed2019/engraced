@@ -144,7 +144,7 @@ export default function TripsPage() {
   const fetchTrips = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:3003/api/v1/trips');
+      const response = await fetch('https://engracedsmile.com/api/v1/trips');
       
       if (response.ok) {
         const data = await response.json();

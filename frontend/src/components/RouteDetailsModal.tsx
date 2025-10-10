@@ -72,7 +72,7 @@ export default function RouteDetailsModal({ route, isOpen, onClose, onBookNow }:
   const fetchTrips = async () => {
     try {
       setLoading(true);
-      const response = await fetch(`http://localhost:3003/api/v1/trips?routeId=${route.id}`);
+      const response = await fetch(`https://engracedsmile.com/api/v1/trips?routeId=${route.id}`);
       
       if (response.ok) {
         const data = await response.json();

@@ -254,7 +254,7 @@ export default function RatingSystem({
 
   const markHelpful = async (ratingId: string) => {
     try {
-      await fetch(`http://localhost:3003/api/v1/ratings/${ratingId}/helpful`, {
+      await fetch(`https://engracedsmile.com/api/v1/ratings/${ratingId}/helpful`, {
         method: 'POST'
       });
       

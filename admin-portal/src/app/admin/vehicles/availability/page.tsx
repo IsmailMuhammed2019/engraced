@@ -86,7 +86,7 @@ export default function VehicleAvailabilityPage() {
     try {
       setLoading(true);
       const token = localStorage.getItem('adminToken');
-      const response = await fetch('http://localhost:3003/api/v1/vehicles/availability', {
+      const response = await fetch('https://engracedsmile.com/api/v1/vehicles/availability', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
@@ -110,7 +110,7 @@ export default function VehicleAvailabilityPage() {
   const fetchSeatOccupancy = async () => {
     try {
       const token = localStorage.getItem('adminToken');
-      const response = await fetch('http://localhost:3003/api/v1/vehicles/seat-occupancy', {
+      const response = await fetch('https://engracedsmile.com/api/v1/vehicles/seat-occupancy', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
