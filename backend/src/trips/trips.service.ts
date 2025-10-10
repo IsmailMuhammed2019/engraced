@@ -36,7 +36,7 @@ export class TripsService {
       throw new NotFoundException('Vehicle not found or inactive');
     }
 
-    // Create the trip
+    // Create the trip - enforce 7 seats for all Sienna vehicles
     const trip = await this.prisma.trip.create({
       data: {
         routeId: createTripDto.routeId,
@@ -45,7 +45,7 @@ export class TripsService {
         departureTime: new Date(createTripDto.departureTime),
         arrivalTime: new Date(createTripDto.arrivalTime),
         price: createTripDto.price,
-        maxPassengers: createTripDto.maxPassengers || 7,
+        maxPassengers: 7, // Fixed at 7 for all Sienna vehicles
         status: (createTripDto.status as TripStatus) || TripStatus.ACTIVE,
         features: createTripDto.features || [],
         amenities: createTripDto.amenities || [],
@@ -88,15 +88,15 @@ export class TripsService {
       },
     });
 
-    // Create seats for the trip based on maxPassengers
-    const maxSeats = createTripDto.maxPassengers || 7;
+    // Create seats for the trip - fixed at 7 seats for Sienna
+    const maxSeats = 7; // Fixed for all Sienna vehicles
     const seatNumbers = [];
     
-    // Generate seat numbers dynamically
-    // Format: A1 (driver/front), then B1-BN for passengers
+    // Generate seat numbers for Sienna (1 driver + 6 passengers = 7 total)
+    // Format: A1 (driver/front), then B1-B6 for passengers
     seatNumbers.push('A1'); // Driver/front seat
     for (let i = 1; i < maxSeats; i++) {
-      seatNumbers.push(`B${i}`); // Passenger seats
+      seatNumbers.push(`B${i}`); // B1, B2, B3, B4, B5, B6 (6 passenger seats)
     }
 
     await this.prisma.seat.createMany({

@@ -188,13 +188,18 @@ export default function TripsPage() {
   const handleScheduleTrip = async () => {
     try {
       const token = localStorage.getItem('adminToken');
+      // Always set maxPassengers to 7 for Sienna vehicles
+      const tripData = {
+        ...newTrip,
+        maxPassengers: 7
+      };
       const response = await fetch('http://localhost:3003/api/v1/trips', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(newTrip)
+        body: JSON.stringify(tripData)
       });
       
       if (response.ok) {
@@ -749,11 +754,7 @@ export default function TripsPage() {
                       value={newTrip.vehicleId}
                   onValueChange={(value) => {
                     setNewTrip(prev => ({ ...prev, vehicleId: value }));
-                    // Auto-fill max passengers from vehicle capacity
-                    const selectedVehicle = vehicles.find(v => v.id === value);
-                    if (selectedVehicle && selectedVehicle.capacity) {
-                      setNewTrip(prev => ({ ...prev, maxPassengers: selectedVehicle.capacity.toString() }));
-                    }
+                    // All Sienna vehicles have fixed 7 seats
                   }}
                 >
                   <SelectTrigger>
@@ -793,13 +794,15 @@ export default function TripsPage() {
                   
             <div className="grid grid-cols-2 gap-4">
                   <div>
-                <Label htmlFor="maxPassengers">Max Passengers</Label>
+                <Label htmlFor="maxPassengers">Max Passengers (Sienna Capacity)</Label>
                     <Input 
                   id="maxPassengers"
                       type="number" 
-                  value={newTrip.maxPassengers}
-                  onChange={(e) => setNewTrip(prev => ({ ...prev, maxPassengers: e.target.value }))}
-                  placeholder="Auto-filled from vehicle"
+                  value="7"
+                  readOnly
+                  disabled
+                  className="bg-gray-100"
+                  placeholder="Fixed at 7 seats for Sienna"
                 />
               </div>
               <div>

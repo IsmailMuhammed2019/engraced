@@ -20,6 +20,7 @@ export class VehiclesService {
     return this.prisma.vehicle.create({
       data: {
         ...createVehicleDto,
+        capacity: 7, // Enforce 7 seats for all Sienna vehicles
         ...(createVehicleDto.lastService && {
           lastService: new Date(createVehicleDto.lastService),
         }),

@@ -20,12 +20,6 @@ const cities = [
   "Aba", "Jos", "Ilorin", "Oyo", "Abakaliki", "Abeokuta", "Sokoto", "Onitsha"
 ];
 
-const travelClasses = [
-  { value: "economy", label: "Economy" },
-  { value: "business", label: "Business" },
-  { value: "first", label: "First Class" },
-];
-
 export default function BookingForm() {
   const [isRoundTrip, setIsRoundTrip] = useState(false);
   const [formData, setFormData] = useState({
@@ -34,7 +28,6 @@ export default function BookingForm() {
     departureDate: "",
     returnDate: "",
     passengers: "1",
-    class: "economy",
   });
 
   const handleInputChange = (field: string, value: string) => {
@@ -61,7 +54,6 @@ export default function BookingForm() {
       to: formData.to,
       date: formData.departureDate,
       passengers: formData.passengers,
-      class: formData.class
     });
 
     if (isRoundTrip && formData.returnDate) {
@@ -88,17 +80,17 @@ export default function BookingForm() {
       className="w-full max-w-md"
     >
       <Card className="shadow-2xl border-0 bg-white/95 backdrop-blur-sm rounded-2xl overflow-hidden">
-        <CardHeader className="pb-6 pt-12 px-6 py-6">
-          <CardTitle className="flex items-center gap-2 text-xl font-bold text-gray-900 mb-3">
+        <CardHeader className="pb-4">
+          <CardTitle className="flex items-center gap-2 text-xl font-bold text-gray-900">
             <Search className="h-5 w-5 text-[#5d4a15]" />
             Quick Booking
           </CardTitle>
-          <p className="text-sm text-gray-600 leading-relaxed">
+          <p className="text-sm text-gray-600 leading-relaxed mt-2">
             Search routes, choose a date and secure your seat in minutes.
           </p>
         </CardHeader>
         
-        <CardContent className="px-6 pb-8">
+        <CardContent className="space-y-6">
           <form onSubmit={handleSubmit} className="space-y-6">
             {/* Trip Type Toggle */}
             <div className="flex bg-gray-100 rounded-xl p-1.5">
@@ -127,13 +119,13 @@ export default function BookingForm() {
             </div>
 
             {/* From and To */}
-            <div className="space-y-4">
-              <div className="relative">
+            <div className="space-y-4 relative">
+              <div>
                 <Label htmlFor="from" className="text-sm font-semibold text-gray-700 mb-2 block">
                   From
                 </Label>
                 <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 z-10" />
                   <Select value={formData.from} onValueChange={(value) => handleInputChange("from", value)}>
                     <SelectTrigger className="pl-10 h-12 rounded-xl border-gray-200 focus:border-[#5d4a15] focus:ring-[#5d4a15] transition-all duration-200">
                       <SelectValue placeholder="Select departure city" />
@@ -149,21 +141,24 @@ export default function BookingForm() {
                 </div>
               </div>
 
-              {/* Swap Button */}
-              <button
-                type="button"
-                onClick={swapLocations}
-                className="absolute right-4 top-1/2 transform -translate-y-1/2 z-10 p-2 hover:bg-gray-100 rounded-full transition-all duration-200 hover:scale-110"
-              >
-                <ArrowRightLeft className="h-4 w-4 text-gray-500" />
-              </button>
+              {/* Swap Button - Positioned between the two fields */}
+              <div className="flex justify-center">
+                <button
+                  type="button"
+                  onClick={swapLocations}
+                  className="p-2 hover:bg-gray-100 rounded-full transition-all duration-200 hover:scale-110 bg-white border border-gray-200 shadow-sm"
+                  title="Swap locations"
+                >
+                  <ArrowRightLeft className="h-4 w-4 text-[#5d4a15]" />
+                </button>
+              </div>
 
               <div>
                 <Label htmlFor="to" className="text-sm font-semibold text-gray-700 mb-2 block">
                   To
                 </Label>
                 <div className="relative">
-                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 z-10" />
                   <Select value={formData.to} onValueChange={(value) => handleInputChange("to", value)}>
                     <SelectTrigger className="pl-10 h-12 rounded-xl border-gray-200 focus:border-[#5d4a15] focus:ring-[#5d4a15] transition-all duration-200">
                       <SelectValue placeholder="Select destination city" />
@@ -181,13 +176,13 @@ export default function BookingForm() {
             </div>
 
             {/* Date Selection */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className={`grid ${isRoundTrip ? 'grid-cols-2' : 'grid-cols-1'} gap-4`}>
               <div>
                 <Label htmlFor="departureDate" className="text-sm font-semibold text-gray-700 mb-2 block">
-                  Departure
+                  Departure Date
                 </Label>
                 <div className="relative">
-                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 z-10" />
                   <Input
                     id="departureDate"
                     type="date"
@@ -202,10 +197,10 @@ export default function BookingForm() {
               {isRoundTrip && (
                 <div>
                   <Label htmlFor="returnDate" className="text-sm font-semibold text-gray-700 mb-2 block">
-                    Return
+                    Return Date
                   </Label>
                   <div className="relative">
-                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 z-10" />
                     <Input
                       id="returnDate"
                       type="date"
@@ -219,41 +214,21 @@ export default function BookingForm() {
               )}
             </div>
 
-            {/* Passengers and Class */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="passengers" className="text-sm font-semibold text-gray-700 mb-2 block">
-                  Passengers
-                </Label>
-                <div className="relative">
-                  <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <Select value={formData.passengers} onValueChange={(value) => handleInputChange("passengers", value)}>
-                    <SelectTrigger className="pl-10 h-12 rounded-xl border-gray-200 focus:border-[#5d4a15] focus:ring-[#5d4a15] transition-all duration-200">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {[1, 2, 3, 4, 5, 6, 7, 8].map((num) => (
-                        <SelectItem key={num} value={num.toString()}>
-                          {num} {num === 1 ? "Passenger" : "Passengers"}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div>
-                <Label htmlFor="class" className="text-sm font-semibold text-gray-700 mb-2 block">
-                  Class
-                </Label>
-                <Select value={formData.class} onValueChange={(value) => handleInputChange("class", value)}>
-                  <SelectTrigger className="h-12 rounded-xl border-gray-200 focus:border-[#5d4a15] focus:ring-[#5d4a15] transition-all duration-200">
+            {/* Passengers */}
+            <div>
+              <Label htmlFor="passengers" className="text-sm font-semibold text-gray-700 mb-2 block">
+                Number of Passengers
+              </Label>
+              <div className="relative">
+                <Users className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 z-10" />
+                <Select value={formData.passengers} onValueChange={(value) => handleInputChange("passengers", value)}>
+                  <SelectTrigger className="pl-10 h-12 rounded-xl border-gray-200 focus:border-[#5d4a15] focus:ring-[#5d4a15] transition-all duration-200">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {travelClasses.map((travelClass) => (
-                      <SelectItem key={travelClass.value} value={travelClass.value}>
-                        {travelClass.label}
+                    {[1, 2, 3, 4, 5, 6].map((num) => (
+                      <SelectItem key={num} value={num.toString()}>
+                        {num} {num === 1 ? "Passenger" : "Passengers"}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -264,15 +239,15 @@ export default function BookingForm() {
             {/* Submit Button */}
             <Button
               type="submit"
-              className="w-full py-4 text-base font-semibold bg-[#5d4a15] hover:bg-[#6b5618] pt-8 text-white rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200"
+              className="w-full h-12 text-base font-semibold bg-[#5d4a15] hover:bg-[#6b5618] text-white rounded-xl shadow-lg hover:shadow-xl transform hover:scale-[1.02] transition-all duration-200 flex items-center justify-center"
             >
               <Search className="h-4 w-4 mr-2" />
               Search Trips
             </Button>
 
             {/* Additional Info */}
-            <div className="flex items-center gap-2 text-xs text-gray-500 pb-4bg-gray-50 rounded-lg p-4 mt-4">
-              <Clock className="h-3 w-3 text-[#5d4a15]" />
+            <div className="flex items-center gap-2 text-xs text-gray-500 bg-gray-50 rounded-lg p-4">
+              <Clock className="h-3 w-3 text-[#5d4a15] flex-shrink-0" />
               <span className="font-medium">Free cancellations up to 24 hours before departure</span>
             </div>
           </form>

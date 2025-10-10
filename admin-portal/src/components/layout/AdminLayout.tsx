@@ -20,7 +20,8 @@ import {
   Bell,
   Search,
   MessageCircle,
-  Star
+  Star,
+  Shield
 } from "lucide-react";
 import AdminNotificationCenter from "../AdminNotificationCenter";
 import AdminSupportChat from "../AdminSupportChat";
@@ -38,6 +39,7 @@ const navigation = [
   { name: "Payments", href: "/admin/payments", icon: CreditCard },
   { name: "Ratings", href: "/admin/ratings", icon: Star },
   { name: "Promotions", href: "/admin/promotions", icon: Gift },
+  { name: "Admins", href: "/admin/admins", icon: Shield },
   { name: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
@@ -218,6 +220,7 @@ export default function AdminLayout({ children }: AdminLayoutProps) {
                   {pathname === "/admin/bookings" && "Manage customer bookings and reservations"}
                   {pathname === "/admin/payments" && "Track payments and transactions"}
                   {pathname === "/admin/promotions" && "Manage promotions and offers"}
+                  {pathname === "/admin/admins" && "Manage admin users and their roles"}
                   {pathname === "/admin/settings" && "System settings and configuration"}
                 </p>
               </div>

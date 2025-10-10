@@ -62,7 +62,7 @@ export default function VehiclesPage() {
     make: '',
     model: '',
     year: new Date().getFullYear(),
-    capacity: 0,
+    capacity: 7, // Fixed at 7 for all Sienna vehicles
     features: [] as string[],
     mileage: 0,
     isActive: true
@@ -218,7 +218,7 @@ export default function VehiclesPage() {
           make: '',
           model: '',
           year: new Date().getFullYear(),
-          capacity: 0,
+          capacity: 7, // Fixed at 7 for Sienna
           features: [],
           mileage: 0,
           isActive: true
@@ -245,7 +245,7 @@ export default function VehiclesPage() {
           make: '',
           model: '',
           year: new Date().getFullYear(),
-          capacity: 0,
+          capacity: 7, // Fixed at 7 for Sienna
           features: [],
           mileage: 0,
           isActive: true
@@ -716,13 +716,14 @@ export default function VehiclesPage() {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium mb-1">Capacity</label>
+                        <label className="block text-sm font-medium mb-1">Capacity (Sienna)</label>
                         <input
                           type="number"
-                          value={newVehicle.capacity}
-                          onChange={(e) => setNewVehicle(prev => ({ ...prev, capacity: parseInt(e.target.value) || 0 }))}
-                          className="w-full p-2 border rounded-md"
-                          placeholder="Enter capacity"
+                          value="7"
+                          readOnly
+                          disabled
+                          className="w-full p-2 border rounded-md bg-gray-100"
+                          placeholder="Fixed at 7 seats for Sienna"
                         />
                       </div>
                     </div>
