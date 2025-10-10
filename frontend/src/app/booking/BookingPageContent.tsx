@@ -158,53 +158,15 @@ export default function BookingPageContent() {
       setSelectedPromotion(JSON.parse(storedPromotion));
       setPromotionCode(JSON.parse(storedPromotion).code);
       localStorage.removeItem('selectedPromotion');
-    } else {
-      // Mock trip details for demonstration
-      setTripDetails({
-        id: "1",
-        from: from || "Lagos",
-        to: to || "Abuja",
-        departureTime: "08:00",
-        arrivalTime: "16:30",
-        date: date || new Date().toISOString().split('T')[0],
-        duration: "8h 30m",
-        price: 15000,
-        originalPrice: 18000,
-        availableSeats: 12,
-        totalSeats: 30,
-        vehicle: {
-          make: "Toyota",
-          model: "Sienna",
-          plateNumber: "ABC123XY",
-          capacity: 30,
-          features: ["AC", "WiFi", "USB Charging", "Reclining Seats"]
-        },
-        driver: {
-          name: "John Doe",
-          phone: "+2348071116229",
-          rating: 4.8,
-          experience: 5
-        },
-        amenities: ["Wi-Fi", "Refreshments", "Comfortable Seats", "USB Charging"],
-        status: "scheduled",
-        rating: 4.8,
-        reviews: 1240,
-        vehicleType: "Premium",
-        isActive: true,
-        createdAt: new Date().toISOString()
-      });
     }
 
     if (seats) {
       // Parse selected seats from URL
       const seatIds = seats.split(',');
-      // Mock selected seats
-      setSelectedSeats(seatIds.map((id, index) => ({
-        id,
-        number: `A${index + 1}`,
-        type: "window" as const,
-        price: 15000
-      })));
+      // Fetch actual seat details from the trip
+      if (tripId) {
+        fetchSeatDetails(tripId, seatIds);
+      }
     }
 
     setLoading(false);
@@ -214,11 +176,70 @@ export default function BookingPageContent() {
     try {
       const response = await fetch(`http://localhost:3003/api/v1/trips/${tripId}`);
       if (response.ok) {
-        const data = await response.json();
-        setTripDetails(data);
+        const trip = await response.json();
+        
+        // Calculate available seats from trip data
+        const bookedSeats = trip.seats?.filter((s: any) => s.isBooked).length || 0;
+        const totalSeats = trip.maxPassengers || 7;
+        const availableSeats = totalSeats - bookedSeats;
+        
+        // Transform trip data to match TripDetails interface
+        setTripDetails({
+          id: trip.id,
+          from: trip.route.from,
+          to: trip.route.to,
+          departureTime: new Date(trip.departureTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+          arrivalTime: new Date(trip.arrivalTime).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false }),
+          date: new Date(trip.departureTime).toISOString().split('T')[0],
+          duration: `${Math.floor((new Date(trip.arrivalTime).getTime() - new Date(trip.departureTime).getTime()) / (1000 * 60 * 60))}h`,
+          price: trip.price,
+          originalPrice: undefined,
+          availableSeats: availableSeats,
+          totalSeats: totalSeats,
+          vehicle: {
+            make: trip.vehicle?.make || 'Toyota',
+            model: trip.vehicle?.model || 'Sienna',
+            plateNumber: trip.vehicle?.plateNumber || 'N/A',
+            capacity: trip.vehicle?.capacity || 7,
+            features: trip.vehicle?.features || []
+          },
+          driver: {
+            name: trip.driver ? `${trip.driver.firstName} ${trip.driver.lastName}` : 'N/A',
+            phone: trip.driver?.phone || 'N/A',
+            rating: trip.driver?.rating || 5.0,
+            experience: trip.driver?.experience || 0
+          },
+          amenities: trip.amenities || [],
+          status: trip.status,
+          rating: trip.driver?.rating || 5.0,
+          reviews: trip._count?.bookings || 0,
+          vehicleType: "Standard",
+          isActive: trip.status === 'ACTIVE',
+          createdAt: trip.createdAt
+        });
+      } else {
+        console.error('Failed to fetch trip details');
       }
     } catch (error) {
       console.error('Error fetching trip details:', error);
+    }
+  };
+
+  const fetchSeatDetails = async (tripId: string, seatIds: string[]) => {
+    try {
+      const response = await fetch(`http://localhost:3003/api/v1/trips/${tripId}/seats`);
+      if (response.ok) {
+        const allSeats = await response.json();
+        const selected = allSeats.filter((seat: any) => seatIds.includes(seat.id));
+        setSelectedSeats(selected.map((seat: any) => ({
+          id: seat.id,
+          number: seat.seatNumber,
+          type: "window" as const,
+          price: tripDetails?.price || 0
+        })));
+      }
+    } catch (error) {
+      console.error('Error fetching seat details:', error);
     }
   };
 
@@ -231,35 +252,7 @@ export default function BookingPageContent() {
       }
     } catch (error) {
       console.error('Error fetching promotions:', error);
-      // Fallback to mock data
-      setPromotions([
-        {
-          id: '1',
-          title: "Student Discount",
-          description: "Up to 30% off on student fares with valid ID.",
-          type: "PERCENTAGE",
-          value: 30,
-          code: "STUDENT30",
-          startDate: "2024-01-01",
-          endDate: "2024-12-31",
-          isActive: true,
-          usedCount: 45,
-          usageLimit: 100,
-        },
-        {
-          id: '2',
-          title: "Early Bird Special",
-          description: "Book 14+ days early to save on all routes.",
-          type: "PERCENTAGE",
-          value: 25,
-          code: "EARLY25",
-          startDate: "2024-01-01",
-          endDate: "2024-12-31",
-          isActive: true,
-          usedCount: 23,
-          usageLimit: 50,
-        },
-      ]);
+      setPromotions([]);
     }
   };
 

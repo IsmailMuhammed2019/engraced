@@ -213,84 +213,15 @@ export default function TripsPage() {
         setTrips(formattedTrips);
       } else {
         console.error('Failed to fetch trips');
-        setTrips(getMockTrips());
+        setTrips([]);
       }
     } catch (error) {
       console.error('Error fetching trips:', error);
-      setTrips(getMockTrips());
+      setTrips([]);
     } finally {
       setLoading(false);
     }
   };
-
-  const getMockTrips = (): Trip[] => [
-    {
-      id: "1",
-    route: "Lagos to Abuja",
-    from: "Lagos",
-    to: "Abuja",
-      departureTime: "08:00",
-      arrivalTime: "16:30",
-    date: "2024-01-15",
-    duration: "8h 30m",
-      price: 15000,
-      originalPrice: 18000,
-    availableSeats: 12,
-      totalSeats: 30,
-      vehicle: {
-        make: "Toyota",
-        model: "Sienna",
-        plateNumber: "ABC123XY",
-        features: ["AC", "WiFi", "USB Charging", "Reclining Seats"]
-      },
-      driver: {
-        name: "John Doe",
-        phone: "+2348071116229",
-    rating: 4.8,
-        experience: 5
-      },
-      amenities: ["Wi-Fi", "Refreshments", "Comfortable Seats", "USB Charging"],
-      status: "scheduled",
-    rating: 4.8,
-    reviews: 1240,
-      vehicleType: "Premium",
-      isActive: true,
-      createdAt: "2024-01-01T00:00:00Z"
-  },
-  {
-      id: "2",
-    route: "Lagos to Port Harcourt",
-    from: "Lagos",
-    to: "Port Harcourt",
-      departureTime: "14:00",
-      arrivalTime: "20:00",
-    date: "2024-01-15",
-    duration: "6h 0m",
-      price: 12500,
-      originalPrice: 15000,
-      availableSeats: 8,
-      totalSeats: 30,
-      vehicle: {
-        make: "Toyota",
-        model: "Sienna",
-        plateNumber: "XYZ789AB",
-        features: ["AC", "WiFi", "USB Charging"]
-      },
-      driver: {
-        name: "Jane Smith",
-        phone: "+2348071116230",
-        rating: 4.6,
-        experience: 3
-      },
-      amenities: ["Wi-Fi", "USB Charging", "Comfortable Seats"],
-      status: "scheduled",
-    rating: 4.6,
-    reviews: 980,
-      vehicleType: "Standard",
-      isActive: true,
-      createdAt: "2024-01-01T00:00:00Z"
-    }
-  ];
 
   const filterAndSortTrips = () => {
     const filtered = trips.filter(trip => {

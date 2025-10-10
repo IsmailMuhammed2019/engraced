@@ -67,19 +67,47 @@ export default function RootLayout({
             `,
           }}
         />
-        {/* Service Worker Registration */}
+        {/* Service Worker Registration with Cache Management */}
         <script
           dangerouslySetInnerHTML={{
             __html: `
               if ('serviceWorker' in navigator) {
-                window.addEventListener('load', function() {
-                  navigator.serviceWorker.register('/sw.js')
-                    .then(function(registration) {
-                      console.log('SW registered: ', registration);
-                    })
-                    .catch(function(registrationError) {
-                      console.log('SW registration failed: ', registrationError);
+                window.addEventListener('load', async function() {
+                  try {
+                    // First, unregister any existing service workers
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    for (let registration of registrations) {
+                      await registration.unregister();
+                      console.log('Old SW unregistered');
+                    }
+                    
+                    // Clear all caches
+                    const cacheNames = await caches.keys();
+                    for (let cacheName of cacheNames) {
+                      await caches.delete(cacheName);
+                      console.log('Cache deleted:', cacheName);
+                    }
+                    
+                    // Register new service worker
+                    const registration = await navigator.serviceWorker.register('/sw.js');
+                    console.log('SW registered: ', registration);
+                    
+                    // Force update check
+                    registration.addEventListener('updatefound', () => {
+                      const newWorker = registration.installing;
+                      if (newWorker) {
+                        newWorker.addEventListener('statechange', () => {
+                          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            // New service worker available, reload the page
+                            console.log('New SW available, reloading...');
+                            window.location.reload();
+                          }
+                        });
+                      }
                     });
+                  } catch (error) {
+                    console.log('SW registration failed: ', error);
+                  }
                 });
               }
             `,

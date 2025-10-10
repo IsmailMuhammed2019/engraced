@@ -63,7 +63,7 @@ export class AuthController {
             email: 'admin@engracedsmile.com',
             firstName: 'Admin',
             lastName: 'User',
-            role: 'ADMIN',
+            role: 'SUPER_ADMIN',
             type: 'admin'
           },
           accessToken: 'admin-token-123',

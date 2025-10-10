@@ -90,59 +90,18 @@ export default function PopularRoutes({ onBookNow }: PopularRoutesProps) {
         }));
         setRoutes(formattedRoutes);
       } else {
-        // Fallback to static data
-        setRoutes(getStaticRoutes());
+        console.error('Failed to fetch routes');
+        setError('Failed to load routes');
+        setRoutes([]);
       }
     } catch (error) {
       console.error('Error fetching routes:', error);
       setError('Failed to load routes');
-      setRoutes(getStaticRoutes());
+      setRoutes([]);
     } finally {
       setLoading(false);
     }
   };
-
-  const getStaticRoutes = (): Route[] => [
-    {
-      id: "static-1",
-      from: "Lagos",
-      to: "Abuja",
-      duration: "8h 30m",
-      price: "₦15,000",
-      originalPrice: "₦18,000",
-      rating: 4.8,
-      reviews: 1240,
-      features: ["Wi-Fi", "Refreshments", "Comfortable Seats"],
-      departures: ["06:00", "12:00", "18:00"],
-      image: "/sienna.jpeg",
-    },
-    {
-      id: "static-2",
-      from: "Lagos",
-      to: "Port Harcourt",
-      duration: "6h 0m",
-      price: "₦12,500",
-      originalPrice: "₦15,000",
-      rating: 4.6,
-      reviews: 980,
-      features: ["Wi-Fi", "USB Charging"],
-      departures: ["07:00", "13:00", "19:00"],
-      image: "/sienna2.jpeg",
-    },
-    {
-      id: "static-3",
-      from: "Abuja",
-      to: "Kaduna",
-      duration: "2h 15m",
-      price: "₦4,500",
-      originalPrice: "₦5,500",
-      rating: 4.9,
-      reviews: 2100,
-      features: ["Wi-Fi", "Refreshments", "Priority Boarding"],
-      departures: ["06:30", "09:00", "12:30", "15:00", "18:30"],
-      image: "/sienna3.jpeg",
-    },
-  ];
 
   const handleViewDetails = (route: Route) => {
     setSelectedRoute(route);

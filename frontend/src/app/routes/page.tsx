@@ -148,63 +148,15 @@ export default function RoutesPage() {
         setRoutes(formattedRoutes);
       } else {
         console.error('Failed to fetch routes');
-        // Fallback to mock data
-        setRoutes(getMockRoutes());
+        setRoutes([]);
       }
     } catch (error) {
       console.error('Error fetching routes:', error);
-      setRoutes(getMockRoutes());
+      setRoutes([]);
     } finally {
       setLoading(false);
     }
   };
-
-  const getMockRoutes = (): Route[] => [
-    {
-      id: "1",
-    from: "Lagos",
-    to: "Abuja",
-    duration: "8h 30m",
-    distance: "720 km",
-    price: "₦15,000",
-    originalPrice: "₦18,000",
-    rating: 4.8,
-    reviews: 1240,
-    features: ["Wi-Fi", "Refreshments", "Comfortable Seats", "USB Charging"],
-    departures: [
-      { time: "06:00", type: "Express", available: true },
-      { time: "12:00", type: "Standard", available: true },
-      { time: "18:00", type: "Express", available: false }
-    ],
-    image: "https://images.unsplash.com/photo-1544620347-c4fd4a3d5957?auto=format&fit=crop&w=600&q=60",
-    description: "Our flagship route connecting Nigeria's commercial capital with the federal capital. Features premium coaches with onboard entertainment.",
-      amenities: ["Air Conditioning", "Reclining Seats", "Onboard Toilet", "Refreshments", "Free Wi-Fi"],
-      isActive: true,
-      createdAt: "2024-01-01T00:00:00Z"
-  },
-  {
-      id: "2",
-    from: "Lagos",
-    to: "Port Harcourt",
-    duration: "6h 0m",
-    distance: "540 km",
-    price: "₦12,500",
-    originalPrice: "₦15,000",
-    rating: 4.6,
-    reviews: 980,
-    features: ["Wi-Fi", "USB Charging", "Comfortable Seats"],
-    departures: [
-      { time: "07:00", type: "Express", available: true },
-      { time: "13:00", type: "Standard", available: true },
-      { time: "19:00", type: "Express", available: true }
-    ],
-    image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=600&q=60",
-    description: "Connect to the oil-rich Niger Delta region with our comfortable and reliable service.",
-      amenities: ["Air Conditioning", "Reclining Seats", "Free Wi-Fi", "USB Charging"],
-      isActive: true,
-      createdAt: "2024-01-01T00:00:00Z"
-    }
-  ];
 
   const filterRoutes = () => {
     if (!searchTerm.trim()) {

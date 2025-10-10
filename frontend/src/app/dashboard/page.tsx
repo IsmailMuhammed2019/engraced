@@ -122,8 +122,8 @@ export default function DashboardPage() {
         const bookingsData = await bookingsResponse.json();
         setBookings(bookingsData);
       } else {
-        // Fallback to mock data
-        setBookings(getMockBookings());
+        console.error('Failed to fetch bookings');
+        setBookings([]);
       }
 
       // Fetch shipments
@@ -138,106 +138,21 @@ export default function DashboardPage() {
         const shipmentsData = await shipmentsResponse.json();
         setShipments(shipmentsData);
       } else {
-        // Fallback to mock data
-        setShipments(getMockShipments());
+        console.error('Failed to fetch shipments');
+        setShipments([]);
       }
 
       // Calculate stats
       calculateUserStats();
     } catch (error) {
       console.error('Error fetching user data:', error);
-      // Use mock data
-      setBookings(getMockBookings());
-      setShipments(getMockShipments());
+      setBookings([]);
+      setShipments([]);
       calculateUserStats();
     } finally {
       setLoading(false);
     }
   };
-
-  const getMockBookings = (): Booking[] => [
-    {
-      id: "BK001",
-      route: "Lagos to Abuja",
-      date: "2024-01-15",
-      time: "08:00 AM",
-      status: "confirmed",
-      price: "₦15,000",
-      seat: "A12",
-      driver: "John Doe",
-      vehicle: "Toyota Sienna - ABC123XY",
-      trackingNumber: "TRK123456789",
-      createdAt: "2024-01-10T10:30:00Z"
-    },
-    {
-      id: "BK002", 
-      route: "Lagos to Port Harcourt",
-      date: "2024-01-20",
-      time: "02:00 PM",
-      status: "pending",
-      price: "₦12,500",
-      seat: "B05",
-      driver: "Jane Smith",
-      vehicle: "Toyota Sienna - XYZ789AB",
-      trackingNumber: "TRK987654321",
-      createdAt: "2024-01-15T14:20:00Z"
-    },
-    {
-      id: "BK003",
-      route: "Abuja to Kano",
-      date: "2024-01-25",
-      time: "10:00 AM",
-      status: "completed",
-      price: "₦8,500",
-      seat: "C08",
-      driver: "Mike Johnson",
-      vehicle: "Ford Transit - DEF456CD",
-      trackingNumber: "TRK456789123",
-      createdAt: "2024-01-20T09:15:00Z"
-    }
-  ];
-
-  const getMockShipments = (): Shipment[] => [
-    {
-      id: "SH001",
-      description: "Electronics Package",
-      from: "Lagos",
-      to: "Abuja",
-      status: "in-transit",
-      estimatedDelivery: "2024-01-18",
-      trackingNumber: "TRK123456789",
-      weight: "2.5kg",
-      dimensions: "30x20x15cm",
-      value: "₦50,000",
-      createdAt: "2024-01-10T10:30:00Z"
-    },
-    {
-      id: "SH002",
-      description: "Documents",
-      from: "Abuja", 
-      to: "Kano",
-      status: "delivered",
-      estimatedDelivery: "2024-01-12",
-      trackingNumber: "TRK987654321",
-      weight: "0.5kg",
-      dimensions: "25x15x5cm",
-      value: "₦5,000",
-      createdAt: "2024-01-08T14:20:00Z"
-    },
-    {
-      id: "SH003",
-      description: "Clothing Items",
-      from: "Lagos",
-      to: "Port Harcourt", 
-      status: "processing",
-      estimatedDelivery: "2024-01-22",
-      trackingNumber: "TRK456789123",
-      weight: "1.2kg",
-      dimensions: "40x30x10cm",
-      value: "₦15,000",
-      createdAt: "2024-01-15T09:15:00Z"
-    }
-  ];
 
   const calculateUserStats = () => {
     const totalBookings = bookings.length;

@@ -118,16 +118,16 @@ export default function BookingForm() {
               </button>
             </div>
 
-            {/* From and To */}
-            <div className="space-y-4 relative">
-              <div>
+            {/* From and To - Full Width */}
+            <div className="space-y-3">
+              <div className="w-full">
                 <Label htmlFor="from" className="text-sm font-semibold text-gray-700 mb-2 block">
                   From
                 </Label>
                 <div className="relative">
                   <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 z-10" />
                   <Select value={formData.from} onValueChange={(value) => handleInputChange("from", value)}>
-                    <SelectTrigger className="pl-10 h-12 rounded-xl border-gray-200 focus:border-[#5d4a15] focus:ring-[#5d4a15] transition-all duration-200">
+                    <SelectTrigger className="w-full pl-10 h-12 rounded-xl border-gray-200 focus:border-[#5d4a15] focus:ring-[#5d4a15] transition-all duration-200">
                       <SelectValue placeholder="Select departure city" />
                     </SelectTrigger>
                     <SelectContent>
@@ -142,7 +142,7 @@ export default function BookingForm() {
               </div>
 
               {/* Swap Button - Positioned between the two fields */}
-              <div className="flex justify-center">
+              <div className="flex justify-center -my-1">
                 <button
                   type="button"
                   onClick={swapLocations}
@@ -153,14 +153,14 @@ export default function BookingForm() {
                 </button>
               </div>
 
-              <div>
+              <div className="w-full">
                 <Label htmlFor="to" className="text-sm font-semibold text-gray-700 mb-2 block">
                   To
                 </Label>
                 <div className="relative">
                   <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400 z-10" />
                   <Select value={formData.to} onValueChange={(value) => handleInputChange("to", value)}>
-                    <SelectTrigger className="pl-10 h-12 rounded-xl border-gray-200 focus:border-[#5d4a15] focus:ring-[#5d4a15] transition-all duration-200">
+                    <SelectTrigger className="w-full pl-10 h-12 rounded-xl border-gray-200 focus:border-[#5d4a15] focus:ring-[#5d4a15] transition-all duration-200">
                       <SelectValue placeholder="Select destination city" />
                     </SelectTrigger>
                     <SelectContent>

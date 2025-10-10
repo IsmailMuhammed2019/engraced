@@ -17,14 +17,14 @@ export class SimpleAdminController {
     if (loginDto.email === 'admin@engracedsmile.com' && loginDto.password === 'admin123') {
       console.log('Simple admin login successful');
       
-      // Generate proper JWT tokens with real admin ID
+      // Generate proper JWT tokens with SUPER_ADMIN role
       const accessToken = this.jwtService.sign(
-        { sub: 'cmgf1bllh0000vnc6r47hnz8v', email: 'admin@engracedsmile.com', type: 'admin' },
+        { sub: 'cmgf1bllh0000vnc6r47hnz8v', email: 'admin@engracedsmile.com', type: 'admin', role: 'SUPER_ADMIN' },
         { expiresIn: '15m', secret: process.env.JWT_SECRET }
       );
 
       const refreshToken = this.jwtService.sign(
-        { sub: 'cmgf1bllh0000vnc6r47hnz8v', email: 'admin@engracedsmile.com', type: 'admin' },
+        { sub: 'cmgf1bllh0000vnc6r47hnz8v', email: 'admin@engracedsmile.com', type: 'admin', role: 'SUPER_ADMIN' },
         { expiresIn: '7d', secret: process.env.JWT_REFRESH_SECRET || process.env.JWT_SECRET }
       );
 
@@ -36,7 +36,7 @@ export class SimpleAdminController {
             email: 'admin@engracedsmile.com',
             firstName: 'Admin',
             lastName: 'User',
-            role: 'ADMIN',
+            role: 'SUPER_ADMIN',
             type: 'admin'
           },
           accessToken,

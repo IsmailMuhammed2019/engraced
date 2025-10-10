@@ -1,65 +1,36 @@
-const CACHE_NAME = 'engracedsmile-v1.0.0';
-const STATIC_CACHE_NAME = 'engracedsmile-static-v1.0.0';
-const DYNAMIC_CACHE_NAME = 'engracedsmile-dynamic-v1.0.0';
+// CRITICAL: Update this version number with EVERY deployment to force cache refresh
+const CACHE_VERSION = 'v3.0.0';
+const CACHE_NAME = `engracedsmile-${CACHE_VERSION}`;
 
-// Files to cache for offline functionality
-const STATIC_FILES = [
-  '/',
-  '/login',
-  '/register',
-  '/dashboard',
-  '/trips',
-  '/logistics',
-  '/contact',
-  '/manifest.json',
-  '/favicon.ico'
-];
-
-// Install event - cache static files
+// Install event - skip caching chunks, only cache critical assets
 self.addEventListener('install', (event) => {
-  console.log('Service Worker: Installing...');
-  event.waitUntil(
-    caches.open(STATIC_CACHE_NAME)
-      .then((cache) => {
-        console.log('Service Worker: Caching static files');
-        return cache.addAll(STATIC_FILES);
-      })
-      .then(() => {
-        console.log('Service Worker: Installation complete');
-        return self.skipWaiting();
-      })
-      .catch((error) => {
-        console.error('Service Worker: Installation failed', error);
-      })
-  );
+  console.log('Service Worker: Installing version', CACHE_VERSION);
+  // Force immediate activation
+  self.skipWaiting();
 });
 
-// Activate event - clean up old caches
+// Activate event - AGGRESSIVELY delete ALL old caches
 self.addEventListener('activate', (event) => {
-  console.log('Service Worker: Activating...');
+  console.log('Service Worker: Activating version', CACHE_VERSION);
   event.waitUntil(
     caches.keys()
       .then((cacheNames) => {
+        console.log('Service Worker: Found caches:', cacheNames);
         return Promise.all(
-          cacheNames
-            .filter((cacheName) => {
-              return cacheName !== STATIC_CACHE_NAME && 
-                     cacheName !== DYNAMIC_CACHE_NAME;
-            })
-            .map((cacheName) => {
-              console.log('Service Worker: Deleting old cache', cacheName);
-              return caches.delete(cacheName);
-            })
+          cacheNames.map((cacheName) => {
+            console.log('Service Worker: DELETING cache', cacheName);
+            return caches.delete(cacheName);
+          })
         );
       })
       .then(() => {
-        console.log('Service Worker: Activation complete');
+        console.log('Service Worker: ALL caches deleted, taking control');
         return self.clients.claim();
       })
   );
 });
 
-// Fetch event - serve from cache, fallback to network
+// Fetch event - NETWORK FIRST for everything
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
@@ -74,40 +45,48 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // NETWORK FIRST for all requests (especially Next.js chunks)
   event.respondWith(
-    caches.match(request)
-      .then((cachedResponse) => {
-        // Return cached version if available
-        if (cachedResponse) {
-          console.log('Service Worker: Serving from cache', request.url);
-          return cachedResponse;
+    fetch(request)
+      .then((networkResponse) => {
+        // Successfully fetched from network
+        console.log('Service Worker: Fetched from network', request.url);
+        
+        // Only cache successful responses for static assets (not chunks)
+        if (networkResponse && networkResponse.status === 200 && 
+            !url.pathname.includes('/_next/static/chunks/')) {
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME)
+            .then((cache) => {
+              cache.put(request, responseToCache);
+            });
         }
-
-        // Otherwise, fetch from network
-        return fetch(request)
-          .then((networkResponse) => {
-            // Don't cache non-successful responses
-            if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
-              return networkResponse;
-            }
-
-            // Clone the response
-            const responseToCache = networkResponse.clone();
-
-            // Cache dynamic content
-            caches.open(DYNAMIC_CACHE_NAME)
-              .then((cache) => {
-                cache.put(request, responseToCache);
-              });
-
-            return networkResponse;
-          })
-          .catch(() => {
-            // Return offline page for navigation requests
-            if (request.mode === 'navigate') {
-              return caches.match('/');
-            }
-          });
+        
+        return networkResponse;
+      })
+      .catch((error) => {
+        console.error('Service Worker: Network fetch failed', request.url, error);
+        
+        // Only use cache as fallback for non-chunk requests
+        if (!url.pathname.includes('/_next/static/chunks/')) {
+          return caches.match(request)
+            .then((cachedResponse) => {
+              if (cachedResponse) {
+                console.log('Service Worker: Serving from cache (fallback)', request.url);
+                return cachedResponse;
+              }
+              
+              // Return offline page for navigation requests
+              if (request.mode === 'navigate') {
+                return caches.match('/offline.html') || new Response('Offline', { status: 503 });
+              }
+              
+              return new Response('Network error', { status: 503 });
+            });
+        }
+        
+        // For chunks, don't use cache - let it fail and retry
+        throw error;
       })
   );
 });
@@ -162,10 +141,8 @@ self.addEventListener('notificationclick', (event) => {
       clients.openWindow('/dashboard')
     );
   } else if (event.action === 'close') {
-    // Just close the notification
     return;
   } else {
-    // Default action - open the app
     event.waitUntil(
       clients.openWindow('/')
     );
@@ -175,12 +152,7 @@ self.addEventListener('notificationclick', (event) => {
 // Background sync function
 async function doBackgroundSync() {
   try {
-    // Sync offline bookings, tracking data, etc.
     console.log('Service Worker: Performing background sync');
-    
-    // Here you would typically sync any offline data
-    // For example, sync booking requests, tracking updates, etc.
-    
     return Promise.resolve();
   } catch (error) {
     console.error('Service Worker: Background sync failed', error);
@@ -188,9 +160,28 @@ async function doBackgroundSync() {
   }
 }
 
-// Message handler for communication with the app
+// Message handler
 self.addEventListener('message', (event) => {
+  console.log('Service Worker: Message received', event.data);
+  
   if (event.data && event.data.type === 'SKIP_WAITING') {
     self.skipWaiting();
+  }
+  
+  // Handle cache clear request
+  if (event.data && event.data.type === 'CLEAR_CACHE') {
+    event.waitUntil(
+      caches.keys().then((cacheNames) => {
+        return Promise.all(
+          cacheNames.map((cacheName) => {
+            console.log('Service Worker: Clearing cache on request', cacheName);
+            return caches.delete(cacheName);
+          })
+        );
+      }).then(() => {
+        console.log('Service Worker: All caches cleared');
+        return self.clients.claim();
+      })
+    );
   }
 });

@@ -113,142 +113,16 @@ export default function BookingsPage() {
         const data = await response.json();
         setBookings(data);
       } else {
-        // Fallback to mock data
-        setBookings(getMockBookings());
+        console.error('Failed to fetch bookings');
+        setBookings([]);
       }
     } catch (error) {
       console.error('Error fetching bookings:', error);
-      setBookings(getMockBookings());
+      setBookings([]);
     } finally {
       setLoading(false);
     }
   };
-
-  const getMockBookings = (): Booking[] => [
-    {
-      id: "BK001",
-      route: "Lagos to Abuja",
-      from: "Lagos",
-      to: "Abuja",
-      date: "2024-01-15",
-      time: "08:00 AM",
-      status: "in-progress",
-      price: "₦15,000",
-      seat: "A12",
-      driver: {
-        name: "John Doe",
-        phone: "+2348071116229",
-        rating: 4.8,
-        experience: 5
-      },
-      vehicle: {
-        make: "Toyota",
-        model: "Sienna",
-        plateNumber: "ABC123XY",
-        features: ["AC", "WiFi", "USB Charging", "Reclining Seats"]
-      },
-      trackingNumber: "TRK123456789",
-      estimatedArrival: "2024-01-15 16:00",
-      actualDeparture: "2024-01-15 08:15",
-      createdAt: "2024-01-10T10:30:00Z",
-      paymentStatus: "paid",
-      paymentMethod: "Card",
-      specialRequests: "Window seat preferred",
-      emergencyContact: {
-        name: "Jane Smith",
-        phone: "+2348071116230"
-      }
-    },
-    {
-      id: "BK002", 
-      route: "Lagos to Port Harcourt",
-      from: "Lagos",
-      to: "Port Harcourt",
-      date: "2024-01-20",
-      time: "02:00 PM",
-      status: "confirmed",
-      price: "₦12,500",
-      seat: "B05",
-      driver: {
-        name: "Jane Smith",
-        phone: "+2348071116231",
-        rating: 4.6,
-        experience: 3
-      },
-      vehicle: {
-        make: "Toyota",
-        model: "Sienna",
-        plateNumber: "XYZ789AB",
-        features: ["AC", "WiFi", "USB Charging"]
-      },
-      trackingNumber: "TRK987654321",
-      estimatedArrival: "2024-01-20 20:00",
-      createdAt: "2024-01-15T14:20:00Z",
-      paymentStatus: "paid",
-      paymentMethod: "Bank Transfer"
-    },
-    {
-      id: "BK003",
-      route: "Abuja to Kano",
-      from: "Abuja",
-      to: "Kano",
-      date: "2024-01-25",
-      time: "10:00 AM",
-      status: "completed",
-      price: "₦8,500",
-      seat: "C08",
-      driver: {
-        name: "Mike Johnson",
-        phone: "+2348071116232",
-        rating: 4.9,
-        experience: 7
-      },
-      vehicle: {
-        make: "Ford",
-        model: "Transit",
-        plateNumber: "DEF456CD",
-        features: ["AC", "WiFi", "USB Charging", "Reclining Seats", "Entertainment System"]
-      },
-      trackingNumber: "TRK456789123",
-      estimatedArrival: "2024-01-25 18:00",
-      actualDeparture: "2024-01-25 10:05",
-      actualArrival: "2024-01-25 17:45",
-      createdAt: "2024-01-20T09:15:00Z",
-      paymentStatus: "paid",
-      paymentMethod: "Card"
-    }
-  ];
-
-  const getMockTripStatus = (bookingId: string): TripStatus[] => [
-    {
-      status: "departed",
-      location: "Lagos Terminal",
-      timestamp: "2024-01-15 08:15",
-      description: "Trip departed from Lagos Terminal",
-      icon: "truck"
-    },
-    {
-      status: "in-transit",
-      location: "Ibadan",
-      timestamp: "2024-01-15 10:30",
-      description: "Passing through Ibadan",
-      icon: "navigation"
-    },
-    {
-      status: "in-transit",
-      location: "Lokoja",
-      timestamp: "2024-01-15 13:45",
-      description: "Passing through Lokoja",
-      icon: "navigation"
-    },
-    {
-      status: "arrived",
-      location: "Abuja Terminal",
-      timestamp: "2024-01-15 15:50",
-      description: "Arrived at Abuja Terminal",
-      icon: "check-circle"
-    }
-  ];
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -293,12 +167,12 @@ export default function BookingsPage() {
 
   const handleViewDetails = (booking: Booking) => {
     setSelectedBooking(booking);
-    setTripStatus(getMockTripStatus(booking.id));
+    setTripStatus([]);
   };
 
   const handleTrackTrip = (booking: Booking) => {
     setSelectedBooking(booking);
-    setTripStatus(getMockTripStatus(booking.id));
+    setTripStatus([]);
   };
 
   if (loading) {
