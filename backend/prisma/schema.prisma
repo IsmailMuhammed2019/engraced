@@ -81,6 +81,7 @@ model Trip {
   routeId      String
   driverId     String
   vehicleId    String
+  promotionId  String?     // Optional promotion
   departureTime DateTime
   arrivalTime  DateTime
   price        Decimal     @db.Decimal(10, 2)
@@ -95,6 +96,7 @@ model Trip {
   route        Route       @relation(fields: [routeId], references: [id])
   driver       Driver      @relation(fields: [driverId], references: [id])
   vehicle      Vehicle     @relation(fields: [vehicleId], references: [id])
+  promotion    Promotion?  @relation(fields: [promotionId], references: [id])
   bookings     Booking[]
   seats        Seat[]
 
@@ -268,6 +270,7 @@ model Promotion {
 
   // Relations
   bookings    Booking[]
+  trips       Trip[]
 
   @@map("promotions")
 }

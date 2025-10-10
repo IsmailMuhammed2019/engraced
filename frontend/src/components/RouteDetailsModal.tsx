@@ -76,39 +76,50 @@ export default function RouteDetailsModal({ route, isOpen, onClose, onBookNow }:
       
       if (response.ok) {
         const data = await response.json();
-        const formattedTrips = data.map((trip: any) => ({
-          id: trip.id,
-          departureTime: trip.departureTime,
-          arrivalTime: trip.arrivalTime,
-          price: trip.price,
-          availableSeats: trip.availableSeats || Math.floor(Math.random() * 20) + 1,
-          totalSeats: trip.totalSeats || 30,
-          vehicle: {
-            make: trip.vehicle?.make || "Toyota",
-            model: trip.vehicle?.model || "Sienna",
-            plateNumber: trip.vehicle?.plateNumber || "ABC123XY",
-            features: trip.vehicle?.features || ["AC", "WiFi", "USB Charging"],
-            capacity: trip.vehicle?.capacity || 30,
-            year: trip.vehicle?.year || 2020,
-            color: trip.vehicle?.color || "White",
-            image: trip.vehicle?.image || "/sienna.jpeg"
-          },
-          driver: {
-            name: trip.driver?.name || "John Doe",
-            phone: trip.driver?.phone || "+2348012345678",
-            rating: trip.driver?.rating || 4.5,
-            experience: trip.driver?.experience || "5+ years"
-          },
-          status: trip.status || "ACTIVE"
-        }));
+        const formattedTrips = data.map((trip: any) => {
+          // Calculate available seats from real seat data
+          const availableSeats = trip.seats?.filter((s: any) => !s.isBooked).length || 0;
+          const totalSeats = trip.seats?.length || trip.maxPassengers || 7;
+          
+          // Get driver full name
+          const driverName = trip.driver?.firstName && trip.driver?.lastName 
+            ? `${trip.driver.firstName} ${trip.driver.lastName}`
+            : "Driver";
+          
+          return {
+            id: trip.id,
+            departureTime: trip.departureTime,
+            arrivalTime: trip.arrivalTime,
+            price: parseFloat(trip.price),
+            availableSeats: availableSeats,
+            totalSeats: totalSeats,
+            vehicle: {
+              make: trip.vehicle?.make,
+              model: trip.vehicle?.model,
+              plateNumber: trip.vehicle?.plateNumber,
+              features: trip.vehicle?.features || [],
+              capacity: trip.vehicle?.capacity || totalSeats,
+              year: trip.vehicle?.year,
+              color: trip.vehicle?.color,
+              image: trip.vehicle?.images?.[0] || "/sienna.jpeg"
+            },
+            driver: {
+              name: driverName,
+              phone: trip.driver?.phone,
+              rating: trip.driver?.rating || 0,
+              experience: trip.driver?.yearsExperience ? `${trip.driver.yearsExperience}+ years` : ""
+            },
+            status: trip.status
+          };
+        });
         setTrips(formattedTrips);
       } else {
-        // Fallback to mock data
-        setTrips(getMockTrips());
+        console.error('Failed to fetch trips');
+        setTrips([]);
       }
     } catch (error) {
       console.error('Error fetching trips:', error);
-      setTrips(getMockTrips());
+      setTrips([]);
     } finally {
       setLoading(false);
     }

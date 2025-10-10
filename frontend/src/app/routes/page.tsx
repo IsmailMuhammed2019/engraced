@@ -94,11 +94,18 @@ export default function RoutesPage() {
   const fetchRoutes = async () => {
     try {
       setLoading(true);
-      const response = await fetch('https://engracedsmile.com/api/v1/routes');
       
-      if (response.ok) {
-        const data = await response.json();
-        const formattedRoutes = data.map((route: {
+      // Fetch routes with trips included
+      const [routesResponse, tripsResponse] = await Promise.all([
+        fetch('https://engracedsmile.com/api/v1/routes'),
+        fetch('https://engracedsmile.com/api/v1/trips')
+      ]);
+      
+      if (routesResponse.ok) {
+        const routesData = await routesResponse.json();
+        const tripsData = tripsResponse.ok ? await tripsResponse.json() : [];
+        
+        const formattedRoutes = routesData.map((route: {
           id: string;
           from: string;
           to: string;
@@ -108,43 +115,50 @@ export default function RoutesPage() {
           description?: string;
           isActive: boolean;
           createdAt: string;
-          trips?: Array<{
-            departureTime: string;
-            status: string;
-          }>;
-        }) => ({
-          id: route.id,
-          from: route.from,
-          to: route.to,
-          duration: `${Math.floor(route.duration / 60)}h ${route.duration % 60}m`, // Convert minutes to hours and minutes
-          distance: `${route.distance} km`,
-          price: `₦${route.basePrice.toLocaleString()}`,
-          originalPrice: undefined,
-          rating: 4.5 + Math.random() * 0.5, // Mock rating (backend doesn't have ratings yet)
-          reviews: Math.floor(Math.random() * 2000) + 100, // Mock reviews
-          features: ["Wi-Fi", "Refreshments", "Comfortable Seats"], // Default features
-          departures: route.trips?.map((trip: {
-            departureTime: string;
-            status: string;
-          }) => ({
-            time: new Date(trip.departureTime).toLocaleTimeString('en-US', { 
-              hour: '2-digit', 
-              minute: '2-digit',
-              hour12: false 
-            }),
-            type: "Standard",
-            available: trip.status === 'ACTIVE'
-          })) || [
-            { time: "06:00", type: "Express", available: true },
-            { time: "12:00", type: "Standard", available: true },
-            { time: "18:00", type: "Express", available: false }
-          ],
-          image: "/cars.jpg",
-          description: route.description || `Experience a comfortable journey from ${route.from} to ${route.to} with our premium transport service.`,
-          amenities: ["Air Conditioning", "Reclining Seats", "Free Wi-Fi", "Refreshments"],
-          isActive: route.isActive,
-          createdAt: route.createdAt
-        }));
+          _count?: { trips: number; bookings: number };
+        }) => {
+          // Get all trips for this route
+          const routeTrips = tripsData.filter((trip: any) => trip.routeId === route.id);
+          
+          // Get active trips with available seats
+          const activeTrips = routeTrips.filter((trip: any) => 
+            trip.status === 'ACTIVE' && 
+            new Date(trip.departureTime) > new Date()
+          );
+          
+          // Calculate rating from actual bookings (0 if no bookings yet)
+          const totalBookings = route._count?.bookings || 0;
+          const rating = totalBookings > 0 ? parseFloat((4.0 + Math.min(0.9, totalBookings / 1000)).toFixed(1)) : 0;
+          
+          return {
+            id: route.id,
+            from: route.from,
+            to: route.to,
+            duration: `${Math.floor(route.duration / 60)}h ${route.duration % 60}m`,
+            distance: `${route.distance} km`,
+            price: `₦${route.basePrice.toLocaleString()}`,
+            originalPrice: undefined,
+            rating: rating,
+            reviews: totalBookings,
+            features: activeTrips[0]?.features || [],
+            departures: activeTrips.map((trip: any) => ({
+              time: new Date(trip.departureTime).toLocaleTimeString('en-US', { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                hour12: false 
+              }),
+              type: "Standard",
+              available: trip.status === 'ACTIVE',
+              availableSeats: trip.seats?.filter((s: any) => !s.isBooked).length || 0
+            })),
+            image: activeTrips[0]?.vehicle?.images?.[0] || "/cars.jpg",
+            description: route.description || `Travel from ${route.from} to ${route.to}`,
+            amenities: activeTrips[0]?.amenities || [],
+            isActive: route.isActive,
+            createdAt: route.createdAt
+          };
+        });
+        
         setRoutes(formattedRoutes);
       } else {
         console.error('Failed to fetch routes');

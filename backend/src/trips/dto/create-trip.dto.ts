@@ -23,9 +23,16 @@ export class CreateTripDto {
   @IsDateString()
   arrivalTime: string;
 
-  @ApiProperty({ example: 7500.00 })
-  @Transform(({ value }) => parseFloat(value))
-  price: number;
+  @ApiProperty({ example: 7500.00, required: false })
+  @IsOptional()
+  @Transform(({ value }) => value ? parseFloat(value) : undefined)
+  @IsNumber()
+  price?: number;
+
+  @ApiProperty({ example: 'promotion-id-here', required: false })
+  @IsOptional()
+  @IsString()
+  promotionId?: string;
 
   @ApiProperty({ example: 7, required: false })
   @IsOptional()

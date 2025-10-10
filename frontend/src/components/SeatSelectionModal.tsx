@@ -66,6 +66,7 @@ export default function SeatSelectionModal({
   const [selectedSeats, setSelectedSeats] = useState<Seat[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [tripPrice, setTripPrice] = useState<number>(0);
 
   useEffect(() => {
     if (isOpen) {
@@ -78,14 +79,47 @@ export default function SeatSelectionModal({
       setLoading(true);
       setError(null);
       
+      // First, fetch trip details to get the real price
+      const tripResponse = await fetch(`https://engracedsmile.com/api/v1/trips/${tripId}`);
+      let realPrice = 0;
+      
+      if (tripResponse.ok) {
+        const tripData = await tripResponse.json();
+        realPrice = parseFloat(tripData.price) || 0;
+        setTripPrice(realPrice);
+      }
+      
       // Fetch seat availability from backend
       const response = await fetch(`https://engracedsmile.com/api/v1/trips/${tripId}/seats`);
       
       if (response.ok) {
         const data = await response.json();
-        setSeats(data);
+        
+        // Transform backend seat format to frontend format
+        if (Array.isArray(data)) {
+          const formattedSeats: Seat[] = data.map((seat: any, index: number) => {
+            const row = Math.floor(index / 2) + 1; // 2 seats per row
+            const col = (index % 2) + 1;
+            
+            return {
+              id: seat.id,
+              number: seat.seatNumber,
+              type: (col === 1 ? "window" : "aisle") as "window" | "aisle" | "middle",
+              row: row,
+              column: col,
+              isAvailable: !seat.isBooked,
+              isSelected: false,
+              price: realPrice, // Real price from trip
+              features: col === 1 ? ["Window View"] : ["Aisle Seat"]
+            };
+          });
+          setSeats(formattedSeats);
+        } else {
+          console.error('Seats data is not an array:', data);
+          setSeats(generateMockSeats());
+        }
       } else {
-        // Fallback to mock data
+        console.error('Failed to fetch seats, using fallback');
         setSeats(generateMockSeats());
       }
     } catch (error) {
@@ -114,7 +148,7 @@ export default function SeatSelectionModal({
           column: col,
           isAvailable: Math.random() > 0.3, // 70% availability
           isSelected: false,
-          price: 15000 + (row * 1000), // Price varies by row
+          price: tripPrice || 0, // Use real trip price
           features: isWindow ? ["Window View"] : isAisle ? ["Extra Legroom"] : []
         });
       }

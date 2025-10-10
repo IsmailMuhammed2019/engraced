@@ -44,50 +44,73 @@ export default function PopularRoutes({ onBookNow }: PopularRoutesProps) {
   const fetchRoutes = async () => {
     try {
       setLoading(true);
-      const response = await fetch('https://engracedsmile.com/api/v1/routes');
       
-      if (response.ok) {
-        const data = await response.json();
-        const formattedRoutes = data.map((route: {
-          id: string;
-          from: string;
-          to: string;
-          distance: number;
-          duration: number;
-          basePrice: number;
-          description?: string;
-          isActive: boolean;
-          createdAt: string;
-          trips?: Array<{
-            departureTime: string;
-            status: string;
-          }>;
-        }) => ({
-          id: route.id,
-          from: route.from,
-          to: route.to,
-          duration: `${Math.floor(route.duration / 60)}h ${route.duration % 60}m`,
-          distance: `${route.distance} km`,
-          price: `₦${route.basePrice.toLocaleString()}`,
-          originalPrice: undefined,
-          rating: 4.5 + Math.random() * 0.5,
-          reviews: Math.floor(Math.random() * 2000) + 100,
-          features: ["Wi-Fi", "Refreshments", "Comfortable Seats"],
-          departures: route.trips?.map((trip: {
-            departureTime: string;
-            status: string;
-          }) => new Date(trip.departureTime).toLocaleTimeString('en-US', { 
-            hour: '2-digit', 
-            minute: '2-digit',
-            hour12: false 
-          })) || [
-            "06:00", "12:00", "18:00"
-          ],
-          image: "/sienna.jpeg",
-          description: route.description || `Experience a comfortable journey from ${route.from} to ${route.to} with our premium transport service.`,
-          amenities: ["Air Conditioning", "Reclining Seats", "Free Wi-Fi", "Refreshments"],
-          isActive: route.isActive
-        }));
+      // Fetch routes and trips together
+      const [routesResponse, tripsResponse] = await Promise.all([
+        fetch('https://engracedsmile.com/api/v1/routes'),
+        fetch('https://engracedsmile.com/api/v1/trips')
+      ]);
+      
+      if (routesResponse.ok) {
+        const routesData = await routesResponse.json();
+        const tripsData = tripsResponse.ok ? await tripsResponse.json() : [];
+        
+        const formattedRoutes = routesData
+          .filter((route: any) => route.isActive)
+          .slice(0, 6) // Show top 6 popular routes
+          .map((route: {
+            id: string;
+            from: string;
+            to: string;
+            distance: number;
+            duration: number;
+            basePrice: number;
+            description?: string;
+            isActive: boolean;
+            createdAt: string;
+            _count?: { trips: number; bookings: number };
+          }) => {
+            // Get trips for this route
+            const routeTrips = tripsData.filter((trip: any) => 
+              trip.routeId === route.id &&
+              trip.status === 'ACTIVE' &&
+              new Date(trip.departureTime) > new Date()
+            );
+            
+            // Calculate rating from actual bookings (0 if no bookings yet)
+            const totalBookings = route._count?.bookings || 0;
+            const rating = totalBookings > 0 ? parseFloat((4.0 + Math.min(0.9, totalBookings / 1000)).toFixed(1)) : 0;
+            
+            // Get features and amenities from actual trips
+            const features = routeTrips[0]?.features || [];
+            const amenities = routeTrips[0]?.amenities || [];
+            
+            return {
+              id: route.id,
+              from: route.from,
+              to: route.to,
+              duration: `${Math.floor(route.duration / 60)}h ${route.duration % 60}m`,
+              distance: `${route.distance} km`,
+              price: `₦${route.basePrice.toLocaleString()}`,
+              originalPrice: undefined,
+              rating: rating,
+              reviews: totalBookings,
+              features: features,
+              departures: routeTrips.map((trip: any) => 
+                new Date(trip.departureTime).toLocaleTimeString('en-US', { 
+                  hour: '2-digit', 
+                  minute: '2-digit',
+                  hour12: false 
+                })
+              ),
+              image: routeTrips[0]?.vehicle?.images?.[0] || "/sienna.jpeg",
+              description: route.description || `Travel from ${route.from} to ${route.to}`,
+              amenities: amenities,
+              isActive: route.isActive
+            };
+          })
+          .filter((route: Route) => route.departures.length > 0); // Only show routes with scheduled trips
+        
         setRoutes(formattedRoutes);
       } else {
         console.error('Failed to fetch routes');

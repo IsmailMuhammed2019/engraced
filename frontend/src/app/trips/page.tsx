@@ -148,68 +148,64 @@ export default function TripsPage() {
       
       if (response.ok) {
         const data = await response.json();
-        const formattedTrips = data.map((trip: { 
-          id: string; 
-          route: { from: string; to: string }; 
-          driver: { name: string; phone?: string; rating?: number; experience?: string }; 
-          vehicle: { 
-            plateNumber: string; 
-            make?: string; 
-            model?: string; 
-            features?: string[]; 
-            capacity?: number; 
-            year?: number; 
-            color?: string;
-            image?: string;
-          }; 
-          departureTime: string; 
-          arrivalTime?: string;
-          price: number; 
-          availableSeats: number; 
-          totalSeats: number;
-          status?: string;
-          features?: string[];
-          amenities?: string[];
-        }) => ({
-          id: trip.id,
-          route: `${trip.route.from} to ${trip.route.to}`,
-          from: trip.route.from,
-          to: trip.route.to,
-          departureTime: trip.departureTime,
-          arrivalTime: trip.arrivalTime || new Date(new Date(trip.departureTime).getTime() + 4 * 60 * 60 * 1000).toISOString(),
-          date: new Date(trip.departureTime).toISOString().split('T')[0],
-          duration: trip.arrivalTime ? 
-            `${Math.floor((new Date(trip.arrivalTime).getTime() - new Date(trip.departureTime).getTime()) / (1000 * 60 * 60))}h ${Math.floor(((new Date(trip.arrivalTime).getTime() - new Date(trip.departureTime).getTime()) % (1000 * 60 * 60)) / (1000 * 60))}m` :
-            "4 hours",
-          price: trip.price,
-          originalPrice: trip.price * 1.2,
-          availableSeats: trip.availableSeats || Math.floor(Math.random() * 20) + 1,
-          totalSeats: trip.totalSeats || 30,
-          vehicle: {
-            make: trip.vehicle?.make || "Toyota",
-            model: trip.vehicle?.model || "Sienna",
-            plateNumber: trip.vehicle?.plateNumber || "ABC123XY",
-            features: trip.vehicle?.features || ["AC", "WiFi", "USB Charging"],
-            capacity: trip.vehicle?.capacity || 30,
-            year: trip.vehicle?.year || 2020,
-            color: trip.vehicle?.color || "White",
-            image: trip.vehicle?.image || "/sienna.jpeg"
-          },
-          driver: {
-            name: trip.driver?.name || "John Doe",
-            phone: trip.driver?.phone || "+2348012345678",
-            rating: trip.driver?.rating || 4.5,
-            experience: trip.driver?.experience || "5+ years"
-          },
-          status: trip.status || "ACTIVE",
-          features: trip.features || ["Wi-Fi", "Refreshments", "Comfortable Seats"],
-          amenities: trip.amenities || ["Air Conditioning", "Reclining Seats", "Free Wi-Fi"],
-          rating: 4.5 + Math.random() * 0.5,
-          reviews: Math.floor(Math.random() * 2000) + 100,
-          vehicleType: "Standard",
-          isActive: true,
-          createdAt: new Date().toISOString()
-        }));
+        const formattedTrips = data.map((trip: any) => {
+          // Calculate available seats from actual seat data
+          const availableSeats = trip.seats?.filter((s: any) => !s.isBooked).length || 0;
+          const totalSeats = trip.seats?.length || trip.maxPassengers || 7;
+          
+          // Get driver full name
+          const driverName = trip.driver?.firstName && trip.driver?.lastName 
+            ? `${trip.driver.firstName} ${trip.driver.lastName}`
+            : trip.driver?.firstName || trip.driver?.lastName || "Driver";
+          
+          // Calculate trip duration
+          const durationMs = new Date(trip.arrivalTime).getTime() - new Date(trip.departureTime).getTime();
+          const hours = Math.floor(durationMs / (1000 * 60 * 60));
+          const minutes = Math.floor((durationMs % (1000 * 60 * 60)) / (1000 * 60));
+          
+          // Get bookings count for this trip
+          const bookingsCount = trip._count?.bookings || 0;
+          const rating = bookingsCount > 0 ? parseFloat((4.0 + Math.min(0.9, bookingsCount / 500)).toFixed(1)) : 0;
+          
+          return {
+            id: trip.id,
+            route: `${trip.route?.from} to ${trip.route?.to}`,
+            from: trip.route?.from,
+            to: trip.route?.to,
+            departureTime: trip.departureTime,
+            arrivalTime: trip.arrivalTime,
+            date: new Date(trip.departureTime).toISOString().split('T')[0],
+            duration: `${hours}h ${minutes}m`,
+            price: parseFloat(trip.price),
+            originalPrice: undefined,
+            availableSeats: availableSeats,
+            totalSeats: totalSeats,
+            vehicle: {
+              make: trip.vehicle?.make || "Vehicle",
+              model: trip.vehicle?.model || "Model",
+              plateNumber: trip.vehicle?.plateNumber,
+              features: trip.vehicle?.features || [],
+              capacity: trip.vehicle?.capacity || totalSeats,
+              year: trip.vehicle?.year,
+              color: trip.vehicle?.color,
+              image: trip.vehicle?.images?.[0] || "/sienna.jpeg"
+            },
+            driver: {
+              name: driverName,
+              phone: trip.driver?.phone || "",
+              rating: trip.driver?.rating || 0,
+              experience: trip.driver?.yearsExperience ? `${trip.driver.yearsExperience}+ years` : ""
+            },
+            status: trip.status?.toLowerCase() || "scheduled",
+            features: trip.features || [],
+            amenities: trip.amenities || [],
+            rating: rating,
+            reviews: bookingsCount,
+            vehicleType: trip.vehicle?.model || "Standard",
+            isActive: trip.status === 'ACTIVE',
+            createdAt: trip.createdAt
+          };
+        });
         setTrips(formattedTrips);
       } else {
         console.error('Failed to fetch trips');

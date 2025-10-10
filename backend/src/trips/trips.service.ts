@@ -36,6 +36,19 @@ export class TripsService {
       throw new NotFoundException('Vehicle not found or inactive');
     }
 
+    // Auto-fill price from route if not provided
+    const tripPrice = createTripDto.price || parseFloat(route.basePrice.toString());
+
+    // Verify promotion if provided
+    if (createTripDto.promotionId) {
+      const promotion = await this.prisma.promotion.findUnique({
+        where: { id: createTripDto.promotionId },
+      });
+      if (!promotion || !promotion.isActive) {
+        throw new NotFoundException('Promotion not found or inactive');
+      }
+    }
+
     // Create the trip - enforce 7 seats for all Sienna vehicles
     const trip = await this.prisma.trip.create({
       data: {
@@ -44,11 +57,12 @@ export class TripsService {
         vehicleId: createTripDto.vehicleId,
         departureTime: new Date(createTripDto.departureTime),
         arrivalTime: new Date(createTripDto.arrivalTime),
-        price: createTripDto.price,
+        price: tripPrice,
         maxPassengers: 7, // Fixed at 7 for all Sienna vehicles
         status: (createTripDto.status as TripStatus) || TripStatus.ACTIVE,
         features: createTripDto.features || [],
         amenities: createTripDto.amenities || [],
+        promotionId: createTripDto.promotionId || null,
       },
       include: {
         route: {
