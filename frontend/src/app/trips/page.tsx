@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { motion } from "framer-motion";
 import { 
@@ -94,15 +94,15 @@ interface SearchFilters {
   sortOrder: "asc" | "desc";
 }
 
-export default function TripsPage() {
+function TripsPageContent() {
   const searchParams = useSearchParams();
   const [trips, setTrips] = useState<Trip[]>([]);
   const [filteredTrips, setFilteredTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchFilters, setSearchFilters] = useState<SearchFilters>({
-    from: searchParams.get('from') || "",
-    to: searchParams.get('to') || "",
-    date: searchParams.get('date') || "",
+    from: "",
+    to: "",
+    date: "",
     time: "",
     priceRange: "",
     features: [],
@@ -110,6 +110,7 @@ export default function TripsPage() {
     sortBy: "departureTime",
     sortOrder: "asc"
   });
+
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
   const [isViewDetailsOpen, setIsViewDetailsOpen] = useState(false);
   const [isSeatSelectionOpen, setIsSeatSelectionOpen] = useState(false);
@@ -117,14 +118,13 @@ export default function TripsPage() {
   const [selectedTripDetails, setSelectedTripDetails] = useState<Trip | null>(null);
   const [showFilters, setShowFilters] = useState(false);
 
+  // Initialize from URL params and fetch trips ONCE on mount
   useEffect(() => {
-    // Check for URL parameters from booking form
-    const urlParams = new URLSearchParams(window.location.search);
-    const from = urlParams.get('from');
-    const to = urlParams.get('to');
-    const date = urlParams.get('date');
-    const passengers = urlParams.get('passengers');
-    const travelClass = urlParams.get('class');
+    const from = searchParams.get('from');
+    const to = searchParams.get('to');
+    const date = searchParams.get('date');
+    const passengers = searchParams.get('passengers');
+    const travelClass = searchParams.get('class');
 
     if (from || to || date) {
       setSearchFilters(prev => ({
@@ -137,11 +137,52 @@ export default function TripsPage() {
     }
 
     fetchTrips();
-  }, []);
+  }, []); // Empty dependency array - run only once
 
+  // Filter trips when data or filters change
   useEffect(() => {
-    filterAndSortTrips();
-  }, [trips, searchFilters]);
+    if (trips.length > 0) {
+      const filtered = trips.filter(trip => {
+        // Filter by from/to
+        if (searchFilters.from && !trip.from.toLowerCase().includes(searchFilters.from.toLowerCase())) {
+          return false;
+        }
+        if (searchFilters.to && !trip.to.toLowerCase().includes(searchFilters.to.toLowerCase())) {
+          return false;
+        }
+        
+        // Filter by date
+        if (searchFilters.date && trip.date !== searchFilters.date) {
+          return false;
+        }
+        
+        return trip.isActive;
+      });
+
+      // Sort trips
+      const sorted = [...filtered].sort((a, b) => {
+        let aValue, bValue;
+        
+        switch (searchFilters.sortBy) {
+          case "price":
+            aValue = a.price;
+            bValue = b.price;
+            break;
+          case "departureTime":
+          default:
+            aValue = a.departureTime;
+            bValue = b.departureTime;
+            break;
+        }
+        
+        return searchFilters.sortOrder === "asc" ? 
+          (aValue > bValue ? 1 : -1) : 
+          (aValue < bValue ? 1 : -1);
+      });
+
+      setFilteredTrips(sorted);
+    }
+  }, [trips.length, searchFilters.from, searchFilters.to, searchFilters.date, searchFilters.sortBy, searchFilters.sortOrder]);
 
   const fetchTrips = async () => {
     try {
@@ -807,5 +848,13 @@ export default function TripsPage() {
         />
       )}
     </div>
+  );
+}
+
+export default function TripsPage() {
+  return (
+    <Suspense fallback={null}>
+      <TripsPageContent />
+    </Suspense>
   );
 }

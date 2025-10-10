@@ -263,7 +263,6 @@ export default function RouteDetailsModal({ route, isOpen, onClose, onBookNow }:
                 ))}
               </div>
             </div>
-            )}
           </div>
 
           {/* Available Trips */}
@@ -319,7 +318,7 @@ export default function RouteDetailsModal({ route, isOpen, onClose, onBookNow }:
                                 {trip.vehicle.year} • {trip.vehicle.color} • {trip.vehicle.plateNumber}
                               </div>
                               <div className="flex flex-wrap gap-1 mt-1">
-                                {trip.vehicle.features.map((feature, index) => (
+                                {trip.vehicle.features?.map((feature, index) => (
                                   <Badge key={index} variant="outline" className="text-xs">
                                     {feature}
                                   </Badge>

@@ -87,8 +87,18 @@ export default function RoutesPage() {
     fetchRoutes();
   }, []);
 
+  // Filter routes whenever routes or searchTerm changes
   useEffect(() => {
-    filterRoutes();
+    if (!searchTerm.trim()) {
+      setFilteredRoutes(routes);
+    } else {
+      const filtered = routes.filter(route =>
+        route.from.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        route.to.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        route.description.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setFilteredRoutes(filtered);
+    }
   }, [routes, searchTerm]);
 
   const fetchRoutes = async () => {
@@ -170,20 +180,6 @@ export default function RoutesPage() {
     } finally {
       setLoading(false);
     }
-  };
-
-  const filterRoutes = () => {
-    if (!searchTerm.trim()) {
-      setFilteredRoutes(routes);
-      return;
-    }
-
-    const filtered = routes.filter(route =>
-      route.from.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      route.to.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      route.description.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    setFilteredRoutes(filtered);
   };
 
   const handleBookNow = (route: Route) => {

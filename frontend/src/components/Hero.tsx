@@ -110,12 +110,16 @@ export default function Hero() {
                   >
                     <Button
                       size="lg"
-                      className="px-8 py-3 text-lg"
-                      onClick={() => {
-                        // Scroll to booking form or open booking modal
+                      className="px-8 py-3 text-lg bg-[#5d4a15] hover:bg-[#6b5618] text-white"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        // Scroll to booking form
                         const bookingForm = document.querySelector('#booking-form');
                         if (bookingForm) {
-                          bookingForm.scrollIntoView({ behavior: 'smooth' });
+                          bookingForm.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        } else {
+                          // Fallback: go to trips page
+                          window.location.href = '/trips';
                         }
                       }}
                     >
@@ -124,9 +128,9 @@ export default function Hero() {
                     <Button
                       variant="outline"
                       size="lg"
-                      className="border-white text-black hover:bg-white hover:text-[#5d4a15] px-8 py-3 text-lg"
-                      onClick={() => {
-                        // Navigate to routes page
+                      className="border-white text-white hover:bg-white hover:text-[#5d4a15] px-8 py-3 text-lg"
+                      onClick={(e) => {
+                        e.preventDefault();
                         window.location.href = '/routes';
                       }}
                     >

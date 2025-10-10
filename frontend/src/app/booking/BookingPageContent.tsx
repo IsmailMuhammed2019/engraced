@@ -138,38 +138,39 @@ export default function BookingPageContent() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Get trip details from URL parameters
-    const tripId = searchParams.get("tripId");
-    const from = searchParams.get("from");
-    const to = searchParams.get("to");
-    const date = searchParams.get("date");
-    const seats = searchParams.get("seats");
+    const loadBookingData = async () => {
+      // Get trip details from URL parameters
+      const tripId = searchParams.get("tripId");
+      const from = searchParams.get("from");
+      const to = searchParams.get("to");
+      const date = searchParams.get("date");
+      const seats = searchParams.get("seats");
 
-    if (tripId) {
-      fetchTripDetails(tripId);
-    }
-
-    // Fetch promotions
-    fetchPromotions();
-
-    // Check for selected promotion from localStorage
-    const storedPromotion = localStorage.getItem('selectedPromotion');
-    if (storedPromotion) {
-      setSelectedPromotion(JSON.parse(storedPromotion));
-      setPromotionCode(JSON.parse(storedPromotion).code);
-      localStorage.removeItem('selectedPromotion');
-    }
-
-    if (seats) {
-      // Parse selected seats from URL
-      const seatIds = seats.split(',');
-      // Fetch actual seat details from the trip
       if (tripId) {
-        fetchSeatDetails(tripId, seatIds);
+        await fetchTripDetails(tripId);
+        
+        if (seats) {
+          // Parse selected seats from URL
+          const seatIds = seats.split(',');
+          await fetchSeatDetails(tripId, seatIds);
+        }
       }
-    }
 
-    setLoading(false);
+      // Fetch promotions
+      await fetchPromotions();
+
+      // Check for selected promotion from localStorage
+      const storedPromotion = localStorage.getItem('selectedPromotion');
+      if (storedPromotion) {
+        setSelectedPromotion(JSON.parse(storedPromotion));
+        setPromotionCode(JSON.parse(storedPromotion).code);
+        localStorage.removeItem('selectedPromotion');
+      }
+
+      setLoading(false);
+    };
+
+    loadBookingData();
   }, [searchParams]);
 
   const fetchTripDetails = async (tripId: string) => {
@@ -265,6 +266,8 @@ export default function BookingPageContent() {
     }));
     setSelectedSeats(selectedSeats);
     setIsSeatSelectionOpen(false);
+    // Automatically move to passenger info step after seat selection
+    setCurrentStep(2);
   };
 
   const handlePassengerInfoChange = (field: string, value: string) => {
@@ -327,7 +330,14 @@ export default function BookingPageContent() {
 
   const handleBooking = async () => {
     if (!tripDetails || selectedSeats.length === 0) {
-      alert('Please select seats and fill in passenger information');
+      alert('Please select seats before proceeding');
+      return;
+    }
+
+    // Validate passenger information
+    if (!passengerInfo.firstName || !passengerInfo.lastName || !passengerInfo.email || !passengerInfo.phone) {
+      alert('Please fill in all passenger information fields');
+      setCurrentStep(2); // Go back to passenger info step
       return;
     }
 
@@ -335,10 +345,18 @@ export default function BookingPageContent() {
       // Calculate total amount
       const totalAmount = calculateTotalAmount();
       
+      if (totalAmount <= 0) {
+        alert('Invalid booking amount. Please try again.');
+        return;
+      }
+      
       // Generate unique reference
       const reference = `BOOK_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       
       // Initialize payment with Paystack
+      console.log('Initializing payment with amount:', totalAmount);
+      console.log('Passenger info:', passengerInfo);
+      
       const response = await fetch('/api/payments/initialize', {
         method: 'POST',
         headers: {
@@ -368,12 +386,14 @@ export default function BookingPageContent() {
       });
 
       const data = await response.json();
+      console.log('Payment initialization response:', data);
 
-      if (data.success) {
+      if (response.ok && data.success) {
         // Redirect to Paystack payment page
         window.location.href = data.data.authorization_url;
       } else {
-        alert('Failed to initialize payment. Please try again.');
+        console.error('Payment initialization failed:', data);
+        alert(`Failed to initialize payment: ${data.error || data.message || 'Please try again.'}`);
       }
     } catch (error) {
       console.error('Payment initialization error:', error);
@@ -506,6 +526,7 @@ export default function BookingPageContent() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
+                  {selectedSeats.length === 0 ? (
                   <div className="text-center py-8">
                     <Bus className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                     <h3 className="text-lg font-semibold mb-2">Seat Selection</h3>
@@ -518,6 +539,33 @@ export default function BookingPageContent() {
                       Select Seats
                     </Button>
                   </div>
+                  ) : (
+                    <div className="space-y-4">
+                      <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <div className="flex items-center gap-2 mb-3">
+                          <CheckCircle className="h-5 w-5 text-green-600" />
+                          <span className="font-medium text-green-800">
+                            {selectedSeats.length} Seat{selectedSeats.length > 1 ? 's' : ''} Selected
+                          </span>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          {selectedSeats.map(seat => (
+                            <Badge key={seat.id} className="bg-[#5d4a15] text-white px-3 py-1">
+                              Seat {seat.number}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                      <Button 
+                        onClick={() => setIsSeatSelectionOpen(true)}
+                        variant="outline"
+                        className="w-full"
+                      >
+                        <Users className="h-4 w-4 mr-2" />
+                        Change Seats
+                      </Button>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             )}
@@ -782,22 +830,89 @@ export default function BookingPageContent() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <div className="flex justify-between">
-                    <span>Base Price</span>
+                  {/* Trip Route */}
+                  <div className="pb-3 border-b">
+                    <div className="flex items-center gap-2 mb-2">
+                      <MapPin className="h-4 w-4 text-[#5d4a15]" />
+                      <span className="font-medium">{tripDetails.from} → {tripDetails.to}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-gray-600">
+                      <Calendar className="h-3 w-3" />
+                      <span>{tripDetails.date}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
+                      <Clock className="h-3 w-3" />
+                      <span>{tripDetails.departureTime} - {tripDetails.arrivalTime}</span>
+                    </div>
+                  </div>
+
+                  {/* Selected Seats */}
+                  {selectedSeats.length > 0 && (
+                    <div className="pb-3 border-b">
+                      <div className="flex items-center gap-2 mb-2">
+                        <Users className="h-4 w-4 text-[#5d4a15]" />
+                        <span className="font-medium">Selected Seats</span>
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {selectedSeats.map(seat => (
+                          <span key={seat.id} className="text-xs bg-[#5d4a15]/10 text-[#5d4a15] px-2 py-1 rounded">
+                            {seat.number}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Price Breakdown */}
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span>Price per seat</span>
                     <span>₦{tripDetails.price.toLocaleString()}</span>
                   </div>
                   {selectedSeats.length > 0 && (
-                    <div className="flex justify-between">
-                      <span>Selected Seats ({selectedSeats.length})</span>
-                      <span>₦{(selectedSeats.reduce((sum, seat) => sum + seat.price, 0)).toLocaleString()}</span>
+                      <div className="flex justify-between text-sm">
+                        <span>Number of seats</span>
+                        <span>× {selectedSeats.length}</span>
                     </div>
                   )}
-                  <div className="border-t pt-4">
-                    <div className="flex justify-between font-semibold text-lg">
-                      <span>Total</span>
-                      <span>₦{(tripDetails.price + selectedSeats.reduce((sum, seat) => sum + seat.price, 0)).toLocaleString()}</span>
+                    <div className="flex justify-between font-medium">
+                      <span>Subtotal</span>
+                      <span>₦{(tripDetails.price * Math.max(1, selectedSeats.length)).toLocaleString()}</span>
+                    </div>
+                    
+                    {/* Promotion Discount */}
+                    {selectedPromotion && selectedSeats.length > 0 && (
+                      <div className="flex justify-between text-green-600 text-sm">
+                        <span>Discount ({selectedPromotion.code})</span>
+                        <span>-₦{getDiscountAmount().toLocaleString()}</span>
+                  </div>
+                    )}
+                  </div>
+
+                  {/* Total */}
+                  <div className="border-t pt-3">
+                    <div className="flex justify-between font-bold text-lg">
+                      <span>Total Amount</span>
+                      <span className="text-[#5d4a15]">
+                        ₦{selectedSeats.length > 0 ? calculateTotalAmount().toLocaleString() : tripDetails.price.toLocaleString()}
+                      </span>
                     </div>
                   </div>
+
+                  {/* Passenger Info */}
+                  {currentStep >= 2 && passengerInfo.firstName && (
+                    <div className="pt-3 border-t">
+                      <div className="flex items-center gap-2 mb-2">
+                        <User className="h-4 w-4 text-[#5d4a15]" />
+                        <span className="font-medium">Passenger</span>
+                      </div>
+                      <div className="text-sm text-gray-600 space-y-1">
+                        <p>{passengerInfo.firstName} {passengerInfo.lastName}</p>
+                        <p>{passengerInfo.email}</p>
+                        <p>{passengerInfo.phone}</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -815,14 +930,62 @@ export default function BookingPageContent() {
             Previous
           </Button>
           
+          {currentStep === 1 && (
           <Button
-            onClick={() => setCurrentStep(Math.min(3, currentStep + 1))}
-            disabled={currentStep === 3}
+              onClick={() => {
+                if (selectedSeats.length === 0) {
+                  alert('Please select at least one seat before continuing');
+                  return;
+                }
+                setCurrentStep(2);
+              }}
             className="bg-[#5d4a15] hover:bg-[#6b5618]"
           >
-            Next
+              Continue to Passenger Info
             <ArrowLeft className="h-4 w-4 ml-2 rotate-180" />
           </Button>
+          )}
+          
+          {currentStep === 2 && (
+            <Button
+              onClick={() => {
+                // Validate passenger information
+                if (!passengerInfo.firstName.trim()) {
+                  alert('Please enter your first name');
+                  return;
+                }
+                if (!passengerInfo.lastName.trim()) {
+                  alert('Please enter your last name');
+                  return;
+                }
+                if (!passengerInfo.email.trim()) {
+                  alert('Please enter your email address');
+                  return;
+                }
+                // Basic email validation
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(passengerInfo.email)) {
+                  alert('Please enter a valid email address');
+                  return;
+                }
+                if (!passengerInfo.phone.trim()) {
+                  alert('Please enter your phone number');
+                  return;
+                }
+                // Phone validation (Nigerian numbers)
+                const phoneRegex = /^(\+?234|0)[789]\d{9}$/;
+                if (!phoneRegex.test(passengerInfo.phone.replace(/\s/g, ''))) {
+                  alert('Please enter a valid Nigerian phone number (e.g., 08012345678 or +2348012345678)');
+                  return;
+                }
+                setCurrentStep(3);
+              }}
+              className="bg-[#5d4a15] hover:bg-[#6b5618]"
+            >
+              Continue to Payment
+              <ArrowLeft className="h-4 w-4 ml-2 rotate-180" />
+            </Button>
+          )}
         </div>
       </div>
 

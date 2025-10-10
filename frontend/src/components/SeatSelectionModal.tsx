@@ -95,27 +95,37 @@ export default function SeatSelectionModal({
       if (response.ok) {
         const data = await response.json();
         
+        // Backend returns {trip, totalSeats, bookedSeats, availableSeats, availableCount}
+        const seatsArray = data.availableSeats || data;
+        const bookedSeatsArray = data.bookedSeats || [];
+        
         // Transform backend seat format to frontend format
-        if (Array.isArray(data)) {
-          const formattedSeats: Seat[] = data.map((seat: any, index: number) => {
-            const row = Math.floor(index / 2) + 1; // 2 seats per row
-            const col = (index % 2) + 1;
+        if (Array.isArray(seatsArray)) {
+          // Generate all seats (7 total for Sienna)
+          const totalSeatsCount = data.totalSeats || 7;
+          const allSeats = [];
+          
+          for (let i = 0; i < totalSeatsCount; i++) {
+            const row = Math.floor(i / 2) + 1;
+            const col = (i % 2) + 1;
+            const seatNumber = `${String.fromCharCode(64 + row)}${col}`; // A1, A2, B1, B2, etc.
             
-            return {
-              id: seat.id,
-              number: seat.seatNumber,
+            allSeats.push({
+              id: `seat-${i}`,
+              number: seatNumber,
               type: (col === 1 ? "window" : "aisle") as "window" | "aisle" | "middle",
               row: row,
               column: col,
-              isAvailable: !seat.isBooked,
+              isAvailable: !bookedSeatsArray.includes(seatNumber),
               isSelected: false,
-              price: realPrice, // Real price from trip
+              price: realPrice,
               features: col === 1 ? ["Window View"] : ["Aisle Seat"]
-            };
-          });
-          setSeats(formattedSeats);
+            });
+          }
+          
+          setSeats(allSeats);
         } else {
-          console.error('Seats data is not an array:', data);
+          console.error('Seats data is not in expected format:', data);
           setSeats(generateMockSeats());
         }
       } else {

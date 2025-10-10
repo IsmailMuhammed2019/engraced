@@ -516,6 +516,7 @@ export default function RoutesPage() {
               distance: '',
               duration: '',
               price: '',
+              description: '',
               status: 'active'
             });
             setShowAddRouteModal(true);
@@ -616,6 +617,7 @@ export default function RoutesPage() {
               distance: '',
               duration: '',
               price: '',
+              description: '',
               status: 'active'
             });
           }}
