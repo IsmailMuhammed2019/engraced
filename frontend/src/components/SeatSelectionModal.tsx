@@ -79,7 +79,7 @@ export default function SeatSelectionModal({
       setLoading(true);
       setError(null);
       
-      // First, fetch trip details to get the real price
+      // First, fetch trip details to get the real price and check availability
       const tripResponse = await fetch(`https://engracedsmile.com/api/v1/trips/${tripId}`);
       let realPrice = 0;
       
@@ -87,6 +87,14 @@ export default function SeatSelectionModal({
         const tripData = await tripResponse.json();
         realPrice = parseFloat(tripData.price) || 0;
         setTripPrice(realPrice);
+        
+        // Check if trip has any available seats
+        const availableSeatsCount = tripData.seats?.filter((s: any) => !s.isBooked).length || 0;
+        if (availableSeatsCount === 0) {
+          setError('This trip is fully booked. Please select another trip or date.');
+          setLoading(false);
+          return;
+        }
       }
       
       // Fetch seat availability from backend

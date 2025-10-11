@@ -66,8 +66,8 @@ export default function BookingForm() {
       searchParams.append('returnDate', formData.returnDate);
     }
 
-    // Redirect to trips page with search parameters
-    window.location.href = `/trips?${searchParams.toString()}`;
+    // Redirect to routes page with search parameters
+    window.location.href = `/routes?${searchParams.toString()}`;
   };
 
   const swapLocations = () => {

@@ -380,6 +380,71 @@ export class PaymentsService {
     }
   }
 
+  async recordPayment(data: {
+    bookingId: string;
+    amount: number;
+    paystackRef: string;
+    paymentStatus: 'PAID' | 'PENDING' | 'FAILED';
+    paymentDate?: string;
+    customerName?: string;
+    customerEmail?: string;
+    customerPhone?: string;
+  }) {
+    try {
+      // Check if payment already exists
+      const existingPayment = await this.prisma.payment.findUnique({
+        where: { paystackRef: data.paystackRef },
+      });
+
+      if (existingPayment) {
+        console.log('Payment record already exists:', data.paystackRef);
+        return existingPayment;
+      }
+
+      // Create payment record
+      const payment = await this.prisma.payment.create({
+        data: {
+          bookingId: data.bookingId,
+          amount: data.amount,
+          paystackRef: data.paystackRef,
+          paymentStatus: data.paymentStatus,
+          paymentDate: data.paymentDate ? new Date(data.paymentDate) : new Date(),
+          paymentMethod: 'card',
+        },
+        include: {
+          booking: {
+            include: {
+              user: true,
+              route: true,
+              trip: true,
+            },
+          },
+        },
+      });
+
+      // Create notification for user if they have userId
+      if (payment.booking.userId && data.paymentStatus === 'PAID') {
+        await this.prisma.notification.create({
+          data: {
+            userId: payment.booking.userId,
+            type: 'PAYMENT_SUCCESS',
+            title: 'Payment Successful',
+            message: `Your payment for booking ${payment.booking.bookingNumber} has been confirmed.`,
+            data: {
+              bookingId: payment.booking.id,
+              amount: payment.amount,
+            },
+          },
+        });
+      }
+
+      return payment;
+    } catch (error) {
+      console.error('Error recording payment:', error);
+      throw new Error('Failed to record payment');
+    }
+  }
+
   async handleWebhook(body: any) {
     try {
       const { event, data } = body;

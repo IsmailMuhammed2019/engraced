@@ -52,6 +52,10 @@ interface RouteDetails {
     time: string;
     type: string;
     available: boolean;
+    tripId?: string;
+    availableSeats?: number;
+    vehicle?: string;
+    driver?: string;
   }>;
   isActive: boolean;
   createdAt: string;
@@ -256,11 +260,24 @@ export default function ViewDetailsModal({ isOpen, onClose, type, data }: ViewDe
                   {/* Quick Actions */}
                   <div className="space-y-2">
                     <Button 
-                      className="w-full bg-[#5d4a15] hover:bg-[#6b5618]"
+                      className={`w-full ${
+                        (type === "trip" && (data as TripDetails).availableSeats === 0) ||
+                        (type === "route" && (data as RouteDetails).departures.filter(d => d.available && (d.availableSeats === undefined || d.availableSeats > 0)).length === 0)
+                          ? 'bg-gray-300 text-gray-500 cursor-not-allowed hover:bg-gray-300'
+                          : 'bg-[#5d4a15] hover:bg-[#6b5618] text-white'
+                      }`}
                       onClick={handleBookNow}
+                      disabled={
+                        (type === "trip" && (data as TripDetails).availableSeats === 0) ||
+                        (type === "route" && (data as RouteDetails).departures.filter(d => d.available && (d.availableSeats === undefined || d.availableSeats > 0)).length === 0)
+                      }
                     >
                       <BookOpen className="h-4 w-4 mr-2" />
-                      Book Now
+                      {(type === "trip" && (data as TripDetails).availableSeats === 0) ||
+                       (type === "route" && (data as RouteDetails).departures.filter(d => d.available && (d.availableSeats === undefined || d.availableSeats > 0)).length === 0)
+                        ? 'Fully Booked'
+                        : 'Book Now'
+                      }
                     </Button>
                     <div className="grid grid-cols-2 gap-2">
                       <Button variant="outline" onClick={handleShare}>
@@ -424,64 +441,270 @@ export default function ViewDetailsModal({ isOpen, onClose, type, data }: ViewDe
                 )}
 
                 {activeTab === "features" && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Features & Amenities</CardTitle>
-                      <CardDescription>What&apos;s included in your journey</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {data.features.map((feature, index) => (
-                          <div key={index} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                            <div className="text-[#5d4a15]">
-                              {getAmenityIcon(feature)}
+                  <div className="space-y-6">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <Shield className="h-5 w-5" />
+                          Features & Amenities
+                        </CardTitle>
+                        <CardDescription>Everything you need for a comfortable journey</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {data.features && data.features.length > 0 ? (
+                            data.features.map((feature, index) => (
+                              <div key={index} className="flex items-center space-x-3 p-4 bg-gradient-to-r from-gray-50 to-white border border-gray-200 rounded-lg hover:border-[#5d4a15] transition-all">
+                                <div className="w-10 h-10 bg-[#5d4a15]/10 rounded-lg flex items-center justify-center text-[#5d4a15]">
+                                  {getAmenityIcon(feature)}
+                                </div>
+                                <span className="font-medium text-gray-900">{feature}</span>
+                              </div>
+                            ))
+                          ) : (
+                            <div className="col-span-2 text-center py-8 text-gray-500">
+                              <Shield className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                              <p>Standard features included</p>
                             </div>
-                            <span className="font-medium">{feature}</span>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Additional Vehicle Features (for trips) */}
+                    {type === "trip" && (data as TripDetails).vehicle.features && (
+                      <Card>
+                        <CardHeader>
+                          <CardTitle className="flex items-center gap-2">
+                            <Bus className="h-5 w-5" />
+                            Vehicle Features
+                          </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                            {(data as TripDetails).vehicle.features.map((feature, index) => (
+                              <div key={index} className="flex items-center gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                <CheckCircle className="h-4 w-4 text-blue-600" />
+                                <span className="text-sm font-medium text-gray-900">{feature}</span>
+                              </div>
+                            ))}
                           </div>
-                        ))}
-                      </div>
-                    </CardContent>
-                  </Card>
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    {/* Why Choose This Route */}
+                    <Card className="bg-gradient-to-r from-green-50 to-blue-50 border-2 border-green-200">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <Award className="h-5 w-5 text-green-600" />
+                          Why Choose This Route
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div className="flex items-start gap-3">
+                            <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                              <CheckCircle className="h-5 w-5 text-green-600" />
+                            </div>
+                            <div>
+                              <div className="font-semibold text-gray-900">Professional Drivers</div>
+                              <div className="text-sm text-gray-600">Experienced and certified drivers</div>
+                            </div>
+                          </div>
+                          <div className="flex items-start gap-3">
+                            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                              <Shield className="h-5 w-5 text-blue-600" />
+                            </div>
+                            <div>
+                              <div className="font-semibold text-gray-900">Safety First</div>
+                              <div className="text-sm text-gray-600">Regular vehicle maintenance and safety checks</div>
+                            </div>
+                          </div>
+                          <div className="flex items-start gap-3">
+                            <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
+                              <Timer className="h-5 w-5 text-purple-600" />
+                            </div>
+                            <div>
+                              <div className="font-semibold text-gray-900">On-Time Guarantee</div>
+                              <div className="text-sm text-gray-600">98% on-time departure rate</div>
+                            </div>
+                          </div>
+                          <div className="flex items-start gap-3">
+                            <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
+                              <Heart className="h-5 w-5 text-orange-600" />
+                            </div>
+                            <div>
+                              <div className="font-semibold text-gray-900">Customer Satisfaction</div>
+                              <div className="text-sm text-gray-600">{data.rating}/5.0 average rating</div>
+                            </div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </div>
                 )}
 
                 {activeTab === "schedule" && (
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Schedule & Departures</CardTitle>
-                      <CardDescription>Available departure times</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
-                        {type === "route" 
-                          ? (data as RouteDetails).departures.map((departure, index) => (
-                              <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
-                                <div className="flex items-center space-x-3">
-                                  <Clock className="h-4 w-4 text-gray-500" />
-                                  <span className="font-medium">{departure.time}</span>
-                                  <Badge variant="outline">{departure.type}</Badge>
-                                </div>
-                                <Badge className={departure.available ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800"}>
-                                  {departure.available ? "Available" : "Full"}
-                                </Badge>
-                              </div>
-                            ))
-                          : (
-                              <div className="p-4 bg-gray-50 rounded-lg">
-                                <div className="flex items-center justify-between">
-                                  <div>
-                                    <p className="font-medium">{(data as TripDetails).departureTime} - {(data as TripDetails).arrivalTime}</p>
-                                    <p className="text-sm text-gray-600">{(data as TripDetails).date}</p>
+                  <div className="space-y-6">
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <Calendar className="h-5 w-5" />
+                          Schedule & Departures
+                        </CardTitle>
+                        <CardDescription>
+                          {type === "route" 
+                            ? `${(data as RouteDetails).departures.length} available departure times` 
+                            : "Trip schedule and timing"}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-3">
+                          {type === "route" 
+                            ? (data as RouteDetails).departures.length > 0 
+                              ? (data as RouteDetails).departures.map((departure, index) => (
+                                  <div key={index} className="bg-gradient-to-r from-white to-gray-50 border-2 border-gray-200 rounded-xl p-4 hover:border-[#5d4a15] transition-all">
+                                    <div className="flex items-center justify-between mb-3">
+                                      <div className="flex items-center space-x-3">
+                                        <div className="w-12 h-12 bg-[#5d4a15]/10 rounded-lg flex items-center justify-center">
+                                          <Clock className="h-6 w-6 text-[#5d4a15]" />
+                                        </div>
+                                        <div>
+                                          <div className="font-bold text-lg text-gray-900">{departure.time}</div>
+                                          <div className="text-sm text-gray-600">{departure.type} Service</div>
+                                        </div>
+                                      </div>
+                                      <div className="text-right">
+                                        <Badge className={departure.available ? "bg-green-100 text-green-800 border-green-300" : "bg-red-100 text-red-800 border-red-300"}>
+                                          {departure.available ? (
+                                            <><CheckCircle className="h-3 w-3 mr-1 inline" />Available</>
+                                          ) : (
+                                            <><AlertCircle className="h-3 w-3 mr-1 inline" />Fully Booked</>
+                                          )}
+                                        </Badge>
+                                      </div>
+                                    </div>
+                                    
+                                    {departure.availableSeats !== undefined && (
+                                      <div className="flex items-center justify-between pt-3 border-t border-gray-200">
+                                        <div className="flex items-center gap-4 text-sm">
+                                          <div className="flex items-center gap-1">
+                                            <Users className="h-4 w-4 text-gray-500" />
+                                            <span className="text-gray-700">
+                                              <span className="font-semibold text-green-600">{departure.availableSeats}</span> seats available
+                                            </span>
+                                          </div>
+                                          {departure.vehicle && (
+                                            <div className="flex items-center gap-1">
+                                              <Bus className="h-4 w-4 text-gray-500" />
+                                              <span className="text-gray-700">{departure.vehicle}</span>
+                                            </div>
+                                          )}
+                                        </div>
+                                        {departure.tripId && (
+                                          <Button
+                                            size="sm"
+                                            className={
+                                              departure.available && (departure.availableSeats === undefined || departure.availableSeats > 0)
+                                                ? 'bg-[#5d4a15] hover:bg-[#6b5618] text-white'
+                                                : 'bg-gray-300 text-gray-500 cursor-not-allowed hover:bg-gray-300'
+                                            }
+                                            onClick={() => {
+                                              if (departure.available && (departure.availableSeats === undefined || departure.availableSeats > 0)) {
+                                                window.location.href = `/booking?tripId=${departure.tripId}`;
+                                              }
+                                            }}
+                                            disabled={!departure.available || departure.availableSeats === 0}
+                                          >
+                                            {departure.availableSeats === 0 ? 'Full' : 'Book Now'}
+                                          </Button>
+                                        )}
+                                      </div>
+                                    )}
                                   </div>
-                                  <Badge className="bg-green-100 text-green-800">
-                                    Available
-                                  </Badge>
+                                ))
+                              : (
+                                <div className="text-center py-8 text-gray-500">
+                                  <Calendar className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                                  <p>No scheduled trips available for this route</p>
+                                  <Button 
+                                    variant="outline" 
+                                    className="mt-4"
+                                    onClick={() => window.location.href = '/contact'}
+                                  >
+                                    Contact us to schedule
+                                  </Button>
                                 </div>
-                              </div>
-                            )
+                              )
+                            : (
+                                <div className="bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-200 rounded-xl p-6">
+                                  <div className="grid grid-cols-2 gap-4 mb-4">
+                                    <div className="text-center p-4 bg-white rounded-lg">
+                                      <Calendar className="h-6 w-6 mx-auto mb-2 text-[#5d4a15]" />
+                                      <div className="text-sm text-gray-600">Date</div>
+                                      <div className="font-semibold">{(data as TripDetails).date}</div>
+                                    </div>
+                                    <div className="text-center p-4 bg-white rounded-lg">
+                                      <Clock className="h-6 w-6 mx-auto mb-2 text-[#5d4a15]" />
+                                      <div className="text-sm text-gray-600">Duration</div>
+                                      <div className="font-semibold">{(data as TripDetails).duration}</div>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center justify-between p-4 bg-white rounded-lg">
+                                    <div>
+                                      <div className="text-sm text-gray-600">Departure</div>
+                                      <div className="font-bold text-lg">{(data as TripDetails).departureTime}</div>
+                                    </div>
+                                    <ArrowRight className="h-6 w-6 text-gray-400" />
+                                    <div className="text-right">
+                                      <div className="text-sm text-gray-600">Arrival</div>
+                                      <div className="font-bold text-lg">{(data as TripDetails).arrivalTime}</div>
+                                    </div>
+                                  </div>
+                                  <div className="mt-4 p-4 bg-white rounded-lg">
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-gray-700">Available Seats:</span>
+                                      <Badge className="bg-green-100 text-green-800 text-lg px-4 py-2">
+                                        {(data as TripDetails).availableSeats}/{(data as TripDetails).totalSeats}
+                                      </Badge>
+                                    </div>
+                                  </div>
+                                </div>
+                              )
                         }
                       </div>
                     </CardContent>
                   </Card>
+
+                  {/* Route Statistics (for routes) */}
+                  {type === "route" && (
+                    <Card>
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <Award className="h-5 w-5" />
+                          Route Statistics
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="grid grid-cols-3 gap-4">
+                          <div className="text-center p-4 bg-gray-50 rounded-lg">
+                            <div className="text-2xl font-bold text-[#5d4a15]">{(data as RouteDetails).departures.length}</div>
+                            <div className="text-sm text-gray-600">Daily Trips</div>
+                          </div>
+                          <div className="text-center p-4 bg-gray-50 rounded-lg">
+                            <div className="text-2xl font-bold text-yellow-500">{(data as RouteDetails).rating}</div>
+                            <div className="text-sm text-gray-600">Rating</div>
+                          </div>
+                          <div className="text-center p-4 bg-gray-50 rounded-lg">
+                            <div className="text-2xl font-bold text-blue-500">{(data as RouteDetails).reviews}</div>
+                            <div className="text-sm text-gray-600">Bookings</div>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
+                </div>
                 )}
 
                 {activeTab === "reviews" && (

@@ -45,6 +45,8 @@ interface BookingData {
   passengerName: string;
   email: string;
   phone: string;
+  seats: string[];
+  passengerCount: number;
 }
 
 export default function BookingSuccessContent() {
@@ -111,7 +113,9 @@ export default function BookingSuccessContent() {
               amount: `₦${(data.data.amount / 100).toLocaleString()}`, // Convert from kobo
               passengerName: metadata.passengerName || '',
               email: data.data.customer.email || '',
-              phone: metadata.phone || ''
+              phone: metadata.phone || '',
+              seats: metadata.seats || [],
+              passengerCount: metadata.seats?.length || 1
             });
           } else {
             // Payment verification failed, redirect to failure page
@@ -139,7 +143,9 @@ export default function BookingSuccessContent() {
             amount: parsed.amount || '₦0',
             passengerName: parsed.passengerName || '',
             email: parsed.email || '',
-            phone: parsed.phone || ''
+            phone: parsed.phone || '',
+            seats: parsed.seats || [],
+            passengerCount: parsed.passengerCount || 1
           });
         } else {
           // Default fallback data
@@ -153,7 +159,9 @@ export default function BookingSuccessContent() {
             amount: '₦0',
             passengerName: '',
             email: '',
-            phone: ''
+            phone: '',
+            seats: [],
+            passengerCount: 1
           });
         }
       }
@@ -268,21 +276,81 @@ export default function BookingSuccessContent() {
 
   return (
     <>
+      {/* Print Styles */}
+      <style jsx global>{`
+        @media print {
+          body * {
+            visibility: hidden;
+          }
+          .print-area, .print-area * {
+            visibility: visible;
+          }
+          .print-area {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+          }
+          .no-print {
+            display: none !important;
+          }
+          .print-header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding: 20px;
+            border-bottom: 2px solid #5d4a15;
+          }
+          .print-header h1 {
+            color: #5d4a15;
+            font-size: 24px;
+            font-weight: bold;
+          }
+          .print-details {
+            margin: 20px 0;
+            padding: 10px;
+          }
+          .print-details-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+          }
+          .print-detail-item {
+            padding: 10px;
+            border: 1px solid #e5e7eb;
+          }
+          .print-detail-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+          }
+          .print-detail-value {
+            font-size: 14px;
+            font-weight: 600;
+            color: #000;
+          }
+        }
+      `}</style>
       <div className="min-h-screen bg-gradient-to-br from-green-50 via-white to-[#5d4a15]/5 flex items-center justify-center p-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: showSuccessAnimation ? 1 : 0, scale: showSuccessAnimation ? 1 : 0.9 }}
           transition={{ duration: 0.5, ease: "easeOut" }}
-          className="w-full max-w-2xl"
+          className="w-full max-w-2xl print-area"
         >
           <Card className="border-2 border-green-200 shadow-2xl">
             <CardHeader className="text-center pb-2">
+              {/* Print Header */}
+              <div className="print-header hidden print:block">
+                <h1>Engracedsmile Travel & Logistics</h1>
+                <p>Booking Confirmation Receipt</p>
+              </div>
+              
               {/* Success Animation */}
               <motion.div
                 initial={{ scale: 0 }}
                 animate={{ scale: showSuccessAnimation ? 1 : 0 }}
                 transition={{ delay: 0.2, type: "spring", stiffness: 200, damping: 15 }}
-                className="mx-auto w-20 h-20 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center mb-4 shadow-lg"
+                className="mx-auto w-20 h-20 bg-gradient-to-br from-green-400 to-green-600 rounded-full flex items-center justify-center mb-4 shadow-lg no-print"
               >
                 <CheckCircle className="h-12 w-12 text-white" strokeWidth={2.5} />
               </motion.div>
@@ -357,6 +425,26 @@ export default function BookingSuccessContent() {
                   </div>
                   
                   <div className="flex items-start gap-3">
+                    <Star className="h-5 w-5 text-[#5d4a15] mt-0.5" />
+                    <div>
+                      <p className="text-xs text-gray-500">Seat Number{bookingData && bookingData.seats.length > 1 ? 's' : ''}</p>
+                      <p className="font-semibold text-gray-900">
+                        {bookingData && bookingData.seats.length > 0 
+                          ? bookingData.seats.join(', ') 
+                          : 'N/A'}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start gap-3">
+                    <User className="h-5 w-5 text-[#5d4a15] mt-0.5" />
+                    <div>
+                      <p className="text-xs text-gray-500">Passengers</p>
+                      <p className="font-semibold text-gray-900">{bookingData?.passengerCount || 1} {bookingData && bookingData.passengerCount > 1 ? 'Passengers' : 'Passenger'}</p>
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-start gap-3">
                     <CreditCard className="h-5 w-5 text-green-600 mt-0.5" />
                     <div>
                       <p className="text-xs text-gray-500">Amount Paid</p>
@@ -371,7 +459,7 @@ export default function BookingSuccessContent() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: showSuccessAnimation ? 1 : 0, y: showSuccessAnimation ? 0 : 20 }}
                 transition={{ delay: 0.6 }}
-                className="bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-200 rounded-xl p-6"
+                className="bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-blue-200 rounded-xl p-6 no-print"
               >
                 <div className="flex items-start gap-4">
                   <div className="p-3 bg-blue-100 rounded-lg">
@@ -432,7 +520,7 @@ export default function BookingSuccessContent() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: showSuccessAnimation ? 1 : 0, y: showSuccessAnimation ? 0 : 20 }}
                 transition={{ delay: 0.7 }}
-                className="grid grid-cols-1 sm:grid-cols-3 gap-3"
+                className="grid grid-cols-1 sm:grid-cols-3 gap-3 no-print"
               >
                 <Button 
                   onClick={() => router.push('/')}
@@ -467,7 +555,7 @@ export default function BookingSuccessContent() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: showSuccessAnimation ? 1 : 0 }}
                 transition={{ delay: 0.8 }}
-                className="text-center pt-4 border-t"
+                className="text-center pt-4 border-t no-print"
               >
                 <p className="text-sm text-gray-600 mb-1">Need help with your booking?</p>
                 <div className="flex items-center justify-center gap-4 text-sm">

@@ -109,12 +109,16 @@ export default function AvailabilityStatus({
   return (
     <div className={`space-y-2 ${className}`}>
       <div className="flex items-center gap-2">
-        <Badge className={`${status.bgColor} ${status.color} border-0`}>
+        <Badge className={`${status.bgColor} ${status.color} border-0 font-semibold`}>
           {getStatusIcon()}
           <span className="ml-1">{status.label}</span>
         </Badge>
-        <span className="text-sm text-gray-600">
-          {availableSeats} of {totalSeats} seats
+        <span className={`text-sm font-semibold ${
+          availableSeats === 0 ? 'text-red-600' : 
+          availableSeats <= 2 ? 'text-orange-600' : 
+          'text-gray-900'
+        }`}>
+          {availableSeats} available / {totalSeats} total
         </span>
       </div>
       

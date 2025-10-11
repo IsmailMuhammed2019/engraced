@@ -113,8 +113,38 @@ export default function BookingsPage() {
       });
       
       if (response.ok) {
-        const data = await response.json();
-        setBookings(data);
+        const rawData = await response.json();
+        console.log('Raw bookings data:', rawData);
+        
+        // Transform backend data to match the expected format
+        const transformedData = rawData.map((booking: any) => {
+          // Extract passenger info from contactInfo or user
+          const contactInfo = booking.contactInfo || {};
+          const user = booking.user || {};
+          const passengerDetails = Array.isArray(booking.passengerDetails) ? booking.passengerDetails[0] : booking.passengerDetails || {};
+          
+          return {
+            id: booking.id,
+            bookingNumber: booking.bookingNumber,
+            route: `${booking.trip?.route?.from || 'Unknown'} → ${booking.trip?.route?.to || 'Unknown'}`,
+            passenger: {
+              name: contactInfo.name || passengerDetails.name || `${user.firstName || 'Guest'} ${user.lastName || 'Customer'}`,
+              email: contactInfo.email || passengerDetails.email || user.email || 'N/A',
+              phone: contactInfo.phone || passengerDetails.phone || user.phone || 'N/A'
+            },
+            date: booking.trip?.departureTime ? new Date(booking.trip.departureTime).toLocaleDateString() : 'N/A',
+            time: booking.trip?.departureTime ? new Date(booking.trip.departureTime).toLocaleTimeString() : 'N/A',
+            status: booking.status.toLowerCase(),
+            paymentStatus: booking.paymentStatus.toLowerCase(),
+            amount: `₦${Number(booking.totalAmount).toLocaleString()}`,
+            passengers: booking.passengerCount,
+            seats: booking.seatNumbers || [],
+            createdAt: booking.createdAt
+          };
+        });
+        
+        console.log('Transformed bookings:', transformedData);
+        setBookings(transformedData);
       } else {
         console.error('Failed to fetch bookings');
         setBookings([]);

@@ -1,4 +1,4 @@
-import { IsString, IsNumber, IsArray, IsOptional, IsObject } from 'class-validator';
+import { IsString, IsNumber, IsArray, IsOptional, IsObject, IsEnum } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateBookingDto {
@@ -25,15 +25,15 @@ export class CreateBookingDto {
   passengerCount: number;
 
   @ApiProperty({ 
-    example: { phone: '+2348071116229', email: 'user@example.com' }
+    example: { phone: '+2348071116229', email: 'user@example.com', name: 'John Doe' }
   })
   @IsObject()
   contactInfo: object;
 
   @ApiProperty({ 
     example: [
-      { name: 'John Doe', age: 35 },
-      { name: 'Jane Doe', age: 32 }
+      { name: 'John Doe', email: 'john@example.com', phone: '+2348071116229' },
+      { name: 'Jane Doe', email: 'jane@example.com', phone: '+2348071116229' }
     ]
   })
   @IsArray()
@@ -48,4 +48,19 @@ export class CreateBookingDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @ApiProperty({ example: 'PAY_123456', required: false })
+  @IsOptional()
+  @IsString()
+  paymentReference?: string;
+
+  @ApiProperty({ example: 'PAID', required: false })
+  @IsOptional()
+  @IsEnum(['PENDING', 'PAID', 'FAILED', 'REFUNDED'])
+  paymentStatus?: 'PENDING' | 'PAID' | 'FAILED' | 'REFUNDED';
+
+  @ApiProperty({ example: 15000, required: false })
+  @IsOptional()
+  @IsNumber()
+  totalAmount?: number;
 }

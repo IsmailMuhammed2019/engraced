@@ -44,6 +44,24 @@ export class PaymentsController {
     return this.paymentsService.verifyPayment(reference);
   }
 
+  @Post('record')
+  @ApiOperation({ summary: 'Record a payment manually' })
+  @ApiResponse({ status: 201, description: 'Payment recorded successfully' })
+  recordPayment(
+    @Body() body: {
+      bookingId: string;
+      amount: number;
+      paystackRef: string;
+      paymentStatus: 'PAID' | 'PENDING' | 'FAILED';
+      paymentDate?: string;
+      customerName?: string;
+      customerEmail?: string;
+      customerPhone?: string;
+    },
+  ) {
+    return this.paymentsService.recordPayment(body);
+  }
+
   @Post('webhook')
   @ApiOperation({ summary: 'Paystack webhook handler' })
   @ApiResponse({ status: 200, description: 'Webhook processed successfully' })

@@ -358,6 +358,11 @@ function TripsPageContent() {
   };
 
   const handleBookNow = (trip: Trip) => {
+    // Check seat availability before booking
+    if (trip.availableSeats === 0) {
+      alert('Sorry, this trip is fully booked. Please select another trip or date.');
+      return;
+    }
     // Redirect directly to booking page with tripId
     window.location.href = `/booking?tripId=${trip.id}`;
   };
@@ -368,6 +373,11 @@ function TripsPageContent() {
   };
 
   const handleSelectSeats = (trip: Trip) => {
+    // Check seat availability before selection
+    if (trip.availableSeats === 0) {
+      alert('Sorry, this trip is fully booked. Please select another trip.');
+      return;
+    }
     // Redirect directly to booking page with tripId for seat selection
     window.location.href = `/booking?tripId=${trip.id}`;
   };
@@ -623,22 +633,151 @@ function TripsPageContent() {
               </div>
             </div>
           ) : filteredTrips.length === 0 ? (
-            <div className="text-center py-16">
-              <AlertCircle className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No trips found</h3>
-              <p className="text-gray-500 mb-4">
-                Try adjusting your search criteria or check back later for new trips.
-              </p>
-              <Button variant="outline" onClick={clearFilters}>
-                Clear Filters
-              </Button>
-          </div>
+            <div className="space-y-8">
+              {/* No Trips Found Message */}
+              <div className="bg-gradient-to-r from-orange-50 to-yellow-50 border-2 border-orange-200 rounded-2xl p-8">
+                <div className="flex items-start gap-4">
+                  <div className="p-3 bg-orange-100 rounded-full">
+                    <AlertCircle className="h-8 w-8 text-orange-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h2 className="text-2xl font-bold text-gray-900 mb-3">
+                      No Trips Available for Your Search
+                    </h2>
+                    <p className="text-lg text-gray-700 mb-2">
+                      We couldn't find any trips matching your criteria
+                      {searchFilters.from && searchFilters.to && (
+                        <span> from <span className="font-bold text-[#5d4a15]">{searchFilters.from}</span> to <span className="font-bold text-[#5d4a15]">{searchFilters.to}</span></span>
+                      )}
+                      {searchFilters.date && (
+                        <span> on <span className="font-bold text-[#5d4a15]">{new Date(searchFilters.date).toLocaleDateString()}</span></span>
+                      )}.
+                    </p>
+                    <p className="text-gray-600 mb-6">
+                      Try adjusting your search criteria, selecting a different date, or browse all available trips below.
+                    </p>
+                    <div className="flex flex-wrap gap-3">
+                      <Button 
+                        onClick={clearFilters}
+                        className="bg-[#5d4a15] hover:bg-[#6b5618] text-white"
+                      >
+                        <RefreshCw className="h-4 w-4 mr-2" />
+                        Clear All Filters
+                      </Button>
+                      <Button 
+                        variant="outline"
+                        onClick={() => window.location.href = '/routes'}
+                        className="border-[#5d4a15] text-[#5d4a15] hover:bg-[#5d4a15]/5"
+                      >
+                        <MapPin className="h-4 w-4 mr-2" />
+                        View All Routes
+                      </Button>
+                      <Button 
+                        variant="outline"
+                        onClick={() => window.location.href = '/contact'}
+                        className="border-[#5d4a15] text-[#5d4a15] hover:bg-[#5d4a15]/5"
+                      >
+                        Contact Support
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Show All Trips Suggestion */}
+              {trips.length > 0 && (
+                <div>
+                  <div className="text-center mb-6">
+                    <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                      Browse All Available Trips
+                    </h3>
+                    <p className="text-gray-600">
+                      Here are all our current trips. You might find an alternative that suits your schedule.
+                    </p>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {trips.slice(0, 6).map((trip) => (
+                      <Card key={trip.id} className="hover:shadow-lg transition-all duration-300 border-2 hover:border-[#5d4a15]">
+                        <CardContent className="p-6">
+                          <div className="flex items-center justify-between mb-4">
+                            <div>
+                              <h3 className="font-bold text-gray-900 text-lg">{trip.from}</h3>
+                              <div className="flex items-center gap-1 my-1">
+                                <ArrowRight className="h-4 w-4 text-[#5d4a15]" />
+                              </div>
+                              <p className="font-bold text-gray-900 text-lg">{trip.to}</p>
+                            </div>
+                            <Badge className="bg-green-100 text-green-800">
+                              {trip.availableSeats} seats
+                            </Badge>
+                          </div>
+
+                          <div className="space-y-2 mb-4 text-sm">
+                            <div className="flex items-center justify-between">
+                              <span className="text-gray-600">Departure</span>
+                              <span className="font-semibold">{trip.departureTime}</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-gray-600">Duration</span>
+                              <span className="font-semibold">{trip.duration}</span>
+                            </div>
+                            <div className="flex items-center justify-between">
+                              <span className="text-gray-600">Price</span>
+                              <span className="font-bold text-[#5d4a15] text-lg">₦{trip.price.toLocaleString()}</span>
+                            </div>
+                          </div>
+
+                          <Button 
+                            onClick={() => window.location.href = `/booking?tripId=${trip.id}`}
+                            className="w-full bg-[#5d4a15] hover:bg-[#6b5618] text-white"
+                            disabled={trip.availableSeats === 0}
+                          >
+                            {trip.availableSeats === 0 ? 'Fully Booked' : 'Book This Trip'}
+                          </Button>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+
+                  {trips.length > 6 && (
+                    <div className="text-center mt-8">
+                      <Button 
+                        onClick={clearFilters}
+                        variant="outline"
+                        size="lg"
+                        className="border-[#5d4a15] text-[#5d4a15] hover:bg-[#5d4a15]/5"
+                      >
+                        View All {trips.length} Trips
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           ) : (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              {filteredTrips.map((trip) => (
-              <motion.div
-                key={trip.id}
-                initial={{ opacity: 0, y: 20 }}
+            <>
+              {/* Trips Header */}
+              <div className="mb-8">
+                <h2 className="text-3xl font-bold text-gray-900 mb-2">
+                  {searchFilters.from || searchFilters.to ? 'Search Results' : 'Available Trips'}
+                </h2>
+                <p className="text-gray-600">
+                  Found {filteredTrips.length} {filteredTrips.length === 1 ? 'trip' : 'trips'} 
+                  {searchFilters.from && searchFilters.to && (
+                    <span> from <span className="font-semibold text-[#5d4a15]">{searchFilters.from}</span> to <span className="font-semibold text-[#5d4a15]">{searchFilters.to}</span></span>
+                  )}
+                  {searchFilters.date && (
+                    <span> on <span className="font-semibold text-[#5d4a15]">{new Date(searchFilters.date).toLocaleDateString()}</span></span>
+                  )}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                {filteredTrips.map((trip) => (
+                <motion.div
+                  key={trip.id}
+                  initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.3 }}
                 >
@@ -755,10 +894,15 @@ function TripsPageContent() {
                       {/* Action Buttons */}
                       <div className="flex gap-2">
                         <Button
-                          className="flex-1 bg-[#5d4a15] hover:bg-[#6b5618]"
+                          className={`flex-1 ${
+                            trip.availableSeats === 0
+                              ? 'bg-gray-300 text-gray-500 cursor-not-allowed hover:bg-gray-300'
+                              : 'bg-[#5d4a15] hover:bg-[#6b5618] text-white'
+                          }`}
                           onClick={() => handleBookNow(trip)}
+                          disabled={trip.availableSeats === 0}
                         >
-                          Book Now
+                          {trip.availableSeats === 0 ? 'Fully Booked' : 'Book Now'}
                         </Button>
                         <Button 
                           variant="outline"
@@ -771,14 +915,15 @@ function TripsPageContent() {
                           onClick={() => handleSelectSeats(trip)}
                           disabled={trip.availableSeats === 0}
                         >
-                          Select Seats
+                          {trip.availableSeats === 0 ? 'No Seats' : 'Select Seats'}
                         </Button>
                     </div>
                   </CardContent>
                 </Card>
               </motion.div>
-            ))}
-            </div>
+              ))}
+              </div>
+            </>
           )}
         </div>
       </section>
