@@ -60,6 +60,15 @@ export class PaymentsController {
     return this.paymentsService.getPaymentByBookingId(bookingId);
   }
 
+  @Get('my-payments')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get payments for current logged-in user' })
+  @ApiResponse({ status: 200, description: 'User payments retrieved successfully' })
+  getMyPayments(@Request() req) {
+    return this.paymentsService.getPaymentsByUserId(req.user.id);
+  }
+
   @Get()
   @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()

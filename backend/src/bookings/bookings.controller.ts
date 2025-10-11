@@ -42,6 +42,15 @@ export class BookingsController {
     return this.bookingsService.findAll();
   }
 
+  @Get('my-bookings')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Get bookings for current logged-in user' })
+  @ApiResponse({ status: 200, description: 'User bookings retrieved successfully' })
+  getMyBookings(@Request() req) {
+    return this.bookingsService.findByUser(req.user.id);
+  }
+
   @Get('user/:userId')
   @UseGuards(AuthGuard('jwt'))
   @ApiBearerAuth()

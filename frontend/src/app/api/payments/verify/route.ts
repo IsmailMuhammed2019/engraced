@@ -23,42 +23,74 @@ export async function POST(request: NextRequest) {
       // Payment was successful, create booking in backend
       const paymentData = data.data;
       const metadata = paymentData.metadata || {};
+      const customer = paymentData.customer || {};
 
       try {
         // Get trip and route information
         const tripResponse = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'https://engracedsmile.com'}/api/v1/trips/${metadata.tripId}`);
         let routeId = '';
+        let userId = null;
         
         if (tripResponse.ok) {
           const tripData = await tripResponse.json();
           routeId = tripData.routeId;
         }
 
+        // Check if user exists by email and get userId
+        try {
+          const userResponse = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'https://engracedsmile.com'}/api/v1/users/by-email/${customer.email || metadata.email || 'unknown@example.com'}`, {
+            headers: {
+              'Content-Type': 'application/json',
+            }
+          });
+          
+          if (userResponse.ok) {
+            const userData = await userResponse.json();
+            userId = userData.id;
+          }
+        } catch (userError) {
+          console.log('User not found, booking as guest');
+        }
+
+        // Prepare passenger name
+        const passengerName = metadata.passengerName || `${customer.first_name || 'Unknown'} ${customer.last_name || 'Customer'}`;
+        const passengerEmail = customer.email || metadata.email || paymentData.customer?.email || '';
+        const passengerPhone = metadata.phone || '';
+
         // Create booking in backend
+        const bookingPayload = {
+          tripId: metadata.tripId,
+          routeId: routeId,
+          userId: userId, // Will be null if user doesn't exist (guest booking)
+          passengerCount: metadata.seats?.length || 1,
+          contactInfo: {
+            phone: passengerPhone,
+            email: passengerEmail,
+            name: passengerName
+          },
+          passengerDetails: [
+            {
+              name: passengerName,
+              email: passengerEmail,
+              phone: passengerPhone
+            }
+          ],
+          seatNumbers: metadata.seats || [],
+          promotionCode: metadata.promotionCode || null,
+          notes: `Payment Reference: ${reference}. Customer: ${passengerName}`,
+          paymentReference: reference,
+          paymentStatus: 'PAID',
+          totalAmount: paymentData.amount / 100 // Convert from kobo to naira
+        };
+
+        console.log('Creating booking with payload:', bookingPayload);
+
         const backendResponse = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'https://engracedsmile.com'}/api/v1/bookings`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({
-            tripId: metadata.tripId,
-            routeId: routeId,
-            passengerCount: metadata.seats?.length || 1,
-            contactInfo: {
-              phone: metadata.phone,
-              email: paymentData.customer?.email
-            },
-            passengerDetails: [
-              {
-                name: metadata.passengerName,
-                email: paymentData.customer?.email,
-                phone: metadata.phone
-              }
-            ],
-            seatNumbers: metadata.seats || [],
-            promotionCode: metadata.promotionCode || null,
-            notes: `Payment Reference: ${reference}`
-          }),
+          body: JSON.stringify(bookingPayload),
         });
 
         if (!backendResponse.ok) {
@@ -67,6 +99,34 @@ export async function POST(request: NextRequest) {
         } else {
           const bookingData = await backendResponse.json();
           console.log('Booking created successfully:', bookingData);
+          
+          // Create payment record in backend with customer details
+          try {
+            const paymentPayload = {
+              bookingId: bookingData.id,
+              amount: paymentData.amount / 100,
+              paystackRef: reference,
+              paymentStatus: 'PAID',
+              paymentDate: new Date().toISOString(),
+              customerName: passengerName,
+              customerEmail: passengerEmail,
+              customerPhone: passengerPhone
+            };
+
+            const paymentResponse = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'https://engracedsmile.com'}/api/v1/payments/record`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(paymentPayload),
+            });
+
+            if (paymentResponse.ok) {
+              console.log('Payment record created successfully');
+            }
+          } catch (paymentError) {
+            console.error('Error creating payment record:', paymentError);
+          }
         }
       } catch (backendError) {
         console.error('Error creating booking:', backendError);

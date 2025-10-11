@@ -186,6 +186,44 @@ export class PaymentsService {
     });
   }
 
+  async getPaymentsByUserId(userId: string) {
+    try {
+      const payments = await this.prisma.payment.findMany({
+        where: {
+          booking: {
+            userId: userId,
+          },
+        },
+        include: {
+          booking: {
+            include: {
+              route: {
+                select: {
+                  from: true,
+                  to: true,
+                },
+              },
+              trip: {
+                select: {
+                  departureTime: true,
+                  arrivalTime: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      });
+
+      return payments;
+    } catch (error) {
+      console.error('Error fetching user payments:', error);
+      return [];
+    }
+  }
+
   async getAllPayments() {
     try {
       // First, try to get payments from local database
